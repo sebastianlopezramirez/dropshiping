@@ -1,0 +1,136 @@
+# ============================================================
+# CI — Dropshipping Colombia
+# ============================================================
+#
+# ENTENDER — ¿Qué hace este workflow?
+#
+#   Cada vez que haces push a cualquier rama, o abres un Pull Request
+#   hacia main, GitHub corre automáticamente este workflow:
+#
+#   1. Levanta un servidor PostgreSQL 17 (igual que en local)
+#   2. Instala PHP 8.3 con las extensiones necesarias
+#   3. Instala dependencias PHP (composer install)
+#   4. Instala dependencias JS y hace el build de Vite
+#   5. Crea el archivo .env de testing con la clave de la app
+#   6. Corre las migraciones en la BD de test
+#   7. Ejecuta todos los tests PHPUnit
+#
+#   Si algún paso falla → ❌ rojo en GitHub + email de aviso.
+#   Si todo pasa      → ✅ verde en el repositorio.
+#
+# PENSAR — ¿Por qué PostgreSQL 17 y no SQLite?
+#
+#   El proyecto usa PostgreSQL localmente y en producción.
+#   Usar SQLite en CI ocultaría errores específicos de Postgres
+#   (tipos de columna, ilike, funciones de fecha, etc.).
+#   La consistencia entre entornos es más valiosa que la velocidad.
+#
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]        # corre en CUALQUIER push a cualquier rama
+  pull_request:
+    branches: [main]        # y en PRs que apuntan a main
+
+jobs:
+  tests:
+    name: Tests (PHP 8.3 + PostgreSQL 17)
+    runs-on: ubuntu-latest
+
+    # ── Servicio de PostgreSQL ───────────────────────────────
+    # GitHub Actions levanta este contenedor antes de que empiece el job.
+    # La app se conecta en localhost:5432 como si fuera la BD local.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB:       dropshipping_test
+          POSTGRES_USER:     postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        # Espera a que Postgres esté listo antes de continuar
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+
+      # 1. Descargar el código del repositorio
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. Instalar PHP 8.3 con las extensiones que usa Laravel + Postgres
+      - name: Configurar PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo, pdo_pgsql, pgsql, bcmath, xml, ctype, fileinfo, tokenizer, curl, zip
+          coverage: none    # no generamos reporte de cobertura (más rápido)
+
+      # 3. Cache de dependencias Composer (evita descargar todo en cada run)
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      # 4. Instalar dependencias PHP
+      - name: Instalar dependencias PHP
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      # 5. Cache de node_modules
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+
+      # 6. Instalar dependencias JS y compilar assets
+      - name: Instalar JS y build Vite
+        run: |
+          npm ci
+          npm run build
+
+      # 7. Crear .env de testing a partir de .env.example
+      #    Las credenciales de Postgres coinciden con el servicio de arriba.
+      - name: Crear .env de testing
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST:       127.0.0.1
+          DB_PORT:       5432
+          DB_DATABASE:   dropshipping_test
+          DB_USERNAME:   postgres
+          DB_PASSWORD:   postgres
+
+      # 8. Correr migraciones en la BD de test (sin seeders — datos limpios)
+      - name: Correr migraciones
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST:       127.0.0.1
+          DB_PORT:       5432
+          DB_DATABASE:   dropshipping_test
+          DB_USERNAME:   postgres
+          DB_PASSWORD:   postgres
+
+      # 9. Ejecutar todos los tests PHPUnit
+      - name: Ejecutar tests
+        run: php artisan test --stop-on-failure
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST:       127.0.0.1
+          DB_PORT:       5432
+          DB_DATABASE:   dropshipping_test
+          DB_USERNAME:   postgres
+          DB_PASSWORD:   postgres
