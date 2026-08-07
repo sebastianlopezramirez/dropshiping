@@ -1,0 +1,103 @@
+---
+type: dashboard
+tags: [estado, bugs, pendientes]
+created: 2026-08-04
+updated: 2026-08-07
+status: evergreen
+descripcion: "Bugs activos y acciones inmediatas del proyecto"
+---
+
+# 🐛 Bugs y Pendientes
+
+> Este archivo se actualiza al inicio y cierre de cada sesión.
+> Los bugs resueltos se mueven a la sección "Historial".
+
+---
+
+## ⚠️ BUGS ACTIVOS
+
+✅ **Ningún bug activo** al cierre de la sesión 10.
+
+---
+
+## 📋 PENDIENTES — Próxima sesión (11)
+
+### Paso 1 — Verificar build y rutas nuevas
+```powershell
+cd D:\proyectos\dropshiping
+npm run build
+```
+
+Probar en `http://dropshiping.test` (Herd) o `http://localhost:8000` (`php artisan serve`):
+- [ ] `/categorias` — lista de categorías
+- [ ] `/categorias/create` — crear categoría
+- [ ] `/transacciones/{id}` — detalle de una transacción (clic desde `/transacciones`)
+- [ ] Editar usuario con rol `proveedor` desde `/usuarios` → ver sección perfil empresa
+
+### Paso 2 — FASE 8 — Tienda Pública + SEO
+- [ ] Rutas públicas: `GET /tienda`, `GET /tienda/{slug}`, `GET /tienda/categoria/{slug}`
+- [ ] `TiendaController@index()` — catálogo filtrable (categoría, precio, búsqueda)
+- [ ] `TiendaController@show()` — detalle de producto por slug
+- [ ] `TiendaLayout.jsx` — layout sin auth (navbar pública, footer)
+- [ ] `Tienda/Index.jsx` — catálogo con filtros y paginación
+- [ ] `Tienda/Producto.jsx` — detalle con imágenes, precio, descripción
+- [ ] Meta tags SEO por producto (`og:title`, `og:description`, `og:image`)
+
+---
+
+## 📌 BACKLOG — Pendientes de baja prioridad
+
+| Item | Módulo | Prioridad |
+|---|---|---|
+| Capitalización en `Pedidos/Crear.jsx` (cliente_nombre, ciudad) | FASE 4 | Baja |
+| Capitalización en `Usuarios/Crear.jsx` (campo nombre) | FASE 2 | Baja |
+| Perfil proveedor: campos adicionales (condiciones_pago, metodos_pago) | FASE 6 | Baja |
+| Notificaciones por email al cambiar estado de pedido | FASE 4 | Media |
+| Exportar lista de pedidos a Excel/CSV | FASE 4 | Media |
+| Sitemap XML automático | FASE 8 | Media |
+
+---
+
+## 📌 Reglas aprendidas — Convenciones fijas
+
+| Regla | Descripción |
+|---|---|
+| `--legacy-peer-deps` solo en `npm install` | Nunca en `npm run build` — eso es un flag de Vite y lanza CACError |
+| `Campo` siempre FUERA del componente React | Si se define dentro, React remonta el input en cada tecla → foco perdido |
+| Ruta explícita ANTES del `resource()` | `POST /cupones/validar` antes de `Route::resource('cupones', ...)` |
+| `DB::transaction()` → variables en `use()` | Todas las variables externas deben incluirse explícitamente |
+| Columnas NOT NULL con DEFAULT → normalizar en PHP | `$datos['campo'] = $datos['campo'] ?? 0` antes de `create()` |
+| `route()` de Ziggy lanza error en render si no existe | Verificar nombres exactos con `php artisan route:list` |
+| Tablas en español, columnas internas en inglés | `last_activity`, `payload`, `remember_token` = mantener en inglés |
+| URL local correcta | `http://dropshiping.test` (Herd) — NO `http://localhost` sin puerto |
+| Proveedor se auto-crea en `UsuarioController@store()` | Sin esto, el portal lanza 403 |
+| Snapshot de cupón en pedido | Guardar `cupon_codigo` (string) además de `cupon_id` FK |
+
+---
+
+## ✅ BUGS RESUELTOS — Historial completo
+
+| # | Bug | Sesión | Solución |
+|---|-----|--------|---------|
+| H001 | `composer create-project` falla (dir no vacío) | 1 | Proyecto en `_laravel-temp` → mover |
+| H002 | `npm ERESOLVE` Vite 8 incompatible | 1 | `--legacy-peer-deps` en `npm install` |
+| H003 | PostgreSQL auth failed | 1 | `pg_hba.conf` trust → `ALTER USER` |
+| H004 | `last_activity` column not found | 1 | No traducir columnas internas de Laravel |
+| H005 | ViteManifestNotFoundException | 1 | Siempre correr `npm run dev` en paralelo |
+| H006 | `bootstrap.js` not found | 1 | Crear manualmente con config Axios |
+| H007 | UUID auth password doble hash | 2 | Pasar texto plano al seeder |
+| H008 | `{transaccione}` ruta inválida | 6 | `.parameters()` + `route:clear` |
+| H009 | `react-is` peer dep faltante | 6 | `npm install react-is --legacy-peer-deps` |
+| H010 | Cookie `remember_me` email en lugar de UUID | 7 | Truncar `sesiones` + nuevo login |
+| H011 | `403 No tienes perfil de proveedor` | 7 | Auto-crear en `UsuarioController@store` |
+| H012 | Pivot columna `precio` no existe | 8 | Migración correctiva `2026_08_07_000001` |
+| H013 | `Undefined variable $request` en closure | 8 | Agregar al `use()` del closure |
+| H014 | `categoria_id required` bloquea form | 8 | Cambiar a `nullable` en validación |
+| H015 | `route('finanzas.dashboard')` → blank screen | 9 | Fix: `route('reportes.financiero')` |
+| H016 | `Campo` dentro del componente → foco perdido | 9 | Mover Campo FUERA del componente función |
+| H017 | `npm run build -- --legacy-peer-deps` CACError | 9 | Ese flag es solo para `npm install` |
+| H018 | `minimo_compra` NOT NULL violation | 9 | Normalizar `null → 0` antes de `create()` |
+
+---
+
+*Relacionado: [[🏠 Inicio]] · [[📊 Tablero de Fases]] · [[🔐 Credenciales — Master]]*

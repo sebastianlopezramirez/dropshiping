@@ -1,0 +1,413 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS WEB — routes/web.php
+|--------------------------------------------------------------------------
+|
+| ¿QUÉ ES UNA RUTA EN LARAVEL?
+|   Una ruta mapea una URL + método HTTP → a una acción (closure o controller).
+|   Ejemplo: GET /usuarios → UsuarioController@index → página React Usuarios/Index
+|
+| ¿QUÉ ES INERTIA::RENDER()?
+|   En lugar de devolver una vista Blade (HTML plano), Inertia.js
+|   le pasa los datos al componente React correcto.
+|   Inertia::render('Dashboard') → resources/js/Pages/Dashboard.jsx
+|
+| ¿QUÉ ES MIDDLEWARE EN RUTAS?
+|   Es un filtro que se aplica ANTES de entrar al controller:
+|   'auth'       → el usuario debe estar autenticado (logged in)
+|   'verified'   → el usuario debe tener el email verificado
+|   'role:admin' → el usuario debe tener el rol 'admin' de Spatie
+|
+| ESTRUCTURA DE GRUPOS DE RUTAS:
+|   Las rutas se agrupan por nivel de acceso.
+|   Esto evita repetir ->middleware() en cada ruta individualmente.
+|
+*/
+
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Web\TiendaController;
+use App\Http\Controllers\Web\CampanaController;
+use App\Http\Controllers\Web\CategoriaController;
+use App\Http\Controllers\Web\CuponController;
+use App\Http\Controllers\Web\GastoController;
+use App\Http\Controllers\Web\PedidoController;
+use App\Http\Controllers\Web\ProductoController;
+use App\Http\Controllers\Web\AnalyticsController;
+use App\Http\Controllers\Web\ReporteFinancieroController;
+use App\Http\Controllers\Web\TransaccionController;
+use App\Http\Controllers\Web\UsuarioController;
+use App\Http\Controllers\Portal\PortalController;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| RUTA PÚBLICA: Página de bienvenida
+|--------------------------------------------------------------------------
+| No requiere autenticación.
+| Muestra la pantalla de inicio con botones Log in / Register.
+*/
+/*
+|--------------------------------------------------------------------------
+| RUTAS PÚBLICAS: Tienda — No requieren autenticación
+|--------------------------------------------------------------------------
+|
+| PENSAR — ¿Por qué van ANTES del grupo auth?
+|
+|   Estas rutas no tienen middleware. Cualquier visitante puede acceder.
+|   Las registramos primero para que Laravel las evalúe antes de entrar
+|   a los grupos con middleware, aunque en la práctica el orden no afecta
+|   el match — sí es buena práctica para legibilidad.
+|
+| PENSAR — ¿Por qué /tienda/categoria/{slug} va ANTES de /tienda/{slug}?
+|
+|   Si registráramos /tienda/{slug} primero, Laravel interpretaría
+|   'categoria' como un slug de producto → error 404.
+|   La ruta más específica siempre va primero.
+|
+*/
+Route::prefix('tienda')->name('tienda.')->group(function () {
+
+    // GET /tienda — Catálogo completo con filtros
+    Route::get('/', [TiendaController::class, 'index'])
+         ->name('index');
+
+    // GET /tienda/categoria/{slug} — Productos de una categoría
+    // Va ANTES de /tienda/{slug} para evitar que 'categoria' se resuelva como slug
+    Route::get('categoria/{slug}', [TiendaController::class, 'categoria'])
+         ->name('categoria');
+
+    // GET /tienda/{slug} — Detalle de un producto
+    Route::get('{slug}', [TiendaController::class, 'show'])
+         ->name('show');
+});
+
+/*
+|--------------------------------------------------------------------------
+| RUTA PÚBLICA: Página de bienvenida
+|--------------------------------------------------------------------------
+| No requiere autenticación.
+| Muestra la pantalla de inicio con botones Log in / Register.
+*/
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        // ¿Existen estas rutas? Le pasamos true/false a React para
+        // mostrar u ocultar los botones de login/registro
+        'canLogin'       => Route::has('login'),
+        'canRegister'    => Route::has('register'),
+        'laravelVersion' => Application::VERSION,
+        'phpVersion'     => PHP_VERSION,
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS AUTENTICADAS: Requieren login + email verificado
+|--------------------------------------------------------------------------
+| middleware(['auth', 'verified']):
+|   auth     → si no está logueado, redirige a /login
+|   verified → si no verificó el email, redirige a /verify-email
+*/
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    /*
+    |----------------------------------------------------------------------
+    | DASHBOARD — Página principal después de login
+    |----------------------------------------------------------------------
+    | El controller detecta el rol del usuario y muestra el dashboard
+    | adecuado (admin ve estadísticas, vendedor ve sus pedidos, etc.)
+    */
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
+
+    /*
+    |----------------------------------------------------------------------
+    | PERFIL DE USUARIO — Generado por Breeze
+    |----------------------------------------------------------------------
+    | Breeze genera estos controllers automáticamente.
+    | Permiten al usuario editar su nombre, email y contraseña.
+    */
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    /*
+    |----------------------------------------------------------------------
+    | MÓDULO: USUARIOS — Solo para admin y super_admin
+    |----------------------------------------------------------------------
+    |
+    | middleware('role:super_administrador|administrador'):
+    |   El pipe | significa OR — debe tener uno de los dos roles.
+    |   Si el usuario tiene rol 'vendedor' e intenta entrar a /usuarios,
+    |   Spatie devuelve un 403 Forbidden.
+    |
+    | Route::resource() genera automáticamente 7 rutas:
+    |   GET    /usuarios           → index   (listar todos)
+    |   GET    /usuarios/create    → create  (formulario crear)
+    |   POST   /usuarios           → store   (guardar nuevo)
+    |   GET    /usuarios/{id}      → show    (ver uno)
+    |   GET    /usuarios/{id}/edit → edit    (formulario editar)
+    |   PUT    /usuarios/{id}      → update  (guardar cambios)
+    |   DELETE /usuarios/{id}      → destroy (eliminar/soft delete)
+    |
+    */
+    Route::middleware('role:super_administrador|administrador')->group(function () {
+
+        // Resource completo de usuarios
+        Route::resource('usuarios', UsuarioController::class);
+
+        // Ruta adicional: cambiar estado activo/inactivo/suspendido
+        Route::patch('usuarios/{usuario}/estado', [UsuarioController::class, 'cambiarEstado'])
+             ->name('usuarios.estado');
+
+        // Ruta adicional: asignar/cambiar rol de un usuario
+        Route::patch('usuarios/{usuario}/rol', [UsuarioController::class, 'cambiarRol'])
+             ->name('usuarios.rol');
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: PRODUCTOS — Admin y vendedor pueden gestionar catálogo
+        |----------------------------------------------------------------------
+        |
+        | Route::resource() genera las 7 rutas estándar:
+        |   GET    /productos              → index   (catálogo completo)
+        |   GET    /productos/crear        → create  (formulario nuevo producto)
+        |   POST   /productos              → store   (guardar producto)
+        |   GET    /productos/{producto}   → show    (detalle del producto)
+        |   GET    /productos/{producto}/editar → edit (formulario edición)
+        |   PUT    /productos/{producto}   → update  (guardar cambios)
+        |   DELETE /productos/{producto}   → destroy (soft delete)
+        |
+        | El parámetro 'parameters' cambia el nombre en la URL:
+        |   Por defecto: /productos/{producto}
+        |   Con esto:    /productos/{producto} (igual, pero explícito en español)
+        |
+        */
+        Route::resource('productos', ProductoController::class)
+             ->parameters(['productos' => 'producto']);
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: PEDIDOS — Admin y vendedor gestionan pedidos
+        |----------------------------------------------------------------------
+        |
+        | Rutas estándar del resource:
+        |   GET    /pedidos              → index   (lista de pedidos)
+        |   GET    /pedidos/crear        → create  (nuevo pedido)
+        |   POST   /pedidos              → store   (guardar pedido)
+        |   GET    /pedidos/{pedido}     → show    (detalle del pedido)
+        |   GET    /pedidos/{pedido}/editar → edit (formulario editar)
+        |   PUT    /pedidos/{pedido}     → update  (guardar cambios)
+        |   DELETE /pedidos/{pedido}     → destroy (soft delete)
+        |
+        | Ruta extra:
+        |   PATCH  /pedidos/{pedido}/estado → cambiarEstado() — avanzar estado
+        |
+        */
+        Route::resource('pedidos', PedidoController::class)
+             ->parameters(['pedidos' => 'pedido']);
+
+        // Ruta extra: cambio de estado desde la lista/detalle
+        Route::patch('pedidos/{pedido}/estado', [PedidoController::class, 'cambiarEstado'])
+             ->name('pedidos.estado');
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: FINANZAS — Transacciones, Gastos y Reportes
+        |----------------------------------------------------------------------
+        |
+        | Transacciones: pagos recibidos por pedidos (manual o Wompi)
+        |   GET    /transacciones              → index
+        |   GET    /transacciones/create       → create
+        |   POST   /transacciones              → store
+        |   GET    /transacciones/{id}         → show
+        |   PATCH  /transacciones/{id}         → update (solo anular)
+        |
+        | Gastos operativos: costos del negocio (publicidad, empaque, etc.)
+        |   7 rutas resource estándar
+        |
+        | Reporte financiero: dashboard con KPIs del mes
+        |   GET    /reportes/financiero        → dashboard
+        |
+        | Wompi link: genera link de pago para un pedido
+        |   POST   /transacciones/wompi/{pedido} → generarLinkWompi
+        |
+        */
+
+        // Transacciones (sin destroy — registros financieros son inmutables)
+        Route::resource('transacciones', TransaccionController::class)
+             ->only(['index', 'create', 'store', 'show', 'update'])
+             ->parameters(['transacciones' => 'transaccion']);
+
+        // Link de pago Wompi para un pedido específico
+        Route::post('transacciones/wompi/{pedido}', [TransaccionController::class, 'generarLinkWompi'])
+             ->name('transacciones.wompi-link');
+
+        // Gastos operativos — CRUD completo
+        Route::resource('gastos', GastoController::class);
+
+        // Dashboard financiero
+        Route::get('reportes/financiero', [ReporteFinancieroController::class, 'dashboard'])
+             ->name('reportes.financiero');
+
+        // Dashboard de Analytics — métricas ejecutivas del negocio
+        Route::get('analytics', [AnalyticsController::class, 'dashboard'])
+             ->name('analytics.dashboard');
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: MARKETING — Cupones y Campañas (FASE 7)
+        |----------------------------------------------------------------------
+        |
+        | Cupones:
+        |   GET    /cupones              → index   (lista con estadísticas)
+        |   GET    /cupones/crear        → create  (formulario nuevo cupón)
+        |   POST   /cupones              → store   (guardar cupón)
+        |   GET    /cupones/{cupon}/editar → edit  (formulario edición)
+        |   PUT    /cupones/{cupon}      → update  (guardar cambios)
+        |   DELETE /cupones/{cupon}      → destroy (desactivar, no borrar)
+        |   POST   /cupones/validar      → validar (AJAX — valida código + total)
+        |
+        | Campañas:
+        |   GET    /campanas             → index   (lista con métricas de ROI)
+        |   GET    /campanas/crear       → create  (formulario nueva campaña)
+        |   POST   /campanas             → store   (guardar campaña)
+        |   GET    /campanas/{campana}   → show    (detalle + pedidos)
+        |   GET    /campanas/{campana}/editar → edit (formulario edición)
+        |   PUT    /campanas/{campana}   → update  (guardar cambios)
+        |   DELETE /campanas/{campana}   → destroy (borrar si no tiene pedidos)
+        |
+        | PENSAR — ¿Por qué validar() va ANTES del resource?
+        |
+        |   Route::resource() genera la ruta POST /cupones → store().
+        |   Si ponemos la ruta POST /cupones/validar DESPUÉS, Laravel
+        |   intentará resolver 'validar' como el ID de un cupón → error.
+        |   Solución: registrar la ruta explícita ANTES del resource.
+        |
+        */
+
+        // AJAX: validar código de cupón + calcular descuento
+        // IMPORTANTE: va ANTES de Route::resource para evitar conflicto con {cupon}
+        Route::post('cupones/validar', [CuponController::class, 'validar'])
+             ->name('cupones.validar');
+
+        // CRUD de cupones (sin show — la lista ya tiene toda la info necesaria)
+        Route::resource('cupones', CuponController::class)
+             ->except(['show'])
+             ->parameters(['cupones' => 'cupon']);
+
+        // CRUD completo de campañas (con show para la vista de análisis/ROI)
+        Route::resource('campanas', CampanaController::class)
+             ->parameters(['campanas' => 'campana']);
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: CATEGORÍAS — CRUD de categorías de productos
+        |----------------------------------------------------------------------
+        |
+        | GET    /categorias              → index   (lista con jerarquía)
+        | GET    /categorias/create       → create  (formulario nueva)
+        | POST   /categorias              → store   (guardar)
+        | GET    /categorias/{id}/edit    → edit    (formulario edición)
+        | PUT    /categorias/{id}         → update  (guardar cambios)
+        | DELETE /categorias/{id}         → destroy (bloquea si tiene productos/hijos)
+        |
+        */
+        Route::resource('categorias', CategoriaController::class)
+             ->except(['show'])
+             ->parameters(['categorias' => 'categoria']);
+
+    }); // fin grupo admin
+
+}); // fin grupo auth+verified
+
+/*
+|--------------------------------------------------------------------------
+| PORTAL DE PROVEEDORES — /portal/*
+|--------------------------------------------------------------------------
+|
+| PENSAR — ¿Por qué un grupo separado?
+|
+|   El portal usa el MISMO login que el admin (/login).
+|   Después del login, AuthenticatedSessionController detecta el rol:
+|   - proveedor → redirige a /portal/dashboard
+|   - admin     → redirige a /dashboard
+|
+|   Este grupo protege TODAS las rutas del portal de 3 formas:
+|   1. 'auth'              → debe estar logueado
+|   2. 'verified'          → email verificado (opcional pero buena práctica)
+|   3. 'role:proveedor|...'→ solo proveedores y super_admin pueden entrar
+|
+|   NOTA: 'super_administrador' también tiene acceso para que tú
+|   puedas probar el portal sin crear una cuenta de proveedor.
+|
+*/
+Route::middleware(['auth', 'verified', 'role:proveedor|super_administrador'])
+     ->prefix('portal')
+     ->name('portal.')
+     ->group(function () {
+
+    // Dashboard principal del proveedor
+    Route::get('dashboard', [PortalController::class, 'dashboard'])
+         ->name('dashboard');
+
+    // Sus productos (solo los que tiene asignados en producto_proveedor)
+    Route::get('productos', [PortalController::class, 'productos'])
+         ->name('productos');
+
+    // Crear producto nuevo desde el portal (nace como inactivo, admin lo activa)
+    // IMPORTANTE: esta ruta va ANTES de {producto}/editar para que Laravel
+    // no intente resolver 'crear' como un UUID de producto.
+    Route::get('productos/crear', [PortalController::class, 'crearProducto'])
+         ->name('productos.crear');
+    Route::post('productos', [PortalController::class, 'guardarProducto'])
+         ->name('productos.guardar');
+
+    // Editar un producto propio
+    Route::get('productos/{producto}/editar', [PortalController::class, 'editarProducto'])
+         ->name('productos.editar');
+    Route::put('productos/{producto}', [PortalController::class, 'actualizarProducto'])
+         ->name('productos.actualizar');
+
+    // Pedidos que incluyen sus productos
+    Route::get('pedidos', [PortalController::class, 'pedidos'])
+         ->name('pedidos');
+    Route::get('pedidos/{pedido}', [PortalController::class, 'verPedido'])
+         ->name('pedidos.ver');
+
+    // Pagos y comisiones
+    Route::get('pagos', [PortalController::class, 'pagos'])
+         ->name('pagos');
+
+}); // fin grupo portal
+
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK WOMPI — Ruta PÚBLICA (sin autenticación)
+|--------------------------------------------------------------------------
+|
+| PENSAR — ¿Por qué está fuera del middleware auth?
+|
+|   Wompi llama a esta URL desde sus servidores, no desde el browser
+|   del usuario. No tiene sesión, no tiene token de autenticación.
+|   La seguridad la garantiza la verificación de firma (SHA256).
+|
+|   Si pusiéramos esta ruta dentro del grupo auth, Wompi recibiría
+|   un 302 redirect al login y el webhook fallaría silenciosamente.
+|
+*/
+Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
+     ->name('wompi.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS DE AUTENTICACIÓN — Generadas por Breeze
+|--------------------------------------------------------------------------
+| Contiene: /login, /register, /logout, /forgot-password, etc.
+| El archivo auth.php fue creado automáticamente por Breeze.
+*/
+require __DIR__.'/auth.php';
