@@ -31,6 +31,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,8 @@ use Illuminate\Support\Str;
 
 class Producto extends Model
 {
+    use HasFactory;
+
     /*
     |----------------------------------------------------------------------
     | TABLA, SOFT DELETE Y TIMESTAMPS
