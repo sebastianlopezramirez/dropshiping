@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, bugs, pendientes]
 created: 2026-08-04
-updated: 2026-08-07
+updated: 2026-08-07 (sesión 12)
 status: evergreen
 descripcion: "Bugs activos y acciones inmediatas del proyecto"
 ---
@@ -16,32 +16,21 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 
 ## ⚠️ BUGS ACTIVOS
 
-✅ **Ningún bug activo** al cierre de la sesión 10.
+✅ **Ningún bug activo** al cierre de la sesión 12. CI verde 8/8 tests.
 
 ---
 
-## 📋 PENDIENTES — Próxima sesión (11)
+## 📋 PENDIENTES — Próxima sesión (13)
 
-### Paso 1 — Verificar build y rutas nuevas
-```powershell
-cd D:\proyectos\dropshiping
-npm run build
-```
+### Paso 1 — Tests adicionales (FASE 10)
+- [ ] Tests para `PedidoController` (crear, cambiar estado)
+- [ ] Tests para `CuponController` (validar cupón)
+- [ ] Tests para `AnalyticsController` (dashboard carga con datos)
 
-Probar en `http://dropshiping.test` (Herd) o `http://localhost:8000` (`php artisan serve`):
-- [ ] `/categorias` — lista de categorías
-- [ ] `/categorias/create` — crear categoría
-- [ ] `/transacciones/{id}` — detalle de una transacción (clic desde `/transacciones`)
-- [ ] Editar usuario con rol `proveedor` desde `/usuarios` → ver sección perfil empresa
-
-### Paso 2 — FASE 8 — Tienda Pública + SEO
-- [ ] Rutas públicas: `GET /tienda`, `GET /tienda/{slug}`, `GET /tienda/categoria/{slug}`
-- [ ] `TiendaController@index()` — catálogo filtrable (categoría, precio, búsqueda)
-- [ ] `TiendaController@show()` — detalle de producto por slug
-- [ ] `TiendaLayout.jsx` — layout sin auth (navbar pública, footer)
-- [ ] `Tienda/Index.jsx` — catálogo con filtros y paginación
-- [ ] `Tienda/Producto.jsx` — detalle con imágenes, precio, descripción
-- [ ] Meta tags SEO por producto (`og:title`, `og:description`, `og:image`)
+### Paso 2 — Deploy prep
+- [ ] Preparar `.env.production` con variables reales
+- [ ] Decidir plataforma: Railway / Render / VPS
+- [ ] Documentar proceso de deploy
 
 ---
 
@@ -97,6 +86,10 @@ Probar en `http://dropshiping.test` (Herd) o `http://localhost:8000` (`php artis
 | H016 | `Campo` dentro del componente → foco perdido | 9 | Mover Campo FUERA del componente función |
 | H017 | `npm run build -- --legacy-peer-deps` CACError | 9 | Ese flag es solo para `npm install` |
 | H018 | `minimo_compra` NOT NULL violation | 9 | Normalizar `null → 0` antes de `create()` |
+| H019 | CI Run #1: `npm ERESOLVE` Vite 8 peer dep | 12 | `.npmrc` → `legacy-peer-deps=true` |
+| H020 | CI Run #2: column "name" no existe | 12 | Eliminar 7 tests Breeze + `UserFactory` corregida |
+| H021 | CI Run #3: `Categoria/Producto::factory()` no existe | 12 | Crear `CategoriaFactory`, `ProductoFactory`, agregar `HasFactory` |
+| H022 | CI Run #4: column "email_verified_at" no existe | 12 | `UserFactory` → `email_verificado_en` ✅ CI VERDE |
 
 ---
 
