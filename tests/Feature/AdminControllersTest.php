@@ -315,15 +315,18 @@ class AdminControllersTest extends TestCase
     {
         $admin = $this->crearAdmin();
 
-        // Creamos un pedido con los campos mínimos requeridos.
-        // direccion_entrega es NOT NULL en la BD → la incluimos como JSON.
+        // Creamos un pedido con todos los campos NOT NULL de la tabla.
+        // direccion_entrega es VARCHAR(250) — string plano, no JSON.
+        // ciudad y departamento también son NOT NULL sin default.
         $pedido = Pedido::create([
             'cliente_nombre'    => 'Juan Pérez',
             'cliente_email'     => 'juan@test.com',
             'cliente_telefono'  => '3001234567',
             'total'             => 100000,
             'estado'            => Pedido::ESTADO_PENDIENTE,
-            'direccion_entrega' => ['calle' => 'Calle 1', 'ciudad' => 'Bogotá'],
+            'direccion_entrega' => 'Calle 1 # 2-3',
+            'ciudad'            => 'Bogotá',
+            'departamento'      => 'Cundinamarca',
         ]);
 
         $response = $this->actingAs($admin)
@@ -364,7 +367,9 @@ class AdminControllersTest extends TestCase
             'cliente_telefono'  => '3109876543',
             'total'             => 50000,
             'estado'            => Pedido::ESTADO_PENDIENTE,
-            'direccion_entrega' => ['calle' => 'Calle 2', 'ciudad' => 'Medellín'],
+            'direccion_entrega' => 'Carrera 2 # 3-4',
+            'ciudad'            => 'Medellín',
+            'departamento'      => 'Antioquia',
         ]);
 
         $response = $this->actingAs($admin)
@@ -400,7 +405,9 @@ class AdminControllersTest extends TestCase
             'cliente_email'     => 'pedro@test.com',
             'cliente_telefono'  => '3201112233',
             'total'             => 75000,
-            'direccion_entrega' => ['calle' => 'Calle 3', 'ciudad' => 'Cali'],
+            'direccion_entrega' => 'Avenida 3 # 4-5',
+            'ciudad'            => 'Cali',
+            'departamento'      => 'Valle del Cauca',
             'estado'           => Pedido::ESTADO_CONFIRMADO,
         ]);
 

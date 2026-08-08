@@ -83,8 +83,6 @@ class Pedido extends Model
     // ─── CASTS ────────────────────────────────────────────────────────────
     // Eloquent convierte automáticamente estos tipos al leer de la BD
     protected $casts = [
-        // JSONB → array PHP (sin esto Eloquent no serializa el array al guardar)
-        'direccion_entrega'   => 'array',
         'subtotal'            => 'decimal:2',
         'descuento'           => 'decimal:2',
         'costo_envio'         => 'decimal:2',
