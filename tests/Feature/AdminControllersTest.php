@@ -315,13 +315,15 @@ class AdminControllersTest extends TestCase
     {
         $admin = $this->crearAdmin();
 
-        // Creamos un pedido con los campos mínimos requeridos
+        // Creamos un pedido con los campos mínimos requeridos.
+        // direccion_entrega es NOT NULL en la BD → la incluimos como JSON.
         $pedido = Pedido::create([
-            'cliente_nombre' => 'Juan Pérez',
-            'cliente_email'  => 'juan@test.com',
-            'cliente_telefono' => '3001234567',
-            'total'          => 100000,
-            'estado'         => Pedido::ESTADO_PENDIENTE,
+            'cliente_nombre'    => 'Juan Pérez',
+            'cliente_email'     => 'juan@test.com',
+            'cliente_telefono'  => '3001234567',
+            'total'             => 100000,
+            'estado'            => Pedido::ESTADO_PENDIENTE,
+            'direccion_entrega' => ['calle' => 'Calle 1', 'ciudad' => 'Bogotá'],
         ]);
 
         $response = $this->actingAs($admin)
@@ -357,11 +359,12 @@ class AdminControllersTest extends TestCase
         $admin = $this->crearAdmin();
 
         $pedido = Pedido::create([
-            'cliente_nombre'   => 'Ana García',
-            'cliente_email'    => 'ana@test.com',
-            'cliente_telefono' => '3109876543',
-            'total'            => 50000,
-            'estado'           => Pedido::ESTADO_PENDIENTE,
+            'cliente_nombre'    => 'Ana García',
+            'cliente_email'     => 'ana@test.com',
+            'cliente_telefono'  => '3109876543',
+            'total'             => 50000,
+            'estado'            => Pedido::ESTADO_PENDIENTE,
+            'direccion_entrega' => ['calle' => 'Calle 2', 'ciudad' => 'Medellín'],
         ]);
 
         $response = $this->actingAs($admin)
@@ -393,10 +396,11 @@ class AdminControllersTest extends TestCase
         $admin = $this->crearAdmin();
 
         $pedido = Pedido::create([
-            'cliente_nombre'   => 'Pedro López',
-            'cliente_email'    => 'pedro@test.com',
-            'cliente_telefono' => '3201112233',
-            'total'            => 75000,
+            'cliente_nombre'    => 'Pedro López',
+            'cliente_email'     => 'pedro@test.com',
+            'cliente_telefono'  => '3201112233',
+            'total'             => 75000,
+            'direccion_entrega' => ['calle' => 'Calle 3', 'ciudad' => 'Cali'],
             'estado'           => Pedido::ESTADO_CONFIRMADO,
         ]);
 
