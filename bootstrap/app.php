@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         | AddLinkHeadersForPreloadedAssets: optimización HTTP/2 push.
         |
         */
+        // Confiar en el proxy de Railway (HTTPS termina en el edge, llega HTTP al container)
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
