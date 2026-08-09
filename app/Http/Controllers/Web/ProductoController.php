@@ -376,6 +376,90 @@ class ProductoController extends Controller
 
     /*
     |----------------------------------------------------------------------
+    | IMPORTAR MASIVO — POST /productos/importar
+    |----------------------------------------------------------------------
+    |
+    | Recibe un archivo CSV con columnas:
+    |   sku, nombre, precio_costo, precio_venta, stock, descripcion_corta
+    |
+    | Por cada fila válida crea un producto en estado 'borrador'.
+    | Retorna resumen: cuántos se crearon y cuáles fallaron.
+    |
+    */
+    public function importar(Request $request)
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $archivo = $request->file('archivo');
+        $handle  = fopen($archivo->getRealPath(), 'r');
+
+        // Leer encabezados (primera fila)
+        $encabezados = array_map('trim', fgetcsv($handle, 1000, ','));
+
+        $creados = 0;
+        $errores = [];
+        $fila    = 2; // empieza en 2 porque la 1 es el encabezado
+
+        while (($columnas = fgetcsv($handle, 1000, ',')) !== false) {
+            // Saltar filas completamente vacías
+            if (empty(array_filter($columnas))) {
+                $fila++;
+                continue;
+            }
+
+            // Mapear columnas por nombre de encabezado
+            $datos = array_combine($encabezados, array_map('trim', $columnas));
+
+            $nombre = $datos['nombre'] ?? '';
+            if (empty($nombre)) {
+                $errores[] = "Fila {$fila}: nombre vacío, se omitió.";
+                $fila++;
+                continue;
+            }
+
+            try {
+                $sku = !empty($datos['sku']) ? $datos['sku'] : null;
+
+                // Si el SKU ya existe, saltar
+                if ($sku && Producto::where('sku', $sku)->exists()) {
+                    $errores[] = "Fila {$fila}: SKU '{$sku}' ya existe, se omitió.";
+                    $fila++;
+                    continue;
+                }
+
+                Producto::create([
+                    'nombre'           => $nombre,
+                    'slug'             => $this->generarSlugUnico($nombre),
+                    'sku'              => $sku,
+                    'descripcion_corta'=> $datos['descripcion_corta'] ?? null,
+                    'precio_costo'     => (float) str_replace(['$', '.', ','], ['', '', '.'], $datos['precio_costo'] ?? 0),
+                    'precio_venta'     => (float) str_replace(['$', '.', ','], ['', '', '.'], $datos['precio_venta'] ?? 0),
+                    'stock'            => isset($datos['stock']) && $datos['stock'] !== '' ? (int) $datos['stock'] : null,
+                    'estado'           => 'borrador',
+                ]);
+
+                $creados++;
+            } catch (\Exception $e) {
+                $errores[] = "Fila {$fila}: error — {$e->getMessage()}";
+            }
+
+            $fila++;
+        }
+
+        fclose($handle);
+
+        $mensaje = "{$creados} productos importados correctamente.";
+        if (!empty($errores)) {
+            $mensaje .= ' ' . count($errores) . ' filas con error.';
+        }
+
+        return back()->with('exito', $mensaje)->with('errores_importacion', $errores);
+    }
+
+    /*
+    |----------------------------------------------------------------------
     | HELPER PRIVADO: generarSlugUnico()
     |----------------------------------------------------------------------
     |

@@ -200,6 +200,38 @@ descripcion: "Registro de todas las sesiones de desarrollo"
 
 ---
 
+## Sesión 12 — 2026-08-09
+
+**Duración:** ~2 horas
+**Fase:** FASE 10 — Deploy en Railway (producción)
+
+**Completado:**
+- [x] Proyecto Railway creado (`brave-elegance`) con servicio GitHub + PostgreSQL
+- [x] Variables de entorno configuradas (22 variables + 5 de R2)
+- [x] `ext-exif` agregado a composer.json → Railpack lo instala automáticamente
+- [x] `ext-gd` agregado a composer.json → conversiones WebP funcionan en Railway
+- [x] `APP_URL` actualizada con URL real de Railway
+- [x] `trustProxies(at: '*')` en bootstrap/app.php → HTTPS correcto
+- [x] `ASSET_URL` variable agregada → assets con https://
+- [x] Seeders corridos en Railway Console → 37 permisos, 6 roles, admin creado
+- [x] Tienda pública verificada: productos activos visibles ✅
+- [x] App 100% funcional en producción
+
+**Errores resueltos:**
+- Railway usa Railpack (no Nixpacks) → nixpacks.toml ignorado
+- `ext-exif` y `ext-gd` deben declararse en composer.json `require`
+- `${{RAILWAY_PUBLIC_DOMAIN}}` no resuelve en build → usar URL hardcodeada
+- Mixed Content (http/https) → TrustProxies + ASSET_URL
+
+**URL de producción:** `https://courageous-flexibility-production-1a54.up.railway.app`
+
+**Próxima sesión:**
+- Dominio custom
+- Wompi producción (credenciales reales)
+- Tests PHPUnit
+
+---
+
 ## Sesión 11 — 2026-08-09
 
 **Duración:** ~3 horas

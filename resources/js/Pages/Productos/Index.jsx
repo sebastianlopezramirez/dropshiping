@@ -26,13 +26,19 @@
 |
 */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ productos, categorias, filtros }) {
-    const { auth } = usePage().props;
+    const { auth, flash } = usePage().props;
     const esAdmin = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
+
+    // ── Estado del modal de importación CSV ────────────────────────────
+    const [modalImportar, setModalImportar] = useState(false);
+    const [archivoCsv, setArchivoCsv]       = useState(null);
+    const [importando, setImportando]        = useState(false);
+    const inputCsvRef = useRef(null);
 
     /*
     |----------------------------------------------------------------------
@@ -50,8 +56,25 @@ export default function Index({ productos, categorias, filtros }) {
     const [categoriaId, setCategoriaId] = useState(filtros.categoria_id || '');
     const [estado, setEstado]           = useState(filtros.estado || '');
 
-    // Obtenemos los mensajes flash del servidor
-    const { flash } = usePage().props;
+    // ── Función: enviar CSV al servidor ────────────────────────────────
+    const enviarCsv = () => {
+        if (!archivoCsv) return;
+        setImportando(true);
+
+        const formData = new FormData();
+        formData.append('archivo', archivoCsv);
+
+        router.post(route('productos.importar'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                setModalImportar(false);
+                setArchivoCsv(null);
+                setImportando(false);
+                if (inputCsvRef.current) inputCsvRef.current.value = '';
+            },
+            onError: () => setImportando(false),
+        });
+    };
 
     /*
     |----------------------------------------------------------------------
@@ -148,12 +171,21 @@ export default function Index({ productos, categorias, filtros }) {
                 {/* ── MENSAJE FLASH ──────────────────────────────────── */}
                 {flash?.exito && (
                     <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-                        {flash.exito}
+                        ✅ {flash.exito}
                     </div>
                 )}
                 {flash?.error && (
                     <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                        {flash.error}
+                        ❌ {flash.error}
+                    </div>
+                )}
+                {/* Errores de fila de importación */}
+                {flash?.errores_importacion?.length > 0 && (
+                    <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-800 font-medium mb-1">Advertencias de importación:</p>
+                        <ul className="text-sm text-yellow-700 list-disc list-inside space-y-0.5">
+                            {flash.errores_importacion.map((e, i) => <li key={i}>{e}</li>)}
+                        </ul>
                     </div>
                 )}
 
@@ -165,7 +197,7 @@ export default function Index({ productos, categorias, filtros }) {
                             {productos.total} productos en total
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {esAdmin && (
                             <Link
                                 href={route('categorias.index')}
@@ -173,6 +205,15 @@ export default function Index({ productos, categorias, filtros }) {
                             >
                                 Categorías
                             </Link>
+                        )}
+                        {/* Botón importar CSV — solo administradores */}
+                        {esAdmin && (
+                            <button
+                                onClick={() => setModalImportar(true)}
+                                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
+                            >
+                                ↑ Importar CSV
+                            </button>
                         )}
                         <Link
                             href={route('productos.create')}
@@ -373,6 +414,112 @@ export default function Index({ productos, categorias, filtros }) {
                 )}
 
             </div>
+
+            {/* ── MODAL: Importar productos desde CSV ─────────────────── */}
+            {/*
+             * ENTENDER — ¿Cómo funciona este modal?
+             *
+             *   1. El usuario hace clic en "↑ Importar CSV"
+             *   2. Se abre el modal (modalImportar = true)
+             *   3. El usuario descarga la plantilla CSV o sube su archivo
+             *   4. Al hacer clic en "Importar", enviamos el archivo con
+             *      router.post() usando FormData (forceFormData: true)
+             *   5. El controller parsea el CSV y crea los productos
+             *   6. El flash message muestra cuántos se crearon y errores
+             *
+             * PENSAR — ¿Por qué forceFormData: true?
+             *
+             *   Inertia por defecto serializa los datos como JSON.
+             *   Pero para subir archivos necesitamos multipart/form-data.
+             *   forceFormData: true le dice a Inertia que use FormData.
+             */}
+            {modalImportar && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+
+                        {/* Encabezado del modal */}
+                        <div className="flex items-center justify-between p-5 border-b">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                Importar Productos desde CSV
+                            </h3>
+                            <button
+                                onClick={() => { setModalImportar(false); setArchivoCsv(null); }}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Cuerpo del modal */}
+                        <div className="p-5 space-y-4">
+
+                            {/* Instrucciones + plantilla */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                                <p className="font-medium mb-1">📋 Formato del CSV:</p>
+                                <p className="font-mono text-xs bg-white border rounded px-2 py-1 mt-1">
+                                    sku, nombre, precio_costo, precio_venta, stock, descripcion_corta
+                                </p>
+                                <p className="mt-2 text-xs">
+                                    Los campos obligatorios son <strong>nombre</strong> y <strong>precio_venta</strong>.
+                                    Los demás son opcionales.
+                                </p>
+                            </div>
+
+                            {/* Descargar plantilla */}
+                            <a
+                                href="/plantilla-productos.csv"
+                                download
+                                className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                            >
+                                ⬇ Descargar plantilla CSV
+                            </a>
+
+                            {/* Input de archivo */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Seleccionar archivo CSV
+                                </label>
+                                <input
+                                    ref={inputCsvRef}
+                                    type="file"
+                                    accept=".csv,text/csv"
+                                    onChange={(e) => setArchivoCsv(e.target.files[0] || null)}
+                                    className="block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-lg file:border-0
+                                        file:text-sm file:font-medium
+                                        file:bg-indigo-50 file:text-indigo-700
+                                        hover:file:bg-indigo-100 cursor-pointer"
+                                />
+                                {archivoCsv && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Archivo: {archivoCsv.name} ({(archivoCsv.size / 1024).toFixed(1)} KB)
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Pie del modal */}
+                        <div className="flex justify-end gap-3 p-5 border-t">
+                            <button
+                                onClick={() => { setModalImportar(false); setArchivoCsv(null); }}
+                                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={enviarCsv}
+                                disabled={!archivoCsv || importando}
+                                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {importando ? 'Importando...' : 'Importar Productos'}
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
         </AuthenticatedLayout>
     );
 }

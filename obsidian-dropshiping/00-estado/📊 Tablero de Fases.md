@@ -200,16 +200,19 @@ Tiempo estimado:    ~3-4 horas restantes
 
 ---
 
-## ⬜ FASE 10 — Tests + CI/CD + Producción
-**Estado:** Pendiente ⬜
-**Estimado:** 2-3 sesiones
+## ✅ FASE 10 — Deploy en Producción (Railway)
+**Estado:** Completo ✅ — Sesión 12 · 2026-08-09
 
+- Railway (Railpack + FrankenPHP + PostgreSQL) funcionando
+- URL: `https://courageous-flexibility-production-1a54.up.railway.app`
+- Migraciones + Seeders corriendo al arrancar
+- Imágenes con Spatie + R2 funcionando en producción
+- TrustProxies configurado para HTTPS correcto
+
+**Pendiente para producción completa:**
 - PHPUnit para controllers críticos
-- Tests de componentes React (Vitest)
-- GitHub Actions CI/CD
-- Deploy en VPS / Railway
-- SSL + Cloudflare
-- Wompi con credenciales reales (producción)
+- Wompi con credenciales reales
+- Dominio custom (reemplazar railway.app)
 
 ---
 
@@ -239,6 +242,11 @@ Tiempo estimado:    ~3-4 horas restantes
 | `morphs()` incompatible con UUID | 11 | Usar `uuidMorphs()` para relaciones polimórficas con UUID (H029) |
 | PHP ignora body de PUT multipart | 11 | `post() + _method:'put'` en Inertia para subir archivos (H030) |
 | URL R2 incorrecta en `.env` | 11 | URL del Public Dev URL ≠ URL del endpoint. Copiar del dashboard R2 |
+| Railway usa Railpack, ignora nixpacks.toml | 12 | nixpacks.toml ignorado — extensiones PHP via composer.json `require` |
+| `ext-exif` faltante en Railway | 12 | Agregar `"ext-exif": "*"` a composer.json para que Railpack lo instale |
+| `Invalid URI` en config:cache | 12 | APP_URL con `${{RAILWAY_PUBLIC_DOMAIN}}` no resuelve en build → usar URL real |
+| Mixed Content: assets con http:// en HTTPS | 12 | `trustProxies(at: '*')` en bootstrap/app.php + ASSET_URL variable |
+| `ext-gd` faltante en Railway | 12 | Agregar `"ext-gd": "*"` a composer.json para conversiones de imágenes |
 
 ---
 

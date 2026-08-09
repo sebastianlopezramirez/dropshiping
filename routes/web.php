@@ -181,6 +181,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         |   Con esto:    /productos/{producto} (igual, pero explícito en español)
         |
         */
+        // Importar productos masivos desde CSV
+        // POST /productos/importar → ProductoController@importar
+        // IMPORTANTE: va ANTES del resource para evitar que Laravel
+        // resuelva 'importar' como un UUID de producto en show().
+        Route::post('productos/importar', [ProductoController::class, 'importar'])
+             ->name('productos.importar');
+
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
 

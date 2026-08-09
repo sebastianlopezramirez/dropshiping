@@ -40,6 +40,12 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
+            // Flash messages compartidos con todas las páginas React
+            'flash' => [
+                'exito'                => $request->session()->get('exito'),
+                'error'                => $request->session()->get('error'),
+                'errores_importacion'  => $request->session()->get('errores_importacion', []),
+            ],
         ];
     }
 }
