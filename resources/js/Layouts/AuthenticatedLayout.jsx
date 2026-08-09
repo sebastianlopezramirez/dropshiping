@@ -24,12 +24,11 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
+                                <NavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</NavLink>
+                                <NavLink href={route('productos.index')} active={route().current('productos.*')}>Productos</NavLink>
+                                <NavLink href={route('categorias.index')} active={route().current('categorias.*')}>Categorías</NavLink>
+                                <NavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</NavLink>
+                                <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</NavLink>
                             </div>
                         </div>
 
@@ -128,12 +127,11 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('productos.index')} active={route().current('productos.*')}>Productos</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('categorias.index')} active={route().current('categorias.*')}>Categorías</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</ResponsiveNavLink>
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
