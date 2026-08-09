@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // / redirige a /tienda (302) — comportamiento correcto
+        $response->assertRedirect('/tienda');
     }
 }
