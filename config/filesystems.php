@@ -60,6 +60,35 @@ return [
             'report' => false,
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | DISCO: Cloudflare R2
+        |----------------------------------------------------------------------
+        |
+        | R2 es compatible con el protocolo S3 → usamos el driver 's3'.
+        | Las credenciales vienen del .env con prefijo CLOUDFLARE_R2_*.
+        |
+        | 'use_path_style_endpoint' => true es OBLIGATORIO para R2.
+        | Sin esto, el SDK de AWS intenta acceder como:
+        |   https://[bucket].r2.cloudflarestorage.com  ← incorrecto
+        | Con true accede como:
+        |   https://[account].r2.cloudflarestorage.com/[bucket]  ← correcto
+        |
+        */
+        'r2' => [
+            'driver'                  => 's3',
+            'key'                     => env('CLOUDFLARE_R2_ACCESS_KEY_ID'),
+            'secret'                  => env('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
+            'region'                  => 'auto',
+            'bucket'                  => env('CLOUDFLARE_R2_BUCKET', 'dropshipping-media'),
+            'url'                     => env('CLOUDFLARE_R2_URL'),
+            'endpoint'                => env('CLOUDFLARE_R2_ENDPOINT'),
+            'use_path_style_endpoint' => true,   // obligatorio para R2
+            'visibility'              => 'public',
+            'throw'                   => false,
+            'report'                  => false,
+        ],
+
     ],
 
     /*

@@ -36,7 +36,15 @@ export default function Editar({ producto, categorias }) {
     */
     const [previews, setPreviews] = useState([]);
 
-    const { data, setData, put, processing, errors } = useForm({
+    // PENSAR — ¿Por qué usamos post() en vez de put()?
+    //
+    // PHP no parsea multipart/form-data en requests PUT/PATCH.
+    // Inertia v2 con forceFormData envía un PUT real → PHP descarta el body.
+    // Solución estándar: enviar POST con _method:'put' (method spoofing de Laravel).
+    // Laravel lee _method del FormData y trata el request como PUT internamente.
+    const { data, setData, post, processing, errors } = useForm({
+        // Campo de method spoofing — Laravel lo intercepta antes de validar
+        _method:           'put',
         nombre:            producto.nombre            ?? '',
         descripcion_corta: producto.descripcion_corta ?? '',
         descripcion:       producto.descripcion       ?? '',
@@ -56,14 +64,19 @@ export default function Editar({ producto, categorias }) {
 
     /*
     |----------------------------------------------------------------------
-    | handleSubmit — Envía PUT al servidor
+    | handleSubmit — Envía POST (con _method:put) al servidor
     |----------------------------------------------------------------------
+    |
+    | PENSAR — Flujo completo:
+    |   1. post() → Inertia crea FormData con todos los campos + _method=put
+    |   2. PHP recibe POST → parsea multipart correctamente → tiene todos los campos
+    |   3. Laravel lee _method=put → enruta al método update() del controller
+    |   4. $request->validate() → tiene todos los datos → pasa validación
+    |
     */
     const handleSubmit = (e) => {
         e.preventDefault();
-        // forceFormData: true → siempre envía como multipart/form-data
-        // Necesario para que los archivos viajen correctamente
-        put(route('productos.update', producto.id), { forceFormData: true });
+        post(route('productos.update', producto.id), { forceFormData: true });
     };
 
     /*

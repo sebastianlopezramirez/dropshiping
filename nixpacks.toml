@@ -1,0 +1,67 @@
+# ============================================================
+# nixpacks.toml — Configuración de build para Railway
+# ============================================================
+#
+# ENTENDER — ¿Qué hace este archivo?
+#
+#   Railway usa Nixpacks para construir y correr la app.
+#   Este archivo le dice exactamente:
+#     - Qué paquetes instalar (PHP 8.3, Node 20, extensiones)
+#     - Cómo instalar dependencias (composer + npm)
+#     - Cómo compilar (Vite build + caches de Laravel)
+#     - Cómo arrancar el servidor
+#
+# PENSAR — ¿Por qué php artisan serve en lugar de Nginx?
+#
+#   Para un MVP en Railway, `php artisan serve` es suficiente.
+#   Railway gestiona el proxy HTTPS en frente.
+#   Nginx agrega complejidad sin beneficio real a este escala.
+#
+# ============================================================
+
+[phases.setup]
+nixPkgs = [
+    # PHP 8.3 con todas las extensiones necesarias para Laravel
+    "php83",
+    "php83Extensions.pdo",
+    "php83Extensions.pdo_pgsql",
+    "php83Extensions.pgsql",
+    "php83Extensions.mbstring",
+    "php83Extensions.xml",
+    "php83Extensions.curl",
+    "php83Extensions.zip",
+    "php83Extensions.gd",           # imágenes (Intervention Image)
+    "php83Extensions.intl",
+    "php83Extensions.bcmath",
+    "php83Extensions.tokenizer",
+    "php83Extensions.ctype",
+    "php83Extensions.fileinfo",
+    "php83Extensions.dom",
+    "php83Extensions.opcache",
+    # Node.js para compilar los assets con Vite
+    "nodejs_20",
+    "nodePackages.npm",
+]
+
+[phases.install]
+cmds = [
+    # Instalar dependencias PHP (sin dev en producción)
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    # Instalar dependencias JS
+    "npm ci",
+]
+
+[phases.build]
+cmds = [
+    # Compilar assets React/Vite → genera public/build/
+    "npm run build",
+    # Cachear config, rutas y vistas de Laravel para mejor rendimiento
+    "php artisan config:cache",
+    "php artisan route:cache",
+    "php artisan view:cache",
+]
+
+[start]
+# Migrar BD en cada arranque (seguro con --force en producción)
+# y luego levantar el servidor en el puerto que Railway asigna
+cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"

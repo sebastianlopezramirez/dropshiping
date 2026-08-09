@@ -20,17 +20,13 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 
 ---
 
-## 📋 PENDIENTES — Próxima sesión (13)
+## 📋 PENDIENTES — Próxima sesión (14)
 
-### Paso 1 — Tests adicionales (FASE 10)
-- [ ] Tests para `PedidoController` (crear, cambiar estado)
-- [ ] Tests para `CuponController` (validar cupón)
-- [ ] Tests para `AnalyticsController` (dashboard carga con datos)
-
-### Paso 2 — Deploy prep
+### Paso 1 — Deploy prep (FASE 10 Bloque B)
 - [ ] Preparar `.env.production` con variables reales
 - [ ] Decidir plataforma: Railway / Render / VPS
-- [ ] Documentar proceso de deploy
+- [ ] Documentar proceso de deploy paso a paso
+- [ ] Deploy real en servidor
 
 ---
 
@@ -90,6 +86,11 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 | H020 | CI Run #2: column "name" no existe | 12 | Eliminar 7 tests Breeze + `UserFactory` corregida |
 | H021 | CI Run #3: `Categoria/Producto::factory()` no existe | 12 | Crear `CategoriaFactory`, `ProductoFactory`, agregar `HasFactory` |
 | H022 | CI Run #4: column "email_verified_at" no existe | 12 | `UserFactory` → `email_verificado_en` ✅ CI VERDE |
+| H023 | CI Run #5: assertJsonPath int vs float strict | 13 | `assertGreaterThan(0, ...)` en vez de `assertJsonPath` |
+| H024 | CI Run #7: direccion_entrega NOT NULL | 13 | Agregar campo al `Pedido::create()` en tests |
+| H025 | CI Run #8: Array to string en direccion_entrega | 13 | Revertir cast 'array' — es VARCHAR no JSONB |
+| H026 | CI Run #9: ciudad/departamento NOT NULL | 13 | Leer migración antes de crear modelos en tests |
+| H027 | CI Run #10: patchJson devuelve error con Inertia | 13 | Usar `patch()` + `assertDatabaseHas()` ✅ 18/18 |
 
 ---
 

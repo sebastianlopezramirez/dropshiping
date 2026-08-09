@@ -66,7 +66,9 @@ legacy-peer-deps=true
 
 ## Tests (estado actual)
 
-### Tests en verde ✅ (8/8)
+### Tests en verde ✅ (18/18)
+
+**`TiendaPublicaTest`** (6 tests)
 
 | Test | Descripción |
 |---|---|
@@ -79,24 +81,57 @@ legacy-peer-deps=true
 | `usuario_puede_autenticarse` | POST /login credenciales válidas → authenticated |
 | `credenciales_invalidas_no_autentican` | POST /login contraseña errónea → guest |
 
+**`AdminControllersTest`** (10 tests)
+
+| Test | Descripción |
+|---|---|
+| `analytics_requiere_login` | GET /analytics sin auth → redirect /login |
+| `admin_puede_ver_dashboard_analytics` | actingAs(admin) → 200 + props kpis, ultimos_6_meses |
+| `analytics_acepta_parametros_de_periodo` | ?mes=3&ano=2025 → periodo correcto en props |
+| `cupon_valido_devuelve_descuento` | POST /cupones/validar → { valido: true } |
+| `cupon_inexistente_devuelve_invalido` | código no existe → { valido: false } |
+| `cupon_expirado_devuelve_invalido` | fecha_expiracion pasada → { valido: false } |
+| `cupon_no_aplica_si_total_es_menor_al_minimo` | total < minimo_compra → { valido: false } |
+| `admin_puede_cambiar_estado_pedido` | PATCH /pedidos/{id}/estado → BD actualizada |
+| `estado_invalido_no_modifica_el_pedido` | estado 'volando' → BD sin cambios |
+| `cancelar_pedido_registra_fecha_cancelacion` | estado cancelado → cancelado_en NOT NULL |
+
 ### Factories creadas
 
 - `UserFactory` — corregida: `nombre`, `contrasena`, `email_verificado_en`
 - `CategoriaFactory` — nueva: genera categorías con slug único
 - `ProductoFactory` — nueva: genera productos con estados `inactivo`, `conOferta`, `sinStock`
 
-### Historial de fixes CI (4 runs)
+### Convenciones aprendidas en tests
 
-| Run | Error | Causa | Fix |
-|---|---|---|---|
-| #1 ❌ | npm ERESOLVE | Vite 8 incompatible con @vitejs/plugin-react | `.npmrc legacy-peer-deps=true` |
-| #2 ❌ | column "name" no existe | Tests Breeze usan schema inglés | Eliminar 7 tests Breeze + corregir UserFactory |
-| #3 ❌ | column "email_verified_at" no existe | UserFactory aún usaba nombre inglés | `email_verified_at` → `email_verificado_en` + factories |
-| #4 ✅ | — | — | 8/8 tests pasan |
+| Convención | Detalle |
+|---|---|
+| `setUp()` + Spatie | Crear roles antes de cada test con `Role::create(...)` |
+| `actingAs($user)` | Simula login sin formulario |
+| `assertDatabaseHas()` | Verifica cambios en BD directamente |
+| `assertInertia()` | Verifica componente + props de Inertia |
+| `patch()` vs `patchJson()` | Inertia redirige en validación; no retorna 422 |
+| NOT NULL sin default | Leer la migración antes de `Model::create()` en tests |
+| `assertGreaterThan` | Para números cuando tipo int vs float no importa |
+
+### Historial de fixes CI (10 runs)
+
+| Run | Error | Fix |
+|---|---|---|
+| #1 ❌ | npm ERESOLVE Vite 8 | `.npmrc legacy-peer-deps=true` |
+| #2 ❌ | column "name" no existe | Eliminar tests Breeze + UserFactory corregida |
+| #3 ❌ | column "email_verified_at" no existe | `email_verificado_en` + factories |
+| #4 ✅ | — | 8/8 tests pasan |
+| #5 ❌ | AdminControllersTest agregado | int vs float en assertJsonPath |
+| #6 ❌ | assertJsonPath strict type | `assertGreaterThan` para descuento |
+| #7 ❌ | direccion_entrega NOT NULL | Agregar campo al create() |
+| #8 ❌ | Array to string conversion | Cast 'array' erróneo en modelo |
+| #9 ❌ | ciudad/departamento NOT NULL | Leer migración, agregar todos los NOT NULL |
+| #10 ✅ | patchJson vs patch con Inertia | Usar patch() + assertDatabaseHas |
 
 ## Pendiente en esta fase
 
-- [ ] Tests adicionales: `PedidoController`, `CuponController`, `AnalyticsController`
-- [ ] Preparar `.env.production`
-- [ ] Documentar proceso de deploy (Railway / Render / VPS)
+- [ ] Preparar `.env.production` con variables reales
+- [ ] Decidir plataforma de deploy (Railway / Render / VPS)
+- [ ] Documentar proceso de deploy
 - [ ] Deploy real en servidor

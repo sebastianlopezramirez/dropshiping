@@ -200,6 +200,35 @@ descripcion: "Registro de todas las sesiones de desarrollo"
 
 ---
 
+## Sesión 11 — 2026-08-09
+
+**Duración:** ~3 horas
+**Fase:** Sistema de Imágenes (mejora FASE 3) + Tienda Pública completada
+
+**Completado:**
+- [x] Spatie Media Library + Intervention Image instalados y configurados
+- [x] Cloudflare R2 como disco de almacenamiento
+- [x] Conversiones WebP automáticas (thumbnail 400×400, medium 800×800)
+- [x] Migración `create_media_table` con `uuidMorphs` (compatible con UUID PKs)
+- [x] ProductoController: upload y eliminación de imágenes vía Spatie
+- [x] Editar.jsx: mostrar imágenes actuales con botón borrar, preview de nuevas
+- [x] Tienda pública: imágenes de Spatie con fallback a campo legacy
+- [x] R2 Public Development URL habilitado y URL correcta en .env
+- [x] Fix method spoofing: `post() + _method:put` para uploads en Inertia
+
+**Errores resueltos:**
+- H028: migración de vendor:publish no estaba commiteada → CI fallaba
+- H029: `morphs()` crea `model_id` como bigint → incompatible con UUID → fix `uuidMorphs()`
+- H030: PHP no parsea multipart/form-data en PUT → body llegaba vacío → fix `post() + _method:put`
+- URL R2 en .env no coincidía con la URL del Public Development URL del dashboard
+
+**Próxima sesión:**
+- Deploy al VPS (Digital Ocean)
+- Configurar dominio custom en R2 (reemplazar r2.dev por dominio real)
+- FASE 9: Analytics o FASE 10: CI/CD + Producción
+
+---
+
 ## Plantilla para próximas sesiones
 
 ```markdown

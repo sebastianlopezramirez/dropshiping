@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, fases, progreso]
 created: 2026-08-04
-updated: 2026-08-07
+updated: 2026-08-09
 status: evergreen
 descripcion: "Tablero central de progreso — 10 fases del proyecto"
 ---
@@ -17,9 +17,9 @@ descripcion: "Tablero central de progreso — 10 fases del proyecto"
 ## 🎯 Resumen
 
 ```
-Fases completadas:  ████████░░  8 / 10  (80%)
-Tiempo estimado:    ~7 horas restantes
-Última sesión:      2026-08-07 (sesión 10)
+Fases completadas:  █████████░  9 / 10  (90%)
+Tiempo estimado:    ~3-4 horas restantes
+Última sesión:      2026-08-09 (sesión 11)
 ```
 
 | Indicador     | Valor                               |
@@ -170,17 +170,23 @@ Tiempo estimado:    ~7 horas restantes
 
 ---
 
-## ⏳ FASE 8 — SEO y Tienda Pública
-**Estado:** Próximo ⏳ — Siguiente sesión
-**Estimado:** 1-2 sesiones
+## ✅ FASE 8 — SEO y Tienda Pública
+**Estado:** Completo ✅ — Sesión 11 · 2026-08-09
 
-### Plan
 - Rutas públicas: `GET /tienda`, `GET /tienda/{slug}`, `GET /tienda/categoria/{slug}`
-- `TiendaController` con `index()` (catálogo) y `show()` (detalle producto)
-- Layout público sin `AuthenticatedLayout` (sin login requerido)
-- Páginas React: `Tienda/Index.jsx` (catálogo con filtros), `Tienda/Producto.jsx` (detalle)
-- Meta tags SEO dinámicos por producto (`og:title`, `og:description`, `og:image`)
-- Sitemap XML automático (opcional)
+- `TiendaController`: catálogo paginado, filtros por categoría/precio/búsqueda
+- Layout público `TiendaLayout` (sin login) con header y footer
+- `Tienda/Index.jsx`: grid de tarjetas, sidebar de filtros, paginación
+- `Tienda/Producto.jsx`: galería, precio con oferta, breadcrumb, relacionados, WhatsApp CTA
+- Meta tags SEO dinámicos: `og:title`, `og:description`, `og:image`, Twitter Cards
+
+**Sistema de imágenes (sesión 11):**
+- Spatie Media Library + Intervention Image + Cloudflare R2
+- Conversiones WebP automáticas: thumbnail 400×400, medium 800×800
+- Upload desde form de editar, eliminación individual, fallback a campo legacy
+- Fix crítico: PHP no parsea multipart en PUT → method spoofing `post() + _method:put`
+
+→ Nota detallada: [[Sistema de Imágenes — Spatie + R2]]
 
 ---
 
@@ -229,6 +235,10 @@ Tiempo estimado:    ~7 horas restantes
 | `Campo` dentro del componente → foco perdido | 9 | Mover Campo FUERA del componente función |
 | `--legacy-peer-deps` en `npm run build` | 9 | Ese flag es solo para `npm install`, no para build |
 | `minimo_compra` NOT NULL violation | 9 | Normalizar `null → 0` antes de `Cupon::create()` |
+| `vendor:publish` migración no commiteada | 11 | Commitear migration de media por separado (H028) |
+| `morphs()` incompatible con UUID | 11 | Usar `uuidMorphs()` para relaciones polimórficas con UUID (H029) |
+| PHP ignora body de PUT multipart | 11 | `post() + _method:'put'` en Inertia para subir archivos (H030) |
+| URL R2 incorrecta en `.env` | 11 | URL del Public Dev URL ≠ URL del endpoint. Copiar del dashboard R2 |
 
 ---
 

@@ -1,5 +1,7 @@
 *.log
 .DS_Store
+/check_media.php
+/checkpoint-*.md
 .env
 .env.backup
 .env.production

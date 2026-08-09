@@ -190,6 +190,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
 
+        // Eliminar una imagen específica de un producto (Spatie Media Library)
+        // DELETE /productos/{producto}/imagenes/{mediaId}
+        Route::delete('productos/{producto}/imagenes/{mediaId}', [ProductoController::class, 'eliminarImagen'])
+             ->name('productos.imagenes.eliminar');
+
         /*
         |----------------------------------------------------------------------
         | MÓDULO: PEDIDOS — Admin y vendedor gestionan pedidos

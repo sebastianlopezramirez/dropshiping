@@ -34,6 +34,7 @@ advertencia: "NO subir este archivo a GitHub ni compartir públicamente"
 | Rol                | `super_administrador`  |
 | Estado             | `activo`               |
 | Tabla BD           | `usuarios`             |
+| digital ocean -    |                        |
 
 > 🔄 **Acción pendiente**: Cambiar la contraseña después del primer login exitoso.
 
