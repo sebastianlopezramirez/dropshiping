@@ -56,4 +56,15 @@ return [
         'sandbox'       => env('WOMPI_SANDBOX', true),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp del negocio
+    |--------------------------------------------------------------------------
+    | Número sin + ni espacios. Ejemplo: 573001234567
+    | Configurar en Railway: WHATSAPP_NUMERO=573XXXXXXXXX
+    */
+    'whatsapp' => [
+        'numero' => env('WHATSAPP_NUMERO', ''),
+    ],
+
 ];
