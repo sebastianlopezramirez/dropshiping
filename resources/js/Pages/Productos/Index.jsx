@@ -32,7 +32,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ productos, categorias, filtros }) {
     const { auth, flash } = usePage().props;
-    const esAdmin = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
+    const esAdmin        = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
+    const puedeImportar  = esAdmin || auth.roles?.includes('proveedor');
 
     // ── Estado del modal de importación CSV ────────────────────────────
     const [modalImportar, setModalImportar] = useState(false);
@@ -206,8 +207,8 @@ export default function Index({ productos, categorias, filtros }) {
                                 Categorías
                             </Link>
                         )}
-                        {/* Botón importar CSV — solo administradores */}
-                        {esAdmin && (
+                        {/* Botón importar CSV — admin, super admin y proveedor */}
+                        {puedeImportar && (
                             <button
                                 onClick={() => setModalImportar(true)}
                                 className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"

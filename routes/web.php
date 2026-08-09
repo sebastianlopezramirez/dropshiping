@@ -149,6 +149,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     |   DELETE /usuarios/{id}      → destroy (eliminar/soft delete)
     |
     */
+    // Importar CSV — accesible para admin, super admin y proveedor
+    Route::post('productos/importar', [ProductoController::class, 'importar'])
+         ->name('productos.importar')
+         ->middleware('role:super_administrador|administrador|proveedor');
+
     Route::middleware('role:super_administrador|administrador')->group(function () {
 
         // Resource completo de usuarios
@@ -181,13 +186,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         |   Con esto:    /productos/{producto} (igual, pero explícito en español)
         |
         */
-        // Importar productos masivos desde CSV
-        // POST /productos/importar → ProductoController@importar
-        // IMPORTANTE: va ANTES del resource para evitar que Laravel
-        // resuelva 'importar' como un UUID de producto en show().
-        Route::post('productos/importar', [ProductoController::class, 'importar'])
-             ->name('productos.importar');
-
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
 
