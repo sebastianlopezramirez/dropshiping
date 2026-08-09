@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "ext-exif": "*",
+        "ext-gd": "*",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image-laravel": "^4.1",
         "laravel/framework": "^13.8",
