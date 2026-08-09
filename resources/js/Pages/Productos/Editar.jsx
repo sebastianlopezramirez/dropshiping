@@ -18,7 +18,7 @@
 */
 
 import { useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Editar({ producto, categorias }) {
@@ -61,9 +61,26 @@ export default function Editar({ producto, categorias }) {
     */
     const handleSubmit = (e) => {
         e.preventDefault();
-        // put() envía PUT /productos/{producto.id}
-        // El ID viene de la URL — Laravel lo resuelve con Route Model Binding
-        put(route('productos.update', producto.id));
+        // forceFormData: true → siempre envía como multipart/form-data
+        // Necesario para que los archivos viajen correctamente
+        put(route('productos.update', producto.id), { forceFormData: true });
+    };
+
+    /*
+    |----------------------------------------------------------------------
+    | eliminarImagen — Borra una imagen del producto en R2
+    |----------------------------------------------------------------------
+    |
+    | Llama a DELETE /productos/{id}/imagenes/{mediaId}
+    | El controller borra de R2 + tabla media via Spatie.
+    | Inertia recarga la página → producto.media se actualiza automáticamente.
+    |
+    */
+    const eliminarImagen = (mediaId) => {
+        if (!confirm('¿Eliminar esta imagen? Esta acción no se puede deshacer.')) return;
+        router.delete(route('productos.imagenes.eliminar', [producto.id, mediaId]), {
+            preserveScroll: true,
+        });
     };
 
     const Error = ({ campo }) => errors[campo]
@@ -275,26 +292,45 @@ export default function Editar({ producto, categorias }) {
                             Las nuevas imágenes se agregan a las existentes. Máximo 2MB por imagen.
                         </p>
 
-                        {/* Imágenes actuales del producto */}
-                        {producto.imagenes?.length > 0 && (
+                        {/*
+                            Imágenes actuales — vienen de Spatie Media Library (R2)
+                            producto.media → array de objetos con original_url, id, etc.
+                            Botón "×" → llama a eliminarImagen(media.id) → borra de R2
+                        */}
+                        {producto.media?.length > 0 && (
                             <div className="mb-4">
-                                <p className="text-xs font-medium text-gray-500 mb-2">Imágenes actuales:</p>
+                                <p className="text-xs font-medium text-gray-500 mb-2">
+                                    Imágenes actuales ({producto.media.length}):
+                                </p>
                                 <div className="flex flex-wrap gap-3">
-                                    {producto.imagenes.map((url, i) => (
-                                        <div key={i} className="relative">
+                                    {producto.media.map((img, i) => (
+                                        <div key={img.id} className="relative group">
                                             <img
-                                                src={url}
+                                                src={img.original_url}
                                                 alt={`imagen ${i + 1}`}
                                                 className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                                             />
+                                            {/* Badge "Principal" en la primera imagen */}
                                             {i === 0 && (
                                                 <span className="absolute -top-1 -left-1 bg-indigo-600 text-white text-xs px-1 rounded">
                                                     Principal
                                                 </span>
                                             )}
+                                            {/* Botón borrar — aparece al hacer hover */}
+                                            <button
+                                                type="button"
+                                                onClick={() => eliminarImagen(img.id)}
+                                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center leading-none"
+                                                title="Eliminar imagen"
+                                            >
+                                                ×
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
+                                <p className="mt-2 text-xs text-gray-400">
+                                    Pasa el cursor sobre una imagen y presiona × para eliminarla.
+                                </p>
                             </div>
                         )}
 

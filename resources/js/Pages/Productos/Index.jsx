@@ -252,12 +252,16 @@ export default function Index({ productos, categorias, filtros }) {
                                 productos.data.map(producto => (
                                     <tr key={producto.id} className="hover:bg-gray-50 transition">
 
-                                        {/* Imagen + nombre */}
+                                        {/* Imagen + nombre
+                                            Prioridad:
+                                            1. Spatie Media Library → producto.media[0].original_url
+                                            2. Campo legacy → producto.imagenes[0] (productos antiguos)
+                                        */}
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                {producto.imagenes?.[0] ? (
+                                                {(producto.media?.[0]?.original_url || producto.imagenes?.[0]) ? (
                                                     <img
-                                                        src={producto.imagenes[0]}
+                                                        src={producto.media?.[0]?.original_url ?? producto.imagenes[0]}
                                                         alt={producto.nombre}
                                                         className="w-10 h-10 object-cover rounded-lg border border-gray-200"
                                                     />

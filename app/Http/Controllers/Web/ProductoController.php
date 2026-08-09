@@ -39,7 +39,6 @@ use App\Models\Categoria;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -66,7 +65,8 @@ class ProductoController extends Controller
     public function index(Request $request): Response
     {
         // Construimos el query base — aún no ejecuta nada en la BD
-        $query = Producto::with('categoria')  // eager loading (evita N+1)
+        // 'media' → eager load imágenes de Spatie (evita N+1 al acceder a thumbnails)
+        $query = Producto::with(['categoria', 'media'])
                          ->orderBy('creado_en', 'desc');
 
         // ─── FILTROS ──────────────────────────────────────────────────────
@@ -175,47 +175,41 @@ class ProductoController extends Controller
             'meta_titulo'       => 'nullable|string|max:60',
             'meta_descripcion'  => 'nullable|string|max:160',
             'sku'               => 'nullable|string|max:50|unique:productos,sku',
+            // Spatie acepta múltiples imágenes. mimes: jpg, png y webp
             'imagenes_nuevas'   => 'nullable|array',
-            'imagenes_nuevas.*' => 'image|max:2048',
+            'imagenes_nuevas.*' => 'image|max:5120|mimes:jpeg,jpg,png,webp',
         ]);
 
-        DB::transaction(function () use ($datos, $request) {
-            // ── CAPITALIZAR NOMBRE ────────────────────────────────────
-            // Str::title('arbol navidad 2026') → 'Arbol Navidad 2026'
+        // ─── PASO 1: Crear el producto en BD (transacción) ────────────────
+        // El producto DEBE existir antes de subir media — Spatie necesita el
+        // 'id' del modelo para crear el registro en la tabla 'media'.
+        $producto = null;
+
+        DB::transaction(function () use ($datos, &$producto) {
             $datos['nombre'] = Str::title($datos['nombre']);
+            $datos['slug']   = $this->generarSlugUnico($datos['nombre']);
 
-            // ── SLUG único desde el nombre ────────────────────────────
-            $datos['slug'] = $this->generarSlugUnico($datos['nombre']);
-
-            // ── IMÁGENES ──────────────────────────────────────────────
-            // Usamos move() directamente en lugar del Storage facade
-            // para mayor compatibilidad en Windows con Flysystem
-            if ($request->hasFile('imagenes_nuevas')) {
-                // Nos aseguramos de que el directorio de destino existe
-                $directorio = storage_path('app/public/productos');
-                if (!is_dir($directorio)) {
-                    mkdir($directorio, 0755, true);
-                }
-
-                $urls = [];
-                foreach ($request->file('imagenes_nuevas') as $archivo) {
-                    // Obtenemos la extensión del archivo original
-                    $extension    = $archivo->getClientOriginalExtension() ?: 'jpg';
-                    // Generamos un nombre único con Str::random
-                    $nombreArchivo = Str::random(40) . '.' . strtolower($extension);
-                    // Movemos el archivo al directorio de storage público
-                    $archivo->move($directorio, $nombreArchivo);
-                    // Construimos la URL pública: /storage/productos/nombre.jpg
-                    $urls[] = '/storage/productos/' . $nombreArchivo;
-                }
-                $datos['imagenes'] = $urls;
-            }
-
-            // Quitamos el campo 'imagenes_nuevas' del array (no es columna de la tabla)
+            // Quitamos imagenes_nuevas — no es columna de la tabla 'productos'
             unset($datos['imagenes_nuevas']);
 
-            Producto::create($datos);
+            $producto = Producto::create($datos);
         });
+
+        // ─── PASO 2: Subir imágenes a R2 via Spatie ───────────────────────
+        // Esto va FUERA de la transacción porque es I/O de red (Cloudflare R2).
+        // Si falla la subida, el producto ya está creado (sin imágenes),
+        // que es preferible a revertir toda la transacción por un error de red.
+        //
+        // addMedia($archivo) → toma el archivo del request
+        // toMediaCollection('imagenes') → lo sube al disco 'r2' y genera
+        //   las conversiones WebP (thumbnail 400×400 y medium 800×800)
+        //   según defineRegisterMediaConversions() en el modelo.
+        if ($request->hasFile('imagenes_nuevas')) {
+            foreach ($request->file('imagenes_nuevas') as $archivo) {
+                $producto->addMedia($archivo)
+                         ->toMediaCollection('imagenes');
+            }
+        }
 
         return redirect()
             ->route('productos.index')
@@ -236,7 +230,8 @@ class ProductoController extends Controller
     public function show(Producto $producto): Response
     {
         // Cargamos las relaciones que necesita la vista de detalle
-        $producto->load(['categoria', 'proveedores']);
+        // 'media' → imágenes de Spatie para mostrar en la página de detalle
+        $producto->load(['categoria', 'proveedores', 'media']);
 
         return Inertia::render('Productos/Ver', [
             'producto' => $producto,
@@ -250,6 +245,9 @@ class ProductoController extends Controller
     */
     public function edit(Producto $producto): Response
     {
+        // Cargamos 'media' para mostrar las imágenes actuales con botón de borrar
+        $producto->load('media');
+
         $categorias = Categoria::activas()
                                ->ordenadas()
                                ->get(['id', 'nombre', 'padre_id']);
@@ -295,39 +293,27 @@ class ProductoController extends Controller
             'imagenes_nuevas.*' => 'image|max:2048',
         ]);
 
-        DB::transaction(function () use ($datos, $request, $producto) {
-            // ── CAPITALIZAR ───────────────────────────────────────────
+        // ─── PASO 1: Actualizar datos del producto en BD ──────────────────
+        DB::transaction(function () use ($datos, $producto) {
             $datos['nombre'] = Str::title($datos['nombre']);
 
-            // ── SLUG ──────────────────────────────────────────────────
             if ($datos['nombre'] !== $producto->nombre) {
                 $datos['slug'] = $this->generarSlugUnico($datos['nombre'], $producto->id);
             }
 
-            // ── IMÁGENES NUEVAS ───────────────────────────────────────
-            if ($request->hasFile('imagenes_nuevas')) {
-                $directorio = storage_path('app/public/productos');
-                if (!is_dir($directorio)) {
-                    mkdir($directorio, 0755, true);
-                }
-
-                $urlsExistentes = $producto->imagenes ?? [];
-                $urlsNuevas = [];
-
-                foreach ($request->file('imagenes_nuevas') as $archivo) {
-                    $extension     = $archivo->getClientOriginalExtension() ?: 'jpg';
-                    $nombreArchivo = Str::random(40) . '.' . strtolower($extension);
-                    $archivo->move($directorio, $nombreArchivo);
-                    $urlsNuevas[] = '/storage/productos/' . $nombreArchivo;
-                }
-
-                $datos['imagenes'] = array_merge($urlsExistentes, $urlsNuevas);
-            }
-
             unset($datos['imagenes_nuevas']);
-
             $producto->update($datos);
         });
+
+        // ─── PASO 2: Agregar nuevas imágenes a R2 ─────────────────────────
+        // Las imágenes anteriores NO se borran — se agregan nuevas.
+        // Para borrar una imagen específica usa eliminarImagen().
+        if ($request->hasFile('imagenes_nuevas')) {
+            foreach ($request->file('imagenes_nuevas') as $archivo) {
+                $producto->addMedia($archivo)
+                         ->toMediaCollection('imagenes');
+            }
+        }
 
         return redirect()
             ->route('productos.index')
@@ -355,6 +341,37 @@ class ProductoController extends Controller
         return redirect()
             ->route('productos.index')
             ->with('exito', 'Producto eliminado correctamente.');
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | eliminarImagen() — Elimina una imagen específica de un producto
+    |----------------------------------------------------------------------
+    |
+    | Spatie Media Library administra el archivo en R2:
+    |   - Borra el original
+    |   - Borra las conversiones (thumbnail, medium)
+    |   - Borra el registro de la tabla 'media'
+    |
+    | Ruta: DELETE /productos/{producto}/imagenes/{media}
+    |
+    | Uso desde React:
+    |   router.delete(`/productos/${producto.id}/imagenes/${media.id}`)
+    |
+    */
+    public function eliminarImagen(Producto $producto, int $mediaId)
+    {
+        // Buscamos la imagen dentro de la colección 'imagenes' de ESTE producto
+        // (evita borrar media de otro producto si alguien manipula el ID)
+        $media = $producto->getMedia('imagenes')->find($mediaId);
+
+        if ($media) {
+            // delete() → Spatie borra el archivo en R2 + las conversiones WebP
+            //            + el registro en la tabla 'media'
+            $media->delete();
+        }
+
+        return back()->with('exito', 'Imagen eliminada correctamente.');
     }
 
     /*
