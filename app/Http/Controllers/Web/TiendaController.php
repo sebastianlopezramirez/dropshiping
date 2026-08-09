@@ -131,8 +131,11 @@ class TiendaController extends Controller
         }
 
         return Inertia::render('Tienda/Producto', [
-            'producto'    => $producto,
+            'producto'     => $producto,
             'relacionados' => $relacionados,
+            // Número de WhatsApp del negocio (sin +, sin espacios)
+            // Configurar en Railway: WHATSAPP_NUMERO=573001234567
+            'whatsapp'     => env('WHATSAPP_NUMERO', ''),
             // Meta tags SEO para og: y twitter cards
             'seo' => [
                 'titulo'      => $producto->meta_titulo ?: $producto->nombre,
