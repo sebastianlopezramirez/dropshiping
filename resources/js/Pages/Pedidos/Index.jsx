@@ -176,7 +176,7 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
 
                 {/* ── TABLA ───────────────────────────────────────────────── */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedido</th>
@@ -272,7 +272,7 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
                                 ))
                             )}
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
 
                 {/* ── PAGINACIÓN ──────────────────────────────────────────── */}

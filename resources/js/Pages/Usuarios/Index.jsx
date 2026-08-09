@@ -172,6 +172,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
 
                     {/* ─── Tabla de usuarios ────────────────────────────── */}
                     <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -250,6 +251,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
                                 )}
                             </tbody>
                         </table>
+                      </div>
 
                         {/* ─── Paginación ────────────────────────────────── */}
                         {/*

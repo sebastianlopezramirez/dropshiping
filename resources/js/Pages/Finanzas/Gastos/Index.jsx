@@ -114,7 +114,7 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
 
                 {/* Tabla */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 {['Fecha', 'Categoría', 'Descripción', 'Monto', 'Acciones'].map(h => (
@@ -165,7 +165,7 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
                                 })
                             )}
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
 
                 {/* Paginación */}

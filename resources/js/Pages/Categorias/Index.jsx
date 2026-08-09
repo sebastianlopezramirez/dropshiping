@@ -172,7 +172,7 @@ export default function Index({ categorias, filtros, stats }) {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table></div>
 
                     {/* Paginación */}
                     {categorias.last_page > 1 && (

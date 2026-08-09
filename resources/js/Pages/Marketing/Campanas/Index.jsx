@@ -210,7 +210,7 @@ export default function Index({ campanas, estadisticas, canales, estados, filtro
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table></div>
 
                     {campanas.last_page > 1 && (
                         <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-600">

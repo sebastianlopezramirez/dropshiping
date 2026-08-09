@@ -213,7 +213,7 @@ export default function Index({ cupones, estadisticas, filtros }) {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                    </table></div>
 
                     {/* Paginación */}
                     {cupones.last_page > 1 && (

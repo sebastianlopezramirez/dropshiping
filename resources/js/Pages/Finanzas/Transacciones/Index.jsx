@@ -136,7 +136,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
 
                 {/* Tabla */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 {['Pedido', 'Monto', 'Método', 'Estado', 'Fecha', 'Acciones'].map(h => (
@@ -192,7 +192,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                                 ))
                             )}
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
 
                 {/* Paginación */}
