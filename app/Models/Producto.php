@@ -37,10 +37,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Producto extends Model
+class Producto extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     /*
     |----------------------------------------------------------------------
@@ -302,12 +305,78 @@ class Producto extends Model
         );
     }
 
+    /*
+    |----------------------------------------------------------------------
+    | SPATIE MEDIA LIBRARY — Colecciones y conversiones
+    |----------------------------------------------------------------------
+    |
+    | registerMediaCollections() → define las colecciones y en qué disco guardar
+    | registerMediaConversions() → define las variantes que se generan al subir
+    |
+    | Flujo cuando se sube una imagen:
+    |   1. Admin sube JPG/PNG/WebP
+    |   2. Spatie guarda el original en R2
+    |   3. Intervention Image genera 'thumbnail' (400×400 WebP) → R2
+    |   4. Intervention Image genera 'medium' (800×800 WebP) → R2
+    |   5. URLs públicas: $producto->getFirstMediaUrl('imagenes', 'thumbnail')
+    |
+    */
+
     /**
-     * URL de la imagen principal (la primera del array).
-     * Retorna null si no tiene imágenes.
+     * Define la colección 'imagenes' y qué disco usa.
+     *
+     * Uso: $producto->addMediaFromRequest('imagen')->toMediaCollection('imagenes')
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('imagenes')
+             ->useDisk('r2');
+    }
+
+    /**
+     * Define las conversiones WebP que se generan automáticamente.
+     *
+     * 'thumbnail' → 400×400 WebP (para listados, cards)
+     * 'medium'    → 800×800 WebP (para página de detalle del producto)
+     *
+     * width/height aplican un fit inteligente (no deforma la imagen).
+     * format('webp') convierte JPG/PNG a WebP vía Intervention Image.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumbnail')
+             ->width(400)
+             ->height(400)
+             ->format('webp')
+             ->performOnCollections('imagenes')
+             ->nonQueued(); // Síncrono para no depender de colas en desarrollo
+
+        $this->addMediaConversion('medium')
+             ->width(800)
+             ->height(800)
+             ->format('webp')
+             ->performOnCollections('imagenes')
+             ->nonQueued();
+    }
+
+    /**
+     * URL de la imagen principal.
+     *
+     * Prioridad:
+     *   1. Spatie Media Library → imagen subida via R2 (nuevo sistema)
+     *   2. Campo 'imagenes' → array legacy de URLs (sistema anterior)
+     *
+     * Uso: $producto->imagenPrincipal()  →  "https://pub-xxx.r2.dev/..."
      */
     public function imagenPrincipal(): ?string
     {
+        // Nuevo sistema: Spatie Media Library en R2
+        $media = $this->getFirstMedia('imagenes');
+        if ($media) {
+            return $media->getUrl('thumbnail');
+        }
+
+        // Fallback: campo legacy 'imagenes' (JSONB array de URLs)
         if (empty($this->imagenes)) return null;
         return $this->imagenes[0];
     }
