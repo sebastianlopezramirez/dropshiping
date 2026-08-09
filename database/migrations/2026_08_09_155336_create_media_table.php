@@ -11,7 +11,10 @@ return new class extends Migration
         Schema::create('media', function (Blueprint $table) {
             $table->id();
 
-            $table->morphs('model');
+            // uuidMorphs en lugar de morphs porque todos nuestros modelos usan UUID como PK.
+            // morphs() crea model_id como unsignedBigInteger → falla con UUIDs.
+            // uuidMorphs() crea model_id como char(36) → compatible con UUIDs.
+            $table->uuidMorphs('model');
             $table->uuid()->nullable()->unique();
             $table->string('collection_name');
             $table->string('name');
