@@ -31,6 +31,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ productos, categorias, filtros }) {
+    const { auth } = usePage().props;
+    const esAdmin = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
 
     /*
     |----------------------------------------------------------------------
@@ -163,12 +165,22 @@ export default function Index({ productos, categorias, filtros }) {
                             {productos.total} productos en total
                         </p>
                     </div>
-                    <Link
-                        href={route('productos.create')}
-                        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-                    >
-                        + Nuevo Producto
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        {esAdmin && (
+                            <Link
+                                href={route('categorias.index')}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition"
+                            >
+                                Categorías
+                            </Link>
+                        )}
+                        <Link
+                            href={route('productos.create')}
+                            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+                        >
+                            + Nuevo Producto
+                        </Link>
+                    </div>
                 </div>
 
                 {/* ── FORMULARIO DE FILTROS ───────────────────────────── */}
