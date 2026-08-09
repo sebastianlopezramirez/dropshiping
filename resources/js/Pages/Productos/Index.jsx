@@ -230,6 +230,7 @@ export default function Index({ productos, categorias, filtros }) {
 
                 {/* ── TABLA DE PRODUCTOS ──────────────────────────────── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -336,6 +337,7 @@ export default function Index({ productos, categorias, filtros }) {
                             )}
                         </tbody>
                     </table>
+                  </div>
                 </div>
 
                 {/* ── PAGINACIÓN ──────────────────────────────────────── */}
