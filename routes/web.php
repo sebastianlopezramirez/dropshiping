@@ -92,15 +92,9 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
 | No requiere autenticación.
 | Muestra la pantalla de inicio con botones Log in / Register.
 */
+// Redirige la raíz directamente a la tienda pública
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        // ¿Existen estas rutas? Le pasamos true/false a React para
-        // mostrar u ocultar los botones de login/registro
-        'canLogin'       => Route::has('login'),
-        'canRegister'    => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion'     => PHP_VERSION,
-    ]);
+    return redirect()->route('tienda.index');
 });
 
 /*
