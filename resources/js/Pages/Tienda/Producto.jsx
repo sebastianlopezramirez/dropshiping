@@ -37,8 +37,11 @@ export default function Producto({ producto, relacionados, seo }) {
     // Índice de la imagen actualmente visible en la galería
     const [imagenActiva, setImagenActiva] = useState(0);
 
-    // Imágenes del producto (puede ser array vacío)
-    const imagenes = producto.imagenes || [];
+    // Imágenes del producto como array de URLs strings
+    // Prioridad: Spatie media (R2) → campo legacy imagenes → vacío
+    const imagenes = producto.media?.length > 0
+        ? producto.media.map(m => m.original_url)
+        : (producto.imagenes || []);
 
     // Formateador de precio COP
     const cop = (n) => Number(n).toLocaleString('es-CO', {

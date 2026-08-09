@@ -247,7 +247,8 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 |
 */
 function TarjetaProducto({ producto, cop }) {
-    const imagen = producto.imagenes?.[0] || null;
+    // Prioridad: Spatie media → campo legacy imagenes
+    const imagen = producto.media?.[0]?.original_url || producto.imagenes?.[0] || null;
     const tieneOferta = producto.precio_oferta && Number(producto.precio_oferta) < Number(producto.precio_venta);
 
     const descuentoPct = tieneOferta

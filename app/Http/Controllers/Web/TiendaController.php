@@ -52,7 +52,8 @@ class TiendaController extends Controller
     public function index(Request $request)
     {
         // Construimos la query base: solo productos activos y con stock
-        $query = Producto::with('categoria')
+        // 'media' → imágenes de Spatie para las tarjetas del catálogo
+        $query = Producto::with(['categoria', 'media'])
             ->activos()
             ->conStock()
             ->orderBy('creado_en', 'desc');
@@ -111,7 +112,8 @@ class TiendaController extends Controller
     {
         // Buscar el producto por su slug
         // firstOrFail() → devuelve 404 automáticamente si no existe
-        $producto = Producto::with('categoria')
+        // Cargamos 'media' para la galería de imágenes y el SEO og:image
+        $producto = Producto::with(['categoria', 'media'])
             ->where('slug', $slug)
             ->activos()
             ->firstOrFail();
@@ -119,7 +121,7 @@ class TiendaController extends Controller
         // Productos relacionados: misma categoría, distinto id, activos, con stock
         $relacionados = collect();
         if ($producto->categoria_id) {
-            $relacionados = Producto::with('categoria')
+            $relacionados = Producto::with(['categoria', 'media'])
                 ->activos()
                 ->conStock()
                 ->where('categoria_id', $producto->categoria_id)
@@ -156,7 +158,7 @@ class TiendaController extends Controller
             ->firstOrFail();
 
         // Productos de esta categoría (activos + con stock)
-        $productos = Producto::with('categoria')
+        $productos = Producto::with(['categoria', 'media'])
             ->activos()
             ->conStock()
             ->where('categoria_id', $categoria->id)
