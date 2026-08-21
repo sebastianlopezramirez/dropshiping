@@ -41,8 +41,9 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
-            // Productos pendientes de aprobación — disponible en toda la app
+            // Productos pendientes de aprobación — solo para admins que pueden activarlos
             'productosPendientes' => fn () => $request->user()
+                && $request->user()->hasAnyRole(['super_administrador', 'administrador'])
                 ? Producto::where('estado', 'inactivo')->count()
                 : 0,
 
