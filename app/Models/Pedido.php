@@ -65,6 +65,7 @@ class Pedido extends Model
         'codigo_postal',
         'barrio',
         'estado',
+        'metodo_pago',
         'subtotal',
         'descuento',
         'costo_envio',

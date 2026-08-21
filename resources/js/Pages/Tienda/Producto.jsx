@@ -1,53 +1,26 @@
 /*
 |--------------------------------------------------------------------------
-| PÁGINA: Tienda/Producto.jsx
+| PÁGINA: Tienda/Producto.jsx — GadGet Store
 |--------------------------------------------------------------------------
-|
-| ENTENDER — ¿Qué hace esta página?
-|
-|   Muestra el detalle completo de un producto:
-|   galería de imágenes, precio, descripción y productos relacionados.
-|   También inyecta los meta tags SEO en el <head> para que Google,
-|   WhatsApp y redes sociales lean el título, descripción e imagen.
-|
-| PENSAR — Props que recibe del controller:
-|
-|   producto    → objeto completo con categoria e imagenes (array)
-|   relacionados → array de hasta 4 productos de la misma categoría
-|   seo         → { titulo, descripcion, imagen, url }
-|
-| PENSAR — ¿Cómo funciona el SEO con Inertia?
-|
-|   Inertia usa el componente <Head> de @inertiajs/react para inyectar
-|   tags en el <head> del HTML. En cada navegación, Inertia reemplaza
-|   el <head> con los nuevos valores → el título y meta cambian por producto.
-|
-|   Para og:title, og:description y og:image usamos <Head> con tags
-|   <meta> explícitos. Esto permite que WhatsApp, Telegram y Google
-|   lean la info correcta al compartir el enlace.
-|
 */
 
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
+import { useCart } from '@/Context/CartContext';
 
 export default function Producto({ producto, relacionados, seo, whatsapp }) {
 
-    // Índice de la imagen actualmente visible en la galería
     const [imagenActiva, setImagenActiva] = useState(0);
+    const [agregado, setAgregado] = useState(false);
+    const { agregarItem } = useCart();
 
-    // Imágenes del producto como array de URLs strings
-    // Prioridad: Spatie media (R2) → campo legacy imagenes → vacío
     const imagenes = producto.media?.length > 0
         ? producto.media.map(m => m.original_url)
         : (producto.imagenes || []);
 
-    // Formateador de precio COP
     const cop = (n) => Number(n).toLocaleString('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        maximumFractionDigits: 0
+        style: 'currency', currency: 'COP', maximumFractionDigits: 0
     });
 
     const tieneOferta = producto.precio_oferta
@@ -57,73 +30,72 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
         ? Math.round((1 - producto.precio_oferta / producto.precio_venta) * 100)
         : 0;
 
+    const handleAgregarCarrito = () => {
+        agregarItem({
+            id:          producto.id,
+            nombre:      producto.nombre,
+            slug:        producto.slug,
+            precio_venta: tieneOferta ? producto.precio_oferta : producto.precio_venta,
+            imagen:      imagenes[0] || null,
+        });
+        setAgregado(true);
+        setTimeout(() => setAgregado(false), 2000);
+    };
+
+    const handleComprarAhora = () => {
+        handleAgregarCarrito();
+        router.visit(route('tienda.carrito'));
+    };
+
+    const msgPedido   = encodeURIComponent(`Hola, quiero pedir:\n\n*${producto.nombre}*\n${seo.url}`);
+    const msgPregunta = encodeURIComponent(`Hola, tengo una pregunta sobre:\n\n*${producto.nombre}*\n${seo.url}`);
+
     return (
         <TiendaLayout>
 
-            {/*
-            |------------------------------------------------------------------
-            | SEO: Meta tags en el <head>
-            |------------------------------------------------------------------
-            |
-            | PENSAR — ¿Por qué usamos <Head> y no un <meta> directo?
-            |
-            |   Inertia renderiza el HTML en el servidor (SSR) o en el cliente.
-            |   El componente <Head> de Inertia gestiona el ciclo de vida
-            |   de los tags: los inserta al entrar a la página y los elimina
-            |   al salir. Sin esto, los meta tags se acumularían en el DOM.
-            |
-            */}
+            {/* ── SEO ──────────────────────────────────────────────────── */}
             <Head>
                 <title>{seo.titulo}</title>
-                <meta name="description"          content={seo.descripcion} />
-
-                {/* Open Graph — para WhatsApp, Telegram, Facebook */}
-                <meta property="og:title"         content={seo.titulo} />
-                <meta property="og:description"   content={seo.descripcion} />
-                <meta property="og:url"           content={seo.url} />
-                <meta property="og:type"          content="product" />
-                {seo.imagen && (
-                    <meta property="og:image"     content={seo.imagen} />
-                )}
-
-                {/* Twitter Card */}
-                <meta name="twitter:card"         content="summary_large_image" />
-                <meta name="twitter:title"        content={seo.titulo} />
-                <meta name="twitter:description"  content={seo.descripcion} />
-                {seo.imagen && (
-                    <meta name="twitter:image"    content={seo.imagen} />
-                )}
+                <meta name="description"        content={seo.descripcion} />
+                <meta property="og:title"       content={seo.titulo} />
+                <meta property="og:description" content={seo.descripcion} />
+                <meta property="og:url"         content={seo.url} />
+                <meta property="og:type"        content="product" />
+                {seo.imagen && <meta property="og:image" content={seo.imagen} />}
+                <meta name="twitter:card"       content="summary_large_image" />
+                <meta name="twitter:title"      content={seo.titulo} />
+                <meta name="twitter:description" content={seo.descripcion} />
+                {seo.imagen && <meta name="twitter:image" content={seo.imagen} />}
             </Head>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-                {/* ── BREADCRUMB ─────────────────────────────── */}
-                <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-                    <Link href={route('tienda.index')} className="hover:text-indigo-600 transition-colors">
+                {/* ── BREADCRUMB ──────────────────────────────────────────── */}
+                <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+                    <Link href={route('tienda.index')} className="hover:text-orange-400 transition-colors">
                         Tienda
                     </Link>
                     {producto.categoria && (
                         <>
-                            <span>/</span>
-                            <Link
-                                href={route('tienda.categoria', producto.categoria.slug)}
-                                className="hover:text-indigo-600 transition-colors"
-                            >
+                            <span className="text-gray-700">/</span>
+                            <Link href={route('tienda.categoria', producto.categoria.slug)}
+                                className="hover:text-orange-400 transition-colors">
                                 {producto.categoria.nombre}
                             </Link>
                         </>
                     )}
-                    <span>/</span>
-                    <span className="text-gray-700 truncate max-w-xs">{producto.nombre}</span>
+                    <span className="text-gray-700">/</span>
+                    <span className="text-gray-300 truncate max-w-[200px] sm:max-w-xs font-medium">
+                        {producto.nombre}
+                    </span>
                 </nav>
 
-                {/* ── DETALLE DEL PRODUCTO ────────────────────── */}
+                {/* ── DETALLE ─────────────────────────────────────────────── */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
 
-                    {/* COLUMNA IZQUIERDA: Galería de imágenes */}
-                    <div>
-                        {/* Imagen principal */}
-                        <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
+                    {/* COLUMNA IZQUIERDA: Galería */}
+                    <div className="space-y-3">
+                        <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-xl">
                             {imagenes.length > 0 ? (
                                 <img
                                     src={imagenes[imagenActiva]}
@@ -131,182 +103,210 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-6xl">
+                                <div className="w-full h-full flex items-center justify-center text-gray-700 text-7xl">
                                     📦
                                 </div>
                             )}
+
+                            {/* Badge descuento */}
+                            {tieneOferta && (
+                                <div className="absolute top-3 left-3">
+                                    <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg">
+                                        -{descuentoPct}% OFF
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Flechas de navegación */}
+                            {imagenes.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={() => setImagenActiva(i => (i - 1 + imagenes.length) % imagenes.length)}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-900/80 hover:bg-gray-900 border border-gray-700 rounded-full flex items-center justify-center shadow-md transition-colors"
+                                    >
+                                        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => setImagenActiva(i => (i + 1) % imagenes.length)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-900/80 hover:bg-gray-900 border border-gray-700 rounded-full flex items-center justify-center shadow-md transition-colors"
+                                    >
+                                        <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                    {/* Puntos */}
+                                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                                        {imagenes.map((_, i) => (
+                                            <button key={i} onClick={() => setImagenActiva(i)}
+                                                className={`w-2 h-2 rounded-full transition-all ${i === imagenActiva ? 'bg-orange-400 w-4' : 'bg-gray-600'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        {/* Miniaturas — solo si hay más de una imagen */}
+                        {/* Miniaturas */}
                         {imagenes.length > 1 && (
                             <div className="flex gap-2 flex-wrap">
                                 {imagenes.map((url, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => setImagenActiva(i)}
-                                        className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors
+                                    <button key={i} onClick={() => setImagenActiva(i)}
+                                        className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all
                                             ${imagenActiva === i
-                                                ? 'border-indigo-500'
-                                                : 'border-gray-200 hover:border-gray-400'}`}
+                                                ? 'border-orange-500 shadow-md shadow-orange-900/30 scale-105'
+                                                : 'border-gray-800 hover:border-gray-600 opacity-60 hover:opacity-100'}`}
                                     >
-                                        <img
-                                            src={url}
-                                            alt={`imagen ${i + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <img src={url} alt={`imagen ${i + 1}`} className="w-full h-full object-cover" />
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* COLUMNA DERECHA: Info del producto */}
+                    {/* COLUMNA DERECHA: Info + CTAs */}
                     <div className="flex flex-col">
 
                         {/* Categoría */}
                         {producto.categoria && (
-                            <Link
-                                href={route('tienda.categoria', producto.categoria.slug)}
-                                className="text-sm text-indigo-500 font-medium hover:text-indigo-700 mb-2 w-fit"
-                            >
+                            <Link href={route('tienda.categoria', producto.categoria.slug)}
+                                className="inline-flex items-center text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-full w-fit mb-3 hover:bg-orange-500/20 transition-colors">
                                 {producto.categoria.nombre}
                             </Link>
                         )}
 
                         {/* Nombre */}
-                        <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-4">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-4">
                             {producto.nombre}
                         </h1>
 
                         {/* Precio */}
-                        <div className="mb-6">
+                        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 mb-5">
                             {tieneOferta ? (
-                                <div className="flex items-baseline gap-3">
-                                    <span className="text-3xl font-bold text-red-600">
-                                        {cop(producto.precio_oferta)}
-                                    </span>
-                                    <span className="text-lg text-gray-400 line-through">
-                                        {cop(producto.precio_venta)}
-                                    </span>
-                                    <span className="bg-red-100 text-red-700 text-sm font-bold px-2 py-0.5 rounded-full">
-                                        -{descuentoPct}%
-                                    </span>
+                                <div>
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-3xl font-extrabold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                                            {cop(producto.precio_oferta)}
+                                        </span>
+                                        <span className="text-lg text-gray-600 line-through">
+                                            {cop(producto.precio_venta)}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-orange-400 font-medium mt-1">
+                                        ¡Ahorras {cop(producto.precio_venta - producto.precio_oferta)}!
+                                    </p>
                                 </div>
                             ) : (
-                                <span className="text-3xl font-bold text-gray-900">
+                                <span className="text-3xl font-extrabold text-white">
                                     {cop(producto.precio_venta)}
                                 </span>
                             )}
-                            <p className="text-xs text-gray-400 mt-1">IVA incluido · Precio en COP</p>
+                            <p className="text-xs text-gray-600 mt-1">IVA incluido · Precio en COP</p>
                         </div>
 
                         {/* Descripción corta */}
                         {producto.descripcion_corta && (
-                            <p className="text-gray-600 text-sm leading-relaxed mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <p className="text-gray-400 text-sm leading-relaxed mb-5">
                                 {producto.descripcion_corta}
                             </p>
                         )}
 
-                        {/* Disponibilidad */}
-                        <div className="flex items-center gap-2 mb-6">
-                            <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
-                            <span className="text-sm text-gray-600">
-                                {producto.stock
-                                    ? `${producto.stock} unidades disponibles`
-                                    : 'Disponible'}
-                            </span>
+                        {/* Disponibilidad + SKU */}
+                        <div className="flex items-center gap-4 mb-5 text-sm">
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse"></span>
+                                <span className="text-gray-300 font-medium">
+                                    {producto.stock ? `${producto.stock} disponibles` : 'En stock'}
+                                </span>
+                            </div>
+                            {producto.sku && (
+                                <span className="text-gray-600 font-mono text-xs">SKU: {producto.sku}</span>
+                            )}
                         </div>
 
-                        {/* SKU */}
-                        {producto.sku && (
-                            <p className="text-xs text-gray-400 font-mono mb-6">
-                                SKU: {producto.sku}
-                            </p>
-                        )}
+                        {/* CTAs */}
+                        <div className="space-y-3">
 
-                        {/*
-                         * CTAs — Botones de acción
-                         *
-                         * 1. "Pedir por WhatsApp" → abre chat con el negocio
-                         *    Mensaje pre-llenado: nombre del producto + URL
-                         *    Requiere variable WHATSAPP_NUMERO en Railway
-                         *
-                         * 2. "Preguntar antes de comprar" → mismo chat, mensaje diferente
-                         *
-                         * 3. "Compartir" → reenvía el link del producto a cualquiera
-                         */}
-                        <div className="flex flex-col gap-3 mt-2">
+                            {/* Comprar ahora */}
+                            <button
+                                onClick={handleComprarAhora}
+                                className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Comprar ahora
+                            </button>
 
-                            {/* Botón principal: Pedir */}
-                            {whatsapp ? (
+                            {/* Agregar al carrito */}
+                            <button
+                                onClick={handleAgregarCarrito}
+                                className={`flex items-center justify-center gap-2.5 w-full border-2 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all ${
+                                    agregado
+                                        ? 'border-green-500 text-green-400 bg-green-500/10'
+                                        : 'border-orange-500 text-orange-400 hover:bg-orange-500/10'
+                                }`}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                {agregado ? '¡Agregado!' : 'Agregar al carrito'}
+                            </button>
+
+                            {/* Preguntar por WhatsApp */}
+                            {whatsapp && (
                                 <a
-                                    href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(
-                                        `Hola, quiero pedir:\n\n*${producto.nombre}*\n${seo.url}`
-                                    )}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold text-base px-6 py-4 rounded-xl transition-colors w-full shadow-sm"
-                                >
-                                    <IconWA />
-                                    Pedir por WhatsApp
-                                </a>
-                            ) : null}
-
-                            {/* Botón secundario: Preguntar */}
-                            {whatsapp ? (
-                                <a
-                                    href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(
-                                        `Hola, tengo una pregunta sobre:\n\n*${producto.nombre}*\n${seo.url}`
-                                    )}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center gap-2 border-2 border-green-500 text-green-700 hover:bg-green-50 font-medium text-sm px-6 py-3 rounded-xl transition-colors w-full"
+                                    href={`https://wa.me/${whatsapp}?text=${msgPregunta}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 border border-gray-700 text-gray-400 hover:bg-gray-800 font-medium text-sm px-6 py-3 rounded-2xl transition-colors w-full"
                                 >
                                     <IconWA className="w-4 h-4" />
                                     Preguntar antes de comprar
                                 </a>
-                            ) : null}
+                            )}
 
-                            {/* Compartir enlace */}
                             <a
                                 href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 text-gray-500 hover:text-gray-700 text-sm px-6 py-2 rounded-xl transition-colors w-full border border-gray-200 hover:bg-gray-50"
+                                target="_blank" rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-300 text-sm px-6 py-2.5 rounded-2xl transition-colors w-full border border-gray-800 hover:bg-gray-800/50"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                 </svg>
                                 Compartir este producto
                             </a>
-
                         </div>
 
+                        {/* Trust Badges */}
+                        <div className="mt-6 grid grid-cols-3 gap-3">
+                            <TrustBadge icon="🚚" label="Envío a todo Colombia" />
+                            <TrustBadge icon="💬" label="Atención por WhatsApp" />
+                            <TrustBadge icon="✅" label="Compra segura" />
+                        </div>
                     </div>
                 </div>
 
-                {/* ── DESCRIPCIÓN COMPLETA ────────────────────── */}
+                {/* ── DESCRIPCIÓN COMPLETA ─────────────────────────────────── */}
                 {producto.descripcion && (
                     <section className="mb-16">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                            Descripción del producto
-                        </h2>
-                        {/*
-                            whitespace-pre-line → respeta los saltos de línea del texto
-                            que guardó el vendedor en el campo descripcion
-                        */}
-                        <div className="prose prose-sm max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
+                        <div className="mb-5 flex items-center gap-3">
+                            <h2 className="text-lg font-bold text-white">Descripción del producto</h2>
+                            <div className="flex-1 h-px bg-gradient-to-r from-orange-500/30 to-transparent"></div>
+                        </div>
+                        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-gray-400 text-sm leading-relaxed whitespace-pre-line">
                             {producto.descripcion}
                         </div>
                     </section>
                 )}
 
-                {/* ── PRODUCTOS RELACIONADOS ───────────────────── */}
+                {/* ── PRODUCTOS RELACIONADOS ───────────────────────────────── */}
                 {relacionados.length > 0 && (
                     <section>
-                        <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
-                            También te puede interesar
-                        </h2>
+                        <div className="mb-5 flex items-center gap-3">
+                            <h2 className="text-lg font-bold text-white">También te puede interesar</h2>
+                            <div className="flex-1 h-px bg-gradient-to-r from-pink-500/30 to-transparent"></div>
+                        </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             {relacionados.map(rel => (
                                 <TarjetaRelacionado key={rel.id} producto={rel} cop={cop} />
@@ -320,11 +320,17 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| COMPONENTE: IconWA — Ícono de WhatsApp reutilizable
-|--------------------------------------------------------------------------
-*/
+/* ─── TRUST BADGE ──────────────────────────────────────────────────── */
+function TrustBadge({ icon, label }) {
+    return (
+        <div className="flex flex-col items-center text-center bg-gray-900 rounded-xl p-3 border border-gray-800">
+            <span className="text-xl mb-1">{icon}</span>
+            <span className="text-xs text-gray-500 leading-tight">{label}</span>
+        </div>
+    );
+}
+
+/* ─── ICONO WHATSAPP ───────────────────────────────────────────────── */
 function IconWA({ className = 'w-5 h-5' }) {
     return (
         <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -333,41 +339,29 @@ function IconWA({ className = 'w-5 h-5' }) {
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| COMPONENTE: TarjetaRelacionado
-|--------------------------------------------------------------------------
-| Versión compacta de tarjeta para la sección "También te puede interesar".
-| Fuera del componente principal por el patrón Campo/helper establecido.
-*/
+/* ─── TARJETA RELACIONADO ──────────────────────────────────────────── */
 function TarjetaRelacionado({ producto, cop }) {
-    const imagen = producto.imagenes?.[0] || null;
+    const imagen = producto.media?.[0]?.original_url || producto.imagenes?.[0] || null;
     const tieneOferta = producto.precio_oferta
         && Number(producto.precio_oferta) < Number(producto.precio_venta);
 
     return (
-        <Link
-            href={route('tienda.show', producto.slug)}
-            className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-        >
-            <div className="aspect-square bg-gray-100 overflow-hidden">
+        <Link href={route('tienda.show', producto.slug)}
+            className="group bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-900/20 hover:-translate-y-0.5 transition-all duration-200">
+            <div className="aspect-square bg-gray-800 overflow-hidden">
                 {imagen ? (
-                    <img
-                        src={imagen}
-                        alt={producto.nombre}
+                    <img src={imagen} alt={producto.nombre}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                        loading="lazy" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">
-                        📦
-                    </div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-700 text-3xl">📦</div>
                 )}
             </div>
             <div className="p-3">
-                <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-snug mb-1">
+                <p className="text-sm font-semibold text-gray-100 line-clamp-2 leading-snug mb-1.5">
                     {producto.nombre}
                 </p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-sm font-bold text-white">
                     {tieneOferta ? cop(producto.precio_oferta) : cop(producto.precio_venta)}
                 </p>
             </div>

@@ -45,10 +45,8 @@ class DatabaseSeeder extends Seeder
             // 2. SEGUNDO: usuario admin (necesita que el rol exista)
             UsuarioAdminSeeder::class,
 
-            // Aquí irán en el futuro:
-            // ProductoSeeder::class,      (FASE 3)
-            // CategoriaSeeder::class,     (FASE 3)
-            // ProveedorDemoSeeder::class, (FASE 6)
+            // 3. CATEGORÍAS: 10 categorías principales + 54 subcategorías
+            CategoriasSeeder::class,
         ]);
 
         $this->command->info('');

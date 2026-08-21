@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "90-credenciales/🔐 Credenciales — Master.md",
+                "file": "40-arquitectura/Stack Tecnológico.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "🔐 Credenciales — Master"
+              "title": "Stack Tecnológico"
             }
           }
         ]
@@ -190,6 +190,10 @@
   },
   "active": "647d40d44db7ed6a",
   "lastOpenFiles": [
+    "10-fases/FASE 10 — Infraestructura.md",
+    "10-fases/FASE 6 — Portal de Proveedores.md",
+    "10-fases/FASE 3 — Productos y Catálogo.md",
+    "90-credenciales/🔐 Credenciales — Master.md",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.6360.afca6f6f6983",
     "00-estado/📊 Tablero de Fases.md.tmp.6360.c959a7566498",
     "00-estado/📊 Tablero de Fases.md.tmp.6360.d0044dfafb24",
@@ -201,16 +205,12 @@
     "60-decisiones/Sistema de Imágenes — Spatie + R2.md",
     "60-decisiones/Sistema de Imágenes — Spatie + R2.md.tmp.10948.8ff2ce3cad3b",
     "00-estado/🐛 Bugs y Pendientes.md.tmp.9984.d75c60d4d105",
-    "00-estado/🐛 Bugs y Pendientes.md.tmp.9984.4094d8c193c1",
-    "10-fases/FASE 10 — Infraestructura.md",
     "10-fases/FASE 9 — Analytics.md",
     "10-fases/FASE 8 — Tienda Pública.md",
     "00-estado/📊 Tablero de Fases.md",
     "10-fases/FASE 7 — Marketing.md",
     "00-estado/📝 Sesiones de Trabajo.md",
     "00-estado/🐛 Bugs y Pendientes.md",
-    "90-credenciales/🔐 Credenciales — Master.md",
-    "10-fases/FASE 6 — Portal de Proveedores.md",
     "10-fases/FASE 5 — Financiero y Wompi.md",
     "20-mocs/MOC — Módulos.md",
     "10-fases/FASE 4 — Pedidos y Logística.md"

@@ -39,6 +39,9 @@ use App\Http\Controllers\Web\ReporteFinancieroController;
 use App\Http\Controllers\Web\TransaccionController;
 use App\Http\Controllers\Web\UsuarioController;
 use App\Http\Controllers\Portal\PortalController;
+use App\Http\Controllers\Tienda\CarritoController;
+use App\Http\Controllers\Web\TarifaController;
+use App\Http\Controllers\Web\MarketingExportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -80,7 +83,22 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
     Route::get('categoria/{slug}', [TiendaController::class, 'categoria'])
          ->name('categoria');
 
-    // GET /tienda/{slug} — Detalle de un producto
+    // ── CARRITO Y PEDIDOS PÚBLICOS ────────────────────────────────────────
+    // Van ANTES de {slug} para que 'carrito' y 'pedido' no se traten como slug
+
+    // GET  /tienda/carrito          → página del carrito
+    Route::get('carrito', [CarritoController::class, 'index'])
+         ->name('carrito');
+
+    // POST /tienda/pedido           → guardar pedido en BD
+    Route::post('pedido', [CarritoController::class, 'store'])
+         ->name('pedido.store');
+
+    // GET  /tienda/pedido/{numero}/gracias → página de confirmación
+    Route::get('pedido/{numero}/gracias', [CarritoController::class, 'gracias'])
+         ->name('pedido.gracias');
+
+    // GET /tienda/{slug} — Detalle de un producto (va AL FINAL)
     Route::get('{slug}', [TiendaController::class, 'show'])
          ->name('show');
 });
@@ -218,6 +236,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Ruta extra: cambio de estado desde la lista/detalle
         Route::patch('pedidos/{pedido}/estado', [PedidoController::class, 'cambiarEstado'])
              ->name('pedidos.estado');
+
+        /*
+        |----------------------------------------------------------------------
+        | MÓDULO: TARIFAS DE DOMICILIO — Solo admin/superadmin
+        |----------------------------------------------------------------------
+        | GET    /tarifas              → index   (lista con precios)
+        | POST   /tarifas              → store   (crear nueva ciudad)
+        | PUT    /tarifas/{tarifa}     → update  (editar precio)
+        | DELETE /tarifas/{tarifa}     → destroy (eliminar)
+        | PATCH  /tarifas/{tarifa}/toggle → activar/desactivar
+        */
+        Route::resource('tarifas', TarifaController::class)
+             ->parameters(['tarifas' => 'tarifa'])
+             ->only(['index', 'store', 'update', 'destroy']);
+
+        Route::patch('tarifas/{tarifa}/toggle', [TarifaController::class, 'toggle'])
+             ->name('tarifas.toggle');
+
+        // Exportar base de datos de clientes con consentimiento de marketing
+        Route::get('marketing/exportar', [MarketingExportController::class, 'exportar'])
+             ->name('marketing.exportar');
 
         /*
         |----------------------------------------------------------------------

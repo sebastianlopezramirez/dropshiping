@@ -114,13 +114,17 @@ export default function Dashboard() {
                                     <p className="text-sm text-gray-500">Cupones y campañas</p>
                                 </div>
                             </div>
-                            <div className="mt-4 flex gap-3">
+                            <div className="mt-4 flex flex-wrap gap-3">
                                 <Link href={route('cupones.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
                                     Cupones →
                                 </Link>
                                 <Link href={route('campanas.index')} className="text-purple-600 hover:text-purple-900 text-sm font-medium">
                                     Campañas →
                                 </Link>
+                                <a href="/marketing/exportar"
+                                    className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-1">
+                                    📥 Exportar clientes →
+                                </a>
                             </div>
                         </div>
 

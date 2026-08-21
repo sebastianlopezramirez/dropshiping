@@ -426,7 +426,13 @@ class PortalController extends Controller
             'imagenes_nuevas.*'   => ['image', 'max:2048'],
         ]);
 
-        DB::transaction(function () use ($datos, $proveedor, $request) {
+        // ─── PASO 1: Crear producto en BD (transacción) ──────────────────────
+        // Las imágenes van FUERA de la transacción — son I/O de red (Cloudflare R2).
+        // Si falla la subida, el producto queda creado sin imágenes (aceptable),
+        // en vez de revertir todo por un error de red.
+        $producto = null;
+
+        DB::transaction(function () use ($datos, $proveedor, &$producto) {
             // Capitalizar nombre: 'camiseta premium' → 'Camiseta Premium'
             $nombre = Str::title($datos['nombre']);
 
@@ -442,52 +448,45 @@ class PortalController extends Controller
             // El admin puede cambiarlo después desde /productos/{id}/editar
             $skuPlaceholder = 'PROV-' . strtoupper(substr($proveedor->id, 0, 8)) . '-' . now()->format('ymdHi');
 
-            // Procesar imágenes si se enviaron
-            $imagenesUrls = [];
-            if ($request->hasFile('imagenes_nuevas')) {
-                $directorio = storage_path('app/public/productos');
-                if (!is_dir($directorio)) {
-                    mkdir($directorio, 0755, true);
-                }
-                foreach ($request->file('imagenes_nuevas') as $archivo) {
-                    $extension    = $archivo->getClientOriginalExtension() ?: 'jpg';
-                    $nombreArchivo = Str::random(40) . '.' . strtolower($extension);
-                    $archivo->move($directorio, $nombreArchivo);
-                    $imagenesUrls[] = '/storage/productos/' . $nombreArchivo;
-                }
-            }
-
             // Crear el producto → nace INACTIVO
             $producto = Producto::create([
-                'nombre'             => $nombre,
-                'slug'               => $slug,
-                'descripcion_corta'  => $datos['descripcion_corta'] ?? null,
-                'descripcion'        => $datos['descripcion'] ?? null,
-                'precio_costo'       => $datos['precio_costo'],
-                'precio_venta'       => $datos['precio_venta'] ?? $datos['precio_costo'],
-                // precio_venta sugerido; el admin lo ajusta para fijar el margen
-                'stock'              => $datos['stock'],
-                'stock_minimo'       => 1,
-                'categoria_id'       => $datos['categoria_id'],
-                'estado'             => 'inactivo', // SIEMPRE — el admin activa
-                'sku'                => $skuPlaceholder,
-                'peso_kg'            => $datos['peso_kg'] ?? null,
-                'imagenes'           => !empty($imagenesUrls) ? $imagenesUrls : null,
+                'nombre'            => $nombre,
+                'slug'              => $slug,
+                'descripcion_corta' => $datos['descripcion_corta'] ?? null,
+                'descripcion'       => $datos['descripcion'] ?? null,
+                'precio_costo'      => $datos['precio_costo'],
+                'precio_venta'      => $datos['precio_venta'] ?? $datos['precio_costo'],
+                'stock'             => $datos['stock'],
+                'stock_minimo'      => 1,
+                'categoria_id'      => $datos['categoria_id'],
+                'estado'            => 'inactivo', // SIEMPRE — el admin activa
+                'sku'               => $skuPlaceholder,
+                'peso_kg'           => $datos['peso_kg'] ?? null,
             ]);
 
             // Vincular al proveedor en la tabla pivot
-            // precio = lo que el negocio le paga al proveedor (precio_costo)
             DB::table('producto_proveedor')->insert([
-                'id'           => (string) Str::uuid(),
-                'producto_id'  => $producto->id,
-                'proveedor_id' => $proveedor->id,
-                'precio'       => $datos['precio_costo'],
-                'stock'        => $datos['stock'],
-                'activo'       => true,
-                'creado_en'    => now(),
+                'id'             => (string) Str::uuid(),
+                'producto_id'    => $producto->id,
+                'proveedor_id'   => $proveedor->id,
+                'precio'         => $datos['precio_costo'],
+                'stock'          => $datos['stock'],
+                'activo'         => true,
+                'creado_en'      => now(),
                 'actualizado_en' => now(),
             ]);
         });
+
+        // ─── PASO 2: Subir imágenes a Cloudflare R2 via Spatie ───────────────
+        // addMedia($archivo) → toma el archivo del request
+        // toMediaCollection('imagenes') → lo sube al disco 'r2' configurado
+        //   en Producto::registerMediaCollections() y genera conversiones WebP
+        if ($request->hasFile('imagenes_nuevas')) {
+            foreach ($request->file('imagenes_nuevas') as $archivo) {
+                $producto->addMedia($archivo)
+                         ->toMediaCollection('imagenes');
+            }
+        }
 
         return redirect()->route('portal.productos')
             ->with('exito', 'Producto enviado. El administrador lo revisará y activará pronto.');
