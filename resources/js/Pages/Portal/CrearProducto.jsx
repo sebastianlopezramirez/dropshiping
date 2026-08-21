@@ -49,6 +49,19 @@ export default function CrearProducto({ categorias }) {
         forzar_creacion:   0,   // 1 cuando el usuario confirma crear aunque ya exista
     });
 
+    // ─── CATEGORÍAS EN CASCADA ─────────────────────────────────────────
+    const [categoriaPadreId, setCategoriaPadreId] = useState('');
+
+    const categoriasPadre = categorias.filter(c => !c.padre_id);
+    const subcategorias   = categoriaPadreId
+        ? categorias.filter(c => String(c.padre_id) === String(categoriaPadreId))
+        : [];
+
+    const handleCategoriaPadre = (id) => {
+        setCategoriaPadreId(id);
+        setData('categoria_id', ''); // limpiar subcategoría al cambiar padre
+    };
+
     // ─── VERIFICACIÓN DE NOMBRE DUPLICADO (tiempo real) ─────────────────
     const [duplicados, setDuplicados]     = useState([]);   // productos similares encontrados
     const [buscandoNombre, setBuscando]   = useState(false);
@@ -221,16 +234,33 @@ export default function CrearProducto({ categorias }) {
                                         Sin categorías creadas — el administrador la asignará al activar el producto.
                                     </div>
                                 ) : (
-                                    <select
-                                        value={data.categoria_id}
-                                        onChange={e => setData('categoria_id', e.target.value)}
-                                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${errors.categoria_id ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                                    >
-                                        <option value="">Sin categoría (el admin la asigna)</option>
-                                        {categorias.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                        ))}
-                                    </select>
+                                    <div className="flex flex-col gap-2">
+                                        {/* Paso 1: Categoría principal */}
+                                        <select
+                                            value={categoriaPadreId}
+                                            onChange={e => handleCategoriaPadre(e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            <option value="">— Selecciona una categoría —</option>
+                                            {categoriasPadre.map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                            ))}
+                                        </select>
+
+                                        {/* Paso 2: Subcategoría (aparece solo si hay padre elegido) */}
+                                        {subcategorias.length > 0 && (
+                                            <select
+                                                value={data.categoria_id}
+                                                onChange={e => setData('categoria_id', e.target.value)}
+                                                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${errors.categoria_id ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+                                            >
+                                                <option value="">— Selecciona una subcategoría —</option>
+                                                {subcategorias.map(sub => (
+                                                    <option key={sub.id} value={sub.id}>{sub.nombre}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
                                 )}
                                 {errors.categoria_id && <p className="mt-1 text-xs text-red-600">{errors.categoria_id}</p>}
                             </div>

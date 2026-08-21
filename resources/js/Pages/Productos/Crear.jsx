@@ -55,6 +55,19 @@ export default function Crear({ categorias }) {
         forzar_creacion:   0,
     });
 
+    // ─── CATEGORÍAS EN CASCADA ─────────────────────────────────────────────
+    const [categoriaPadreId, setCategoriaPadreId] = useState('');
+
+    const categoriasPadre = categorias.filter(c => !c.padre_id);
+    const subcategorias   = categoriaPadreId
+        ? categorias.filter(c => String(c.padre_id) === String(categoriaPadreId))
+        : [];
+
+    const handleCategoriaPadre = (id) => {
+        setCategoriaPadreId(id);
+        setData('categoria_id', '');
+    };
+
     // ─── VERIFICACIÓN NOMBRE DUPLICADO (tiempo real) ─────────────────────
     const [duplicados, setDuplicados]   = useState([]);
     const [buscandoNombre, setBuscando] = useState(false);
@@ -349,19 +362,36 @@ export default function Crear({ categorias }) {
                         <h3 className="text-base font-semibold text-gray-900 mb-4">Inventario y categoría</h3>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Categoría */}
+                            {/* Categoría en cascada */}
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                                <select
-                                    value={data.categoria_id}
-                                    onChange={e => setData('categoria_id', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                >
-                                    <option value="">Sin categoría</option>
-                                    {categorias.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                    ))}
-                                </select>
+                                <div className="flex flex-col gap-2">
+                                    {/* Paso 1: Categoría principal */}
+                                    <select
+                                        value={categoriaPadreId}
+                                        onChange={e => handleCategoriaPadre(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
+                                        <option value="">— Selecciona una categoría —</option>
+                                        {categoriasPadre.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                        ))}
+                                    </select>
+
+                                    {/* Paso 2: Subcategoría (aparece solo si hay padre elegido) */}
+                                    {subcategorias.length > 0 && (
+                                        <select
+                                            value={data.categoria_id}
+                                            onChange={e => setData('categoria_id', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">— Selecciona una subcategoría —</option>
+                                            {subcategorias.map(sub => (
+                                                <option key={sub.id} value={sub.id}>{sub.nombre}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
                                 <Error campo="categoria_id" />
                             </div>
 
