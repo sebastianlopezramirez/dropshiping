@@ -221,7 +221,7 @@ export default function Crear({ categorias }) {
                                         Cancelar
                                     </button>
                                 </p>
-                            )
+                            )}
                             <Error campo="nombre" />
                         </div>
 
