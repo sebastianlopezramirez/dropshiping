@@ -15,7 +15,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth, productosPendientes = 0 } = usePage().props;
+    const user = auth.user;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
     return (
@@ -40,7 +41,16 @@ export default function AuthenticatedLayout({ header, children }) {
                             {/* Nav desktop */}
                             <div className="hidden sm:flex items-center gap-1">
                                 <NavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</NavLink>
-                                <NavLink href={route('productos.index')} active={route().current('productos.*')}>Productos</NavLink>
+                                <NavLink href={route('productos.index')} active={route().current('productos.*')}>
+                                    <span className="flex items-center gap-1.5">
+                                        Productos
+                                        {productosPendientes > 0 && (
+                                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-white text-xs font-bold leading-none">
+                                                {productosPendientes > 9 ? '9+' : productosPendientes}
+                                            </span>
+                                        )}
+                                    </span>
+                                </NavLink>
                                 <NavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</NavLink>
                                 <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</NavLink>
                             </div>

@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth } = usePage().props;
+    const { auth, productosPendientes } = usePage().props;
     const usuario = auth.user;
 
     return (
@@ -46,18 +46,41 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                            <div className="flex items-center">
-                                <div className="text-3xl mr-4">📦</div>
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-800">Productos</h4>
-                                    <p className="text-sm text-gray-500">Catálogo y precios</p>
+                        <div className={`overflow-hidden shadow-sm sm:rounded-lg p-6 ${productosPendientes > 0 ? 'bg-orange-50 border-2 border-orange-300' : 'bg-white'}`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className="text-3xl mr-4">📦</div>
+                                    <div>
+                                        <h4 className="text-base font-semibold text-gray-800">Productos</h4>
+                                        <p className="text-sm text-gray-500">Catálogo y precios</p>
+                                    </div>
                                 </div>
+                                {productosPendientes > 0 && (
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white text-sm font-bold shadow">
+                                        {productosPendientes}
+                                    </span>
+                                )}
                             </div>
-                            <div className="mt-4">
+                            {productosPendientes > 0 && (
+                                <div className="mt-3 bg-orange-100 border border-orange-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                                    <span className="text-orange-600 text-sm">⚠️</span>
+                                    <p className="text-sm font-medium text-orange-800">
+                                        {productosPendientes} producto{productosPendientes > 1 ? 's' : ''} esperando aprobación
+                                    </p>
+                                </div>
+                            )}
+                            <div className="mt-4 flex flex-wrap gap-3">
                                 <Link href={route('productos.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver productos →
                                 </Link>
+                                {productosPendientes > 0 && (
+                                    <Link
+                                        href={route('productos.index') + '?estado=inactivo'}
+                                        className="text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded-lg transition-colors"
+                                    >
+                                        Revisar pendientes →
+                                    </Link>
+                                )}
                             </div>
                         </div>
 

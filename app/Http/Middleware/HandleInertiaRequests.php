@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Producto;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -40,6 +41,11 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
+            // Productos pendientes de aprobación — disponible en toda la app
+            'productosPendientes' => fn () => $request->user()
+                ? Producto::where('estado', 'inactivo')->count()
+                : 0,
+
             // Flash messages compartidos con todas las páginas React
             'flash' => [
                 'exito'                => $request->session()->get('exito'),
