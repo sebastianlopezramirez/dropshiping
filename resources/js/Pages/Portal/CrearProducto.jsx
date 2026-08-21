@@ -29,7 +29,7 @@
 |
 */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 
@@ -46,7 +46,47 @@ export default function CrearProducto({ categorias }) {
         categoria_id:      '',
         peso_kg:           '',
         imagenes_nuevas:   [],
+        forzar_creacion:   0,   // 1 cuando el usuario confirma crear aunque ya exista
     });
+
+    // ─── VERIFICACIÓN DE NOMBRE DUPLICADO (tiempo real) ─────────────────
+    const [duplicados, setDuplicados]     = useState([]);   // productos similares encontrados
+    const [buscandoNombre, setBuscando]   = useState(false);
+    const [forzarCreacion, setForzar]     = useState(false); // usuario eligió "crear de todas formas"
+    const debounceRef = useRef(null);
+
+    // Cuando cambia el nombre, espera 500ms y consulta el backend
+    useEffect(() => {
+        setForzar(false); // resetear si el nombre cambia
+        setDuplicados([]);
+
+        if (data.nombre.length < 3) return;
+
+        clearTimeout(debounceRef.current);
+        setBuscando(true);
+
+        debounceRef.current = setTimeout(async () => {
+            try {
+                const resp = await fetch(
+                    route('portal.productos.verificar') + '?nombre=' + encodeURIComponent(data.nombre)
+                );
+                const json = await resp.json();
+                setDuplicados(json.existe ? json.productos : []);
+            } catch (_) {
+                // silencioso — no bloquear si falla la consulta
+            } finally {
+                setBuscando(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(debounceRef.current);
+    }, [data.nombre]);
+
+    // ─── ENVÍO ───────────────────────────────────────────────────────────
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post(route('portal.productos.guardar'), { forceFormData: true });
+    };
 
     // Preview de imágenes seleccionadas (URLs temporales en el browser)
     const [previews, setPreviews] = useState([]);
@@ -58,12 +98,6 @@ export default function CrearProducto({ categorias }) {
         setPreviews(archivos.map(f => URL.createObjectURL(f)));
     };
 
-    // ─── ENVIAR FORMULARIO ───────────────────────────────────────────────
-    // post() hace un POST a la ruta, Inertia maneja la redirección y errores
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        post(route('portal.productos.guardar'));
-    };
 
     return (
         <PortalLayout header={
@@ -107,14 +141,73 @@ export default function CrearProducto({ categorias }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Nombre del producto *
                                 </label>
-                                <input
-                                    type="text"
-                                    value={data.nombre}
-                                    onChange={e => setData('nombre', e.target.value)}
-                                    placeholder="Ej: Camiseta Premium Algodón Pima"
-                                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${errors.nombre ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={data.nombre}
+                                        onChange={e => setData('nombre', e.target.value)}
+                                        placeholder="Ej: Camiseta Premium Algodón Pima"
+                                        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-8
+                                            ${errors.nombre ? 'border-red-400 bg-red-50'
+                                            : duplicados.length > 0 && !forzarCreacion ? 'border-amber-400 bg-amber-50'
+                                            : 'border-gray-300'}`}
+                                    />
+                                    {buscandoNombre && (
+                                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">⏳</span>
+                                    )}
+                                </div>
+
+                                {/* Error del servidor */}
                                 {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
+
+                                {/* ── Banner de producto duplicado ─────────────────── */}
+                                {duplicados.length > 0 && !forzarCreacion && !errors.nombre && (
+                                    <div className="mt-2 bg-amber-50 border border-amber-300 rounded-lg p-3">
+                                        <p className="text-xs font-semibold text-amber-800 mb-2">
+                                            ⚠️ Ya existe un producto similar en el inventario:
+                                        </p>
+                                        <ul className="space-y-1.5 mb-3">
+                                            {duplicados.map(p => (
+                                                <li key={p.id} className="flex items-center justify-between text-xs bg-white border border-amber-200 rounded-lg px-3 py-2">
+                                                    <div>
+                                                        <span className="font-medium text-gray-800">{p.nombre}</span>
+                                                        <span className="ml-2 text-gray-400">SKU: {p.sku}</span>
+                                                        <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium
+                                                            ${p.estado === 'activo' ? 'bg-green-100 text-green-700'
+                                                            : p.estado === 'inactivo' ? 'bg-red-100 text-red-700'
+                                                            : 'bg-gray-100 text-gray-600'}`}>
+                                                            {p.estado}
+                                                        </span>
+                                                    </div>
+                                                    <a href={p.url_editar}
+                                                        className="ml-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 whitespace-nowrap">
+                                                        Editar →
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <div className="flex gap-2">
+                                            <button type="button"
+                                                onClick={() => {
+                                                    setForzar(true);
+                                                    setData('forzar_creacion', 1);
+                                                }}
+                                                className="flex-1 text-xs font-medium bg-white border border-amber-400 text-amber-700 hover:bg-amber-100 rounded-lg py-2 transition-colors">
+                                                Crear uno diferente de todas formas
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Confirmación cuando eligió forzar */}
+                                {forzarCreacion && (
+                                    <p className="mt-1.5 text-xs text-emerald-600 font-medium flex items-center gap-1">
+                                        ✅ Crearás un nuevo producto con este nombre.
+                                        <button type="button" onClick={() => { setForzar(false); setData('forzar_creacion', 0); }} className="text-gray-400 hover:text-gray-600 underline ml-1">
+                                            Cancelar
+                                        </button>
+                                    </p>
+                                )}
                             </div>
 
                             {/* Categoría */}

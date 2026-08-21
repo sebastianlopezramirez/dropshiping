@@ -369,6 +369,48 @@ class PortalController extends Controller
     |   Esto evita productos sin revisar, mal escritos o con precios incorrectos.
     |
     */
+    /*
+    |----------------------------------------------------------------------
+    | verificarNombre() — Busca productos con nombre similar (AJAX)
+    |----------------------------------------------------------------------
+    |
+    | ENTENDER — ¿Para qué sirve?
+    |
+    |   El frontend llama a este endpoint mientras el proveedor escribe el
+    |   nombre del producto. Si ya existe uno parecido, el frontend muestra
+    |   una advertencia ANTES de intentar guardar.
+    |
+    | PENSAR — Usamos ilike (case-insensitive) para detectar variaciones:
+    |   "reloj current", "Reloj Current", "RELOJ CURRENT" → mismo resultado.
+    |
+    */
+    public function verificarNombre(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $nombre = trim($request->nombre ?? '');
+
+        if (mb_strlen($nombre) < 3) {
+            return response()->json(['existe' => false, 'productos' => []]);
+        }
+
+        $productos = Producto::where('nombre', 'ilike', '%' . $nombre . '%')
+            ->select('id', 'nombre', 'sku', 'estado', 'precio_venta')
+            ->limit(3)
+            ->get()
+            ->map(fn($p) => [
+                'id'           => $p->id,
+                'nombre'       => $p->nombre,
+                'sku'          => $p->sku,
+                'estado'       => $p->estado,
+                'precio_venta' => $p->precio_venta,
+                'url_editar'   => route('productos.edit', $p->id),
+            ]);
+
+        return response()->json([
+            'existe'    => $productos->isNotEmpty(),
+            'productos' => $productos,
+        ]);
+    }
+
     public function crearProducto(): Response
     {
         $this->obtenerProveedor(); // Verificar que tiene perfil de proveedor
@@ -432,17 +474,21 @@ class PortalController extends Controller
         //   Porque necesitamos mostrar el producto existente en el mensaje
         //   para que el proveedor sepa exactamente cuál es el duplicado.
         //
-        $nombreNormalizado = Str::title(trim($datos['nombre']));
-        $duplicado = Producto::where('nombre', $nombreNormalizado)->first();
+        $nombreNormalizado  = Str::title(trim($datos['nombre']));
+        $forzarCreacion     = (bool) $request->input('forzar_creacion', false);
 
-        if ($duplicado) {
-            return back()
-                ->withErrors([
-                    'nombre' => "Ya existe un producto con ese nombre en el inventario. "
-                              . "SKU: {$duplicado->sku} — \"{$duplicado->nombre}\". "
-                              . "Si es el mismo producto, contacta al administrador.",
-                ])
-                ->withInput();
+        // ─── VALIDACIÓN: duplicado por nombre (solo si el proveedor no forzó) ──
+        if (!$forzarCreacion) {
+            $duplicado = Producto::where('nombre', 'ilike', $nombreNormalizado)->first();
+
+            if ($duplicado) {
+                return back()
+                    ->withErrors([
+                        'nombre' => "Ya existe: SKU {$duplicado->sku} — \"{$duplicado->nombre}\" ({$duplicado->estado}). "
+                                  . "Edítalo o confirma que deseas crear uno diferente.",
+                    ])
+                    ->withInput();
+            }
         }
 
         // ─── PASO 1: Crear producto en BD (transacción) ──────────────────────

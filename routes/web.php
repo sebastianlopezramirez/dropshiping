@@ -407,6 +407,8 @@ Route::middleware(['auth', 'verified', 'role:proveedor|super_administrador'])
     // no intente resolver 'crear' como un UUID de producto.
     Route::get('productos/crear', [PortalController::class, 'crearProducto'])
          ->name('productos.crear');
+    Route::get('productos/verificar-nombre', [PortalController::class, 'verificarNombre'])
+         ->name('productos.verificar');
     Route::post('productos', [PortalController::class, 'guardarProducto'])
          ->name('productos.guardar');
 
