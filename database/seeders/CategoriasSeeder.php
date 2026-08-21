@@ -45,137 +45,141 @@ class CategoriasSeeder extends Seeder
         */
         $categorias = [
 
-            // ─── 1. TECNOLOGÍA Y GADGETS ──────────────────────────────────
+            // ─── 1. TECNOLOGÍA ────────────────────────────────────────────
             [
-                'nombre' => 'Tecnología y Gadgets',
+                'nombre' => 'Tecnología',
                 'orden'  => 1,
                 'hijos'  => [
-                    ['nombre' => 'Accesorios para Celular',   'orden' => 1],
-                    ['nombre' => 'Audífonos y Parlantes',     'orden' => 2],
-                    ['nombre' => 'Cargadores y Cables',       'orden' => 3],
-                    ['nombre' => 'Gadgets Inteligentes',      'orden' => 4],
-                    ['nombre' => 'Cámaras y Accesorios',      'orden' => 5],
-                    ['nombre' => 'Relojes Inteligentes',      'orden' => 6],
+                    ['nombre' => 'Celulares y Smartphones',   'orden' => 1],
+                    ['nombre' => 'Computadores y Laptops',    'orden' => 2],
+                    ['nombre' => 'Tablets',                   'orden' => 3],
+                    ['nombre' => 'Audio y Audífonos',         'orden' => 4],
+                    ['nombre' => 'Smartwatches y Wearables',  'orden' => 5],
+                    ['nombre' => 'Televisores y Pantallas',   'orden' => 6],
+                    ['nombre' => 'Cámaras y Fotografía',      'orden' => 7],
+                    ['nombre' => 'Gaming',                    'orden' => 8],
+                    ['nombre' => 'Accesorios Tech',           'orden' => 9],
                 ],
             ],
 
-            // ─── 2. HOGAR Y COCINA ────────────────────────────────────────
+            // ─── 2. HOGAR ─────────────────────────────────────────────────
             [
-                'nombre' => 'Hogar y Cocina',
+                'nombre' => 'Hogar',
                 'orden'  => 2,
                 'hijos'  => [
-                    ['nombre' => 'Organización del Hogar',   'orden' => 1],
-                    ['nombre' => 'Utensilios de Cocina',     'orden' => 2],
-                    ['nombre' => 'Decoración',               'orden' => 3],
-                    ['nombre' => 'Iluminación',              'orden' => 4],
-                    ['nombre' => 'Limpieza del Hogar',       'orden' => 5],
-                    ['nombre' => 'Baño y Sanitarios',        'orden' => 6],
+                    ['nombre' => 'Decoración',                'orden' => 1],
+                    ['nombre' => 'Iluminación',               'orden' => 2],
+                    ['nombre' => 'Organización',              'orden' => 3],
+                    ['nombre' => 'Cocina y Comedor',          'orden' => 4],
+                    ['nombre' => 'Baño',                      'orden' => 5],
+                    ['nombre' => 'Dormitorio',                'orden' => 6],
+                    ['nombre' => 'Jardín y Exterior',         'orden' => 7],
                 ],
             ],
 
-            // ─── 3. SALUD Y BELLEZA ───────────────────────────────────────
+            // ─── 3. ELECTRODOMÉSTICOS ─────────────────────────────────────
             [
-                'nombre' => 'Salud y Belleza',
+                'nombre' => 'Electrodomésticos',
                 'orden'  => 3,
                 'hijos'  => [
-                    ['nombre' => 'Cuidado de la Piel',       'orden' => 1],
-                    ['nombre' => 'Maquillaje',               'orden' => 2],
-                    ['nombre' => 'Cuidado del Cabello',      'orden' => 3],
-                    ['nombre' => 'Masajes y Relajación',     'orden' => 4],
-                    ['nombre' => 'Fitness en Casa',          'orden' => 5],
-                    ['nombre' => 'Salud y Bienestar',        'orden' => 6],
+                    ['nombre' => 'Pequeños Electrodomésticos','orden' => 1],
+                    ['nombre' => 'Licuadoras y Freidoras',    'orden' => 2],
+                    ['nombre' => 'Cuidado de Ropa',           'orden' => 3],
+                    ['nombre' => 'Limpieza del Hogar',        'orden' => 4],
+                    ['nombre' => 'Climatización',             'orden' => 5],
                 ],
             ],
 
-            // ─── 4. MODA Y ACCESORIOS ─────────────────────────────────────
+            // ─── 4. MODA ──────────────────────────────────────────────────
             [
-                'nombre' => 'Moda y Accesorios',
+                'nombre' => 'Moda',
                 'orden'  => 4,
                 'hijos'  => [
-                    ['nombre' => 'Relojes',                  'orden' => 1],
-                    ['nombre' => 'Bolsos y Billeteras',      'orden' => 2],
-                    ['nombre' => 'Bisutería y Joyería',      'orden' => 3],
-                    ['nombre' => 'Gafas y Lentes',           'orden' => 4],
-                    ['nombre' => 'Gorras y Sombreros',       'orden' => 5],
-                    ['nombre' => 'Cinturones',               'orden' => 6],
+                    ['nombre' => 'Ropa Mujer',                'orden' => 1],
+                    ['nombre' => 'Ropa Hombre',               'orden' => 2],
+                    ['nombre' => 'Ropa Niños',                'orden' => 3],
+                    ['nombre' => 'Calzado',                   'orden' => 4],
+                    ['nombre' => 'Bolsos y Carteras',         'orden' => 5],
+                    ['nombre' => 'Accesorios de Moda',        'orden' => 6],
                 ],
             ],
 
-            // ─── 5. DEPORTES Y FITNESS ────────────────────────────────────
+            // ─── 5. BELLEZA Y CUIDADO PERSONAL ───────────────────────────
             [
-                'nombre' => 'Deportes y Fitness',
+                'nombre' => 'Belleza y Cuidado Personal',
                 'orden'  => 5,
                 'hijos'  => [
-                    ['nombre' => 'Ropa Deportiva',           'orden' => 1],
-                    ['nombre' => 'Accesorios de Entrenamiento', 'orden' => 2],
-                    ['nombre' => 'Ciclismo',                 'orden' => 3],
-                    ['nombre' => 'Yoga y Pilates',           'orden' => 4],
-                    ['nombre' => 'Natación',                 'orden' => 5],
-                    ['nombre' => 'Suplementos y Nutrición',  'orden' => 6],
+                    ['nombre' => 'Skincare',                  'orden' => 1],
+                    ['nombre' => 'Maquillaje',                'orden' => 2],
+                    ['nombre' => 'Cabello',                   'orden' => 3],
+                    ['nombre' => 'Perfumes y Fragancias',     'orden' => 4],
+                    ['nombre' => 'Cuidado Corporal',          'orden' => 5],
+                    ['nombre' => 'Herramientas de Belleza',   'orden' => 6],
                 ],
             ],
 
-            // ─── 6. BEBÉS Y NIÑOS ─────────────────────────────────────────
+            // ─── 6. DEPORTES Y FITNESS ────────────────────────────────────
             [
-                'nombre' => 'Bebés y Niños',
+                'nombre' => 'Deportes y Fitness',
                 'orden'  => 6,
                 'hijos'  => [
-                    ['nombre' => 'Juguetes Educativos',      'orden' => 1],
-                    ['nombre' => 'Ropa para Bebé',           'orden' => 2],
-                    ['nombre' => 'Accesorios para Bebé',     'orden' => 3],
-                    ['nombre' => 'Seguridad Infantil',       'orden' => 4],
-                    ['nombre' => 'Movilidad y Paseos',       'orden' => 5],
+                    ['nombre' => 'Equipos de Ejercicio',      'orden' => 1],
+                    ['nombre' => 'Ropa Deportiva',            'orden' => 2],
+                    ['nombre' => 'Suplementos y Nutrición',   'orden' => 3],
+                    ['nombre' => 'Outdoor y Camping',         'orden' => 4],
+                    ['nombre' => 'Ciclismo',                  'orden' => 5],
+                    ['nombre' => 'Yoga y Pilates',            'orden' => 6],
                 ],
             ],
 
-            // ─── 7. MASCOTAS ──────────────────────────────────────────────
+            // ─── 7. JUGUETES Y BEBÉS ──────────────────────────────────────
             [
-                'nombre' => 'Mascotas',
+                'nombre' => 'Juguetes y Bebés',
                 'orden'  => 7,
                 'hijos'  => [
-                    ['nombre' => 'Accesorios para Perros',   'orden' => 1],
-                    ['nombre' => 'Accesorios para Gatos',    'orden' => 2],
-                    ['nombre' => 'Alimentación',             'orden' => 3],
-                    ['nombre' => 'Juguetes para Mascotas',   'orden' => 4],
-                    ['nombre' => 'Higiene y Cuidado',        'orden' => 5],
+                    ['nombre' => 'Juguetes Educativos',       'orden' => 1],
+                    ['nombre' => 'Juegos de Mesa',            'orden' => 2],
+                    ['nombre' => 'Bebés (0-3 años)',          'orden' => 3],
+                    ['nombre' => 'Niños (4-12 años)',         'orden' => 4],
+                    ['nombre' => 'Accesorios Bebé',           'orden' => 5],
                 ],
             ],
 
-            // ─── 8. HERRAMIENTAS Y JARDÍN ─────────────────────────────────
+            // ─── 8. MASCOTAS ──────────────────────────────────────────────
             [
-                'nombre' => 'Herramientas y Jardín',
+                'nombre' => 'Mascotas',
                 'orden'  => 8,
                 'hijos'  => [
-                    ['nombre' => 'Herramientas Eléctricas',  'orden' => 1],
-                    ['nombre' => 'Herramientas Manuales',    'orden' => 2],
-                    ['nombre' => 'Jardín y Plantas',         'orden' => 3],
-                    ['nombre' => 'Seguridad del Hogar',      'orden' => 4],
-                    ['nombre' => 'Plomería y Electricidad',  'orden' => 5],
+                    ['nombre' => 'Perros',                    'orden' => 1],
+                    ['nombre' => 'Gatos',                     'orden' => 2],
+                    ['nombre' => 'Accesorios para Mascotas',  'orden' => 3],
+                    ['nombre' => 'Alimentos para Mascotas',   'orden' => 4],
+                    ['nombre' => 'Higiene y Cuidado',         'orden' => 5],
                 ],
             ],
 
-            // ─── 9. AUTOS Y MOTOS ─────────────────────────────────────────
+            // ─── 9. LIBROS Y ENTRETENIMIENTO ──────────────────────────────
             [
-                'nombre' => 'Autos y Motos',
+                'nombre' => 'Libros y Entretenimiento',
                 'orden'  => 9,
                 'hijos'  => [
-                    ['nombre' => 'Accesorios para Carro',   'orden' => 1],
-                    ['nombre' => 'Accesorios para Moto',    'orden' => 2],
-                    ['nombre' => 'Limpieza Vehicular',      'orden' => 3],
-                    ['nombre' => 'Organización del Vehículo','orden' => 4],
-                    ['nombre' => 'Seguridad Vehicular',     'orden' => 5],
+                    ['nombre' => 'Libros',                    'orden' => 1],
+                    ['nombre' => 'Música',                    'orden' => 2],
+                    ['nombre' => 'Películas y Series',        'orden' => 3],
+                    ['nombre' => 'Papelería y Oficina',       'orden' => 4],
                 ],
             ],
 
-            // ─── 10. OFICINA Y PAPELERÍA ──────────────────────────────────
+            // ─── 10. AUTOS Y MOTOS ────────────────────────────────────────
             [
-                'nombre' => 'Oficina y Papelería',
+                'nombre' => 'Autos y Motos',
                 'orden'  => 10,
                 'hijos'  => [
-                    ['nombre' => 'Escritorio y Organización', 'orden' => 1],
-                    ['nombre' => 'Papelería',                 'orden' => 2],
-                    ['nombre' => 'Impresión y Tóner',         'orden' => 3],
-                    ['nombre' => 'Sillas y Ergonomía',        'orden' => 4],
+                    ['nombre' => 'Accesorios para Carro',    'orden' => 1],
+                    ['nombre' => 'Accesorios para Moto',     'orden' => 2],
+                    ['nombre' => 'Limpieza Vehicular',       'orden' => 3],
+                    ['nombre' => 'Organización Vehicular',   'orden' => 4],
+                    ['nombre' => 'Seguridad Vehicular',      'orden' => 5],
                 ],
             ],
 
