@@ -69,9 +69,12 @@ export default function Dashboard() {
                                     <p className="text-sm text-gray-500">Órdenes y seguimiento</p>
                                 </div>
                             </div>
-                            <div className="mt-4">
+                            <div className="mt-4 flex flex-wrap gap-3">
                                 <Link href={route('pedidos.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
                                     Ver pedidos →
+                                </Link>
+                                <Link href={route('tarifas.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
+                                    🚚 Tarifas domicilio →
                                 </Link>
                             </div>
                         </div>
