@@ -278,12 +278,6 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                             </a>
                         </div>
 
-                        {/* Trust Badges */}
-                        <div className="mt-6 grid grid-cols-3 gap-3">
-                            <TrustBadge icon="🚚" label="Envío a todo Colombia" />
-                            <TrustBadge icon="💬" label="Atención por WhatsApp" />
-                            <TrustBadge icon="✅" label="Compra segura" />
-                        </div>
                     </div>
                 </div>
 
@@ -320,15 +314,6 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
     );
 }
 
-/* ─── TRUST BADGE ──────────────────────────────────────────────────── */
-function TrustBadge({ icon, label }) {
-    return (
-        <div className="flex flex-col items-center text-center bg-gray-900 rounded-xl p-3 border border-gray-800">
-            <span className="text-xl mb-1">{icon}</span>
-            <span className="text-xs text-gray-500 leading-tight">{label}</span>
-        </div>
-    );
-}
 
 /* ─── ICONO WHATSAPP ───────────────────────────────────────────────── */
 function IconWA({ className = 'w-5 h-5' }) {
