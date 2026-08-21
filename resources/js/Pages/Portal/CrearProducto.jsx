@@ -50,6 +50,16 @@ export default function CrearProducto({ categorias }) {
         forzar_creacion:   0,   // 1 cuando el usuario confirma crear aunque ya exista
     });
 
+    // ─── SKU PREVIEW (solo visual, el servidor genera el definitivo) ──────
+    const skuPreview = (() => {
+        const d = new Date();
+        const yy = String(d.getFullYear()).slice(-2);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const rand = Array.from({ length: 4 }, () => letras[Math.floor(Math.random() * 26)]).join('');
+        return `GS-${yy}${mm}-${rand}`;
+    })();
+
     // ─── CATEGORÍAS EN CASCADA ─────────────────────────────────────────
     const [categoriaPadreId, setCategoriaPadreId] = useState('');
 
@@ -173,6 +183,12 @@ export default function CrearProducto({ categorias }) {
 
                                 {/* Error del servidor */}
                                 {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
+
+                                {/* SKU preview — solo lectura */}
+                                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                    <span className="font-mono font-semibold text-emerald-600 tracking-wider">{skuPreview}</span>
+                                    <span className="text-gray-400">— código interno (se asigna automáticamente)</span>
+                                </div>
 
                                 {/* ── Banner de producto duplicado ─────────────────── */}
                                 {duplicados.length > 0 && !forzarCreacion && !errors.nombre && (

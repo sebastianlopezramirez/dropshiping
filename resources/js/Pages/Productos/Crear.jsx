@@ -48,7 +48,6 @@ export default function Crear({ categorias }) {
         stock_minimo:      5,
         categoria_id:      '',
         estado:            'borrador',
-        sku:               '',
         peso_kg:           '',
         meta_titulo:       '',
         meta_descripcion:  '',
@@ -68,6 +67,16 @@ export default function Crear({ categorias }) {
         setCategoriaPadreId(id);
         setData('categoria_id', '');
     };
+
+    // ─── SKU PREVIEW (solo visual, el servidor genera el definitivo) ──────
+    const skuPreview = (() => {
+        const d = new Date();
+        const yy = String(d.getFullYear()).slice(-2);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const rand = Array.from({ length: 4 }, () => letras[Math.floor(Math.random() * 26)]).join('');
+        return `GS-${yy}${mm}-${rand}`;
+    })();
 
     // ─── VERIFICACIÓN NOMBRE DUPLICADO (tiempo real) ─────────────────────
     const [duplicados, setDuplicados]   = useState([]);
@@ -267,19 +276,15 @@ export default function Crear({ categorias }) {
                             <Error campo="descripcion" />
                         </div>
 
-                        {/* SKU */}
+                        {/* SKU — solo lectura, se genera automáticamente */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 SKU (código interno)
                             </label>
-                            <input
-                                type="text"
-                                value={data.sku}
-                                onChange={e => setData('sku', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder="Ej: APPLE-IPH15PM-256-NG"
-                            />
-                            <Error campo="sku" />
+                            <div className="flex items-center gap-2 w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-500">
+                                <span className="font-mono font-semibold text-indigo-600 tracking-wider">{skuPreview}</span>
+                                <span className="text-xs text-gray-400">— se asignará automáticamente al guardar</span>
+                            </div>
                         </div>
                     </div>
 
