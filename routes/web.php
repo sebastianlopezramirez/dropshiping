@@ -207,6 +207,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
 
+        // Verificar nombre duplicado (AJAX — usado por el formulario de crear/editar)
+        Route::get('productos/verificar-nombre', [ProductoController::class, 'verificarNombre'])
+             ->name('productos.verificar-nombre');
+
         // Eliminar una imagen específica de un producto (Spatie Media Library)
         // DELETE /productos/{producto}/imagenes/{mediaId}
         Route::delete('productos/{producto}/imagenes/{mediaId}', [ProductoController::class, 'eliminarImagen'])

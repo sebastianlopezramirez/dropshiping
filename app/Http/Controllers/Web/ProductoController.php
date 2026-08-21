@@ -126,6 +126,40 @@ class ProductoController extends Controller
     | necesita: la lista de categorías para el selector.
     |
     */
+    /*
+    |----------------------------------------------------------------------
+    | verificarNombre() — Busca productos con nombre similar (AJAX)
+    |----------------------------------------------------------------------
+    */
+    public function verificarNombre(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $nombre    = trim($request->nombre ?? '');
+        $excluirId = $request->excluir_id; // al editar, excluimos el producto actual
+
+        if (mb_strlen($nombre) < 3) {
+            return response()->json(['existe' => false, 'productos' => []]);
+        }
+
+        $productos = Producto::where('nombre', 'ilike', '%' . $nombre . '%')
+            ->when($excluirId, fn($q) => $q->where('id', '!=', $excluirId))
+            ->select('id', 'nombre', 'sku', 'estado', 'precio_venta')
+            ->limit(3)
+            ->get()
+            ->map(fn($p) => [
+                'id'           => $p->id,
+                'nombre'       => $p->nombre,
+                'sku'          => $p->sku,
+                'estado'       => $p->estado,
+                'precio_venta' => $p->precio_venta,
+                'url_editar'   => route('productos.edit', $p->id),
+            ]);
+
+        return response()->json([
+            'existe'    => $productos->isNotEmpty(),
+            'productos' => $productos,
+        ]);
+    }
+
     public function create(): Response
     {
         $categorias = Categoria::activas()
@@ -180,9 +214,20 @@ class ProductoController extends Controller
             'imagenes_nuevas.*' => 'image|max:5120|mimes:jpeg,jpg,png,webp',
         ]);
 
+        // ─── VALIDACIÓN: nombre duplicado (si no se forzó) ───────────────
+        $nombreNormalizado = Str::title(trim($datos['nombre']));
+        if (!$request->boolean('forzar_creacion')) {
+            $duplicado = Producto::where('nombre', 'ilike', $nombreNormalizado)
+                ->when($request->excluir_id, fn($q) => $q->where('id', '!=', $request->excluir_id))
+                ->first();
+            if ($duplicado) {
+                return back()
+                    ->withErrors(['nombre' => "Ya existe: SKU {$duplicado->sku} — \"{$duplicado->nombre}\" ({$duplicado->estado})."])
+                    ->withInput();
+            }
+        }
+
         // ─── PASO 1: Crear el producto en BD (transacción) ────────────────
-        // El producto DEBE existir antes de subir media — Spatie necesita el
-        // 'id' del modelo para crear el registro en la tabla 'media'.
         $producto = null;
 
         DB::transaction(function () use ($datos, &$producto) {

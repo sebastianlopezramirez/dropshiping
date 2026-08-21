@@ -21,7 +21,7 @@
 |
 */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -51,8 +51,33 @@ export default function Crear({ categorias }) {
         peso_kg:           '',
         meta_titulo:       '',
         meta_descripcion:  '',
-        imagenes_nuevas:   [],  // archivos seleccionados por el usuario
+        imagenes_nuevas:   [],
+        forzar_creacion:   0,
     });
+
+    // ─── VERIFICACIÓN NOMBRE DUPLICADO (tiempo real) ─────────────────────
+    const [duplicados, setDuplicados]   = useState([]);
+    const [buscandoNombre, setBuscando] = useState(false);
+    const [forzarCreacion, setForzar]   = useState(false);
+    const debounceRef = useRef(null);
+
+    useEffect(() => {
+        setForzar(false);
+        setDuplicados([]);
+        if (data.nombre.length < 3) return;
+
+        clearTimeout(debounceRef.current);
+        setBuscando(true);
+        debounceRef.current = setTimeout(async () => {
+            try {
+                const resp = await fetch(route('productos.verificar-nombre') + '?nombre=' + encodeURIComponent(data.nombre));
+                const json = await resp.json();
+                setDuplicados(json.existe ? json.productos : []);
+            } catch (_) {}
+            finally { setBuscando(false); }
+        }, 500);
+        return () => clearTimeout(debounceRef.current);
+    }, [data.nombre]);
 
     // Preview local de las imágenes antes de subir
     // URL.createObjectURL() crea una URL temporal para mostrar la imagen
@@ -132,16 +157,71 @@ export default function Crear({ categorias }) {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Nombre del producto <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
-                                value={data.nombre}
-                                onChange={e => {
-                                    const v = e.target.value;
-                                    setData('nombre', v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
-                                }}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder="Ej: iPhone 15 Pro Max 256GB"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={data.nombre}
+                                    onChange={e => {
+                                        const v = e.target.value;
+                                        setData('nombre', v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+                                    }}
+                                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8
+                                        ${errors.nombre ? 'border-red-400 bg-red-50'
+                                        : duplicados.length > 0 && !forzarCreacion ? 'border-amber-400 bg-amber-50'
+                                        : 'border-gray-300'}`}
+                                    placeholder="Ej: iPhone 15 Pro Max 256GB"
+                                />
+                                {buscandoNombre && (
+                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs animate-pulse">⏳</span>
+                                )}
+                            </div>
+
+                            {errors.nombre && <p className="mt-1 text-xs text-red-600">{errors.nombre}</p>}
+
+                            {/* Banner duplicado */}
+                            {duplicados.length > 0 && !forzarCreacion && !errors.nombre && (
+                                <div className="mt-2 bg-amber-50 border border-amber-300 rounded-lg p-3">
+                                    <p className="text-xs font-semibold text-amber-800 mb-2">
+                                        ⚠️ Ya existe un producto similar en el inventario:
+                                    </p>
+                                    <ul className="space-y-1.5 mb-3">
+                                        {duplicados.map(p => (
+                                            <li key={p.id} className="flex items-center justify-between text-xs bg-white border border-amber-200 rounded-lg px-3 py-2">
+                                                <div>
+                                                    <span className="font-medium text-gray-800">{p.nombre}</span>
+                                                    <span className="ml-2 text-gray-400">SKU: {p.sku}</span>
+                                                    <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs font-medium
+                                                        ${p.estado === 'activo' ? 'bg-green-100 text-green-700'
+                                                        : p.estado === 'inactivo' ? 'bg-red-100 text-red-700'
+                                                        : 'bg-gray-100 text-gray-600'}`}>
+                                                        {p.estado}
+                                                    </span>
+                                                </div>
+                                                <a href={p.url_editar}
+                                                    className="ml-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+                                                    Editar →
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button type="button"
+                                        onClick={() => { setForzar(true); setData('forzar_creacion', 1); }}
+                                        className="w-full text-xs font-medium bg-white border border-amber-400 text-amber-700 hover:bg-amber-100 rounded-lg py-2 transition-colors">
+                                        Crear uno diferente de todas formas
+                                    </button>
+                                </div>
+                            )}
+
+                            {forzarCreacion && (
+                                <p className="mt-1.5 text-xs text-green-600 font-medium flex items-center gap-1">
+                                    ✅ Crearás un nuevo producto con este nombre.
+                                    <button type="button"
+                                        onClick={() => { setForzar(false); setData('forzar_creacion', 0); }}
+                                        className="text-gray-400 hover:text-gray-600 underline ml-1">
+                                        Cancelar
+                                    </button>
+                                </p>
+                            )
                             <Error campo="nombre" />
                         </div>
 
