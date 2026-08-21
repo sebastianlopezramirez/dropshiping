@@ -204,12 +204,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         |   Con esto:    /productos/{producto} (igual, pero explícito en español)
         |
         */
-        Route::resource('productos', ProductoController::class)
-             ->parameters(['productos' => 'producto']);
-
-        // Verificar nombre duplicado (AJAX — usado por el formulario de crear/editar)
+        // !! DEBE ir ANTES del resource para no ser capturada por {producto} !!
         Route::get('productos/verificar-nombre', [ProductoController::class, 'verificarNombre'])
              ->name('productos.verificar-nombre');
+
+        Route::resource('productos', ProductoController::class)
+             ->parameters(['productos' => 'producto']);
 
         // Eliminar una imagen específica de un producto (Spatie Media Library)
         // DELETE /productos/{producto}/imagenes/{mediaId}
