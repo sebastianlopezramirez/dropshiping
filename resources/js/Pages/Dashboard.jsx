@@ -22,7 +22,7 @@ export default function Dashboard() {
                         </h3>
                         <p className="text-gray-600 mt-1">Panel de control — Dropshipping Colombia</p>
                         <div className="mt-3">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
                                 Rol: {usuario?.rol?.replace(/_/g, ' ')}
                             </span>
                         </div>
@@ -40,7 +40,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('usuarios.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('usuarios.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver usuarios →
                                 </Link>
                             </div>
@@ -55,7 +55,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('productos.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('productos.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver productos →
                                 </Link>
                             </div>
@@ -70,7 +70,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4 flex flex-wrap gap-3">
-                                <Link href={route('pedidos.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('pedidos.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver pedidos →
                                 </Link>
                                 <Link href={route('tarifas.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
@@ -88,7 +88,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('reportes.financiero')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('reportes.financiero')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver finanzas →
                                 </Link>
                             </div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('portal.dashboard')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('portal.dashboard')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ir al portal →
                                 </Link>
                             </div>
@@ -118,7 +118,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4 flex flex-wrap gap-3">
-                                <Link href={route('cupones.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('cupones.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Cupones →
                                 </Link>
                                 <Link href={route('campanas.index')} className="text-purple-600 hover:text-purple-900 text-sm font-medium">
@@ -141,7 +141,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('analytics.dashboard')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('analytics.dashboard')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver analytics →
                                 </Link>
                             </div>
@@ -157,7 +157,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Link href={route('tienda.index')} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                <Link href={route('tienda.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver tienda →
                                 </Link>
                             </div>

@@ -1,18 +1,10 @@
 /*
 |--------------------------------------------------------------------------
-| LAYOUT: PortalLayout
+| LAYOUT: PortalLayout — Portal de Proveedores
 |--------------------------------------------------------------------------
 |
-| Layout exclusivo del Portal de Proveedores.
-| Se diferencia del admin por:
-|   - Color de acento: VERDE (admin usa índigo/morado)
-|   - Navbar con logo "Portal Proveedor"
-|   - Navegación simplificada: solo las 4 secciones del proveedor
-|
-| Uso: wrappear las páginas del portal
-|   <PortalLayout header={<h2>Mi Dashboard</h2>}>
-|     { contenido }
-|   </PortalLayout>
+| Identidad visual: navbar navy oscuro con badge naranja "Portal".
+| Se diferencia del admin visualmente pero mantiene la misma identidad de marca.
 |
 */
 
@@ -24,37 +16,41 @@ export default function PortalLayout({ header, children }) {
     const { auth } = usePage().props;
     const [menuAbierto, setMenuAbierto] = useState(false);
 
-    // Navegación del portal — solo las secciones del proveedor
     const navItems = [
-        { href: route('portal.dashboard'),  label: 'Dashboard',   icono: '📊' },
+        { href: route('portal.dashboard'),  label: 'Dashboard',    icono: '📊' },
         { href: route('portal.productos'),  label: 'Mis Productos', icono: '📦' },
-        { href: route('portal.pedidos'),    label: 'Pedidos',     icono: '🛒' },
-        { href: route('portal.pagos'),      label: 'Mis Pagos',   icono: '💰' },
+        { href: route('portal.pedidos'),    label: 'Pedidos',      icono: '🛒' },
+        { href: route('portal.pagos'),      label: 'Mis Pagos',    icono: '💰' },
     ];
 
-    const cerrarSesion = () => {
-        router.post(route('logout'));
-    };
+    const cerrarSesion = () => router.post(route('logout'));
 
-    // ¿La URL actual coincide con el href? → resalta el link activo
-    const esActivo = (href) => window.location.pathname.startsWith(new URL(href, window.location.origin).pathname);
+    const esActivo = (href) =>
+        window.location.pathname.startsWith(new URL(href, window.location.origin).pathname);
 
     return (
         <div className="min-h-screen bg-gray-50">
 
-            {/* ── NAVBAR ─────────────────────────────────────────────── */}
-            <nav className="bg-white border-b border-gray-100 shadow-sm">
+            {/* ── NAVBAR ─────────────────────────────────────────────────── */}
+            <nav className="bg-gray-950 border-b border-gray-800 sticky top-0 z-50 shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
 
-                        {/* Logo / Marca */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-bold">P</span>
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-gray-900 leading-tight">Portal Proveedor</p>
-                                <p className="text-xs text-gray-400 leading-tight">{auth?.user?.nombre ?? 'Proveedor'}</p>
+                        {/* Logo + badge Portal */}
+                        <div className="flex items-center gap-3 shrink-0">
+                            <Link href={route('tienda.index')} className="group">
+                                <img
+                                    src="/logo.webp"
+                                    alt="GadGet Store"
+                                    className="h-9 w-auto group-hover:scale-105 transition-transform duration-200"
+                                    onError={e => { e.target.style.display = 'none'; }}
+                                />
+                            </Link>
+                            <div className="hidden sm:flex flex-col leading-none">
+                                <span className="text-xs font-bold text-white tracking-wide">GadGet Store</span>
+                                <span className="text-xs font-semibold text-orange-400">
+                                    Portal Proveedor
+                                </span>
                             </div>
                         </div>
 
@@ -64,10 +60,10 @@ export default function PortalLayout({ header, children }) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5
                                         ${esActivo(item.href)
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                            ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent'
                                         }`}
                                 >
                                     <span>{item.icono}</span>
@@ -76,23 +72,39 @@ export default function PortalLayout({ header, children }) {
                             ))}
                         </div>
 
-                        {/* Botón cerrar sesión */}
-                        <div className="flex items-center gap-3">
+                        {/* Usuario + acciones */}
+                        <div className="flex items-center gap-2">
+                            {/* Nombre usuario */}
+                            <div className="hidden md:flex items-center gap-2">
+                                <span className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                    {(auth?.user?.nombre || 'P').charAt(0).toUpperCase()}
+                                </span>
+                                <span className="text-sm text-gray-400 max-w-32 truncate">
+                                    {auth?.user?.nombre ?? 'Proveedor'}
+                                </span>
+                            </div>
+
                             {/* Link al admin si es super_admin */}
                             {auth?.user?.roles?.some(r => r.name === 'super_administrador') && (
-                                <Link href={route('dashboard')}
-                                    className="hidden md:inline-flex text-xs text-gray-400 hover:text-indigo-600 transition">
-                                    ← Admin
+                                <Link
+                                    href={route('dashboard')}
+                                    className="hidden md:inline-flex text-xs text-gray-500 hover:text-orange-400 transition-colors border border-gray-700 rounded-lg px-2 py-1.5"
+                                >
+                                    Admin →
                                 </Link>
                             )}
-                            <button onClick={cerrarSesion}
-                                className="text-sm text-gray-500 hover:text-red-600 transition px-3 py-2 rounded-lg hover:bg-red-50">
+
+                            <button
+                                onClick={cerrarSesion}
+                                className="hidden md:inline-flex text-sm text-gray-500 hover:text-red-400 transition-colors
+                                    border border-gray-700 rounded-lg px-3 py-1.5 hover:border-red-800 hover:bg-red-900/20"
+                            >
                                 Salir
                             </button>
 
                             {/* Hamburger mobile */}
                             <button
-                                className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                                className="md:hidden p-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
                                 onClick={() => setMenuAbierto(!menuAbierto)}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,36 +117,41 @@ export default function PortalLayout({ header, children }) {
 
                     {/* Menú mobile */}
                     {menuAbierto && (
-                        <div className="md:hidden pb-3 space-y-1">
+                        <div className="md:hidden border-t border-gray-800 pb-3 pt-2 space-y-1">
                             {navItems.map(item => (
                                 <Link key={item.href} href={item.href}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                                         ${esActivo(item.href)
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'text-gray-600 hover:bg-gray-50'
+                                            ? 'bg-orange-500/10 text-orange-400'
+                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                         }`}
                                     onClick={() => setMenuAbierto(false)}>
                                     <span>{item.icono}</span>{item.label}
                                 </Link>
                             ))}
+                            <div className="border-t border-gray-800 pt-3 mt-2 flex items-center justify-between px-3">
+                                <span className="text-sm text-gray-400">{auth?.user?.nombre ?? 'Proveedor'}</span>
+                                <button onClick={cerrarSesion}
+                                    className="text-sm text-red-400 hover:text-red-300 transition-colors">
+                                    Salir
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
             </nav>
 
-            {/* ── HEADER DE PÁGINA ───────────────────────────────────── */}
+            {/* ── HEADER DE PÁGINA ───────────────────────────────────────── */}
             {header && (
-                <header className="bg-white border-b border-gray-100">
+                <header className="bg-white border-b border-gray-200 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                         {header}
                     </div>
                 </header>
             )}
 
-            {/* ── CONTENIDO ──────────────────────────────────────────── */}
-            <main>
-                {children}
-            </main>
+            {/* ── CONTENIDO ──────────────────────────────────────────────── */}
+            <main>{children}</main>
         </div>
     );
 }
