@@ -14,6 +14,7 @@
 import { useForm, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { capitalize } from '@/utils/texto';
 
 export default function Crear({ roles }) {
     /*
@@ -84,7 +85,7 @@ export default function Crear({ roles }) {
                                 <input
                                     type="text"
                                     value={data.nombre}
-                                    onChange={(e) => setData('nombre', e.target.value)}
+                                    onChange={(e) => setData('nombre', capitalize(e.target.value))}
                                     // setData('campo', valor) actualiza data.nombre
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                                     placeholder="Ej: Juan Carlos Pérez"

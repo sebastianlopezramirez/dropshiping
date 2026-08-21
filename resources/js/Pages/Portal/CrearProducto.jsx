@@ -32,6 +32,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
+import { capitalize } from '@/utils/texto';
 
 export default function CrearProducto({ categorias }) {
 
@@ -158,7 +159,7 @@ export default function CrearProducto({ categorias }) {
                                     <input
                                         type="text"
                                         value={data.nombre}
-                                        onChange={e => setData('nombre', e.target.value)}
+                                        onChange={e => setData('nombre', capitalize(e.target.value))}
                                         placeholder="Ej: Camiseta Premium Algodón Pima"
                                         className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 pr-8
                                             ${errors.nombre ? 'border-red-400 bg-red-50'
@@ -274,7 +275,7 @@ export default function CrearProducto({ categorias }) {
                                 <textarea
                                     rows={2}
                                     value={data.descripcion_corta}
-                                    onChange={e => setData('descripcion_corta', e.target.value)}
+                                    onChange={e => setData('descripcion_corta', capitalize(e.target.value))}
                                     placeholder="Resumen breve que aparece en la lista de productos..."
                                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none ${errors.descripcion_corta ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
                                 />

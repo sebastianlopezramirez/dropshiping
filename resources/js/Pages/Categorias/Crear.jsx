@@ -27,7 +27,7 @@ function Campo({ label, name, type = 'text', placeholder = '', nota = '', requir
                 onChange={e => {
                     const val = e.target.value;
                     onChange(name, type === 'text' && val.length > 0
-                        ? val.charAt(0).toUpperCase() + val.slice(1)
+                        ? val.replace(/(^\s*\S|\s\S)/g, c => c.toUpperCase())
                         : val);
                 }}
                 placeholder={placeholder}

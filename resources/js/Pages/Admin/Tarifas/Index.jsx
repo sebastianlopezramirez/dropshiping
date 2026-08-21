@@ -16,6 +16,7 @@
 
 import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
+import { capitalize } from '@/utils/texto';
 
 const cop = (n) => Number(n).toLocaleString('es-CO', {
     style: 'currency', currency: 'COP', maximumFractionDigits: 0
@@ -92,7 +93,7 @@ export default function TarifasIndex({ tarifas }) {
                             <input
                                 type="text"
                                 value={crear.data.nombre}
-                                onChange={e => crear.setData('nombre', e.target.value)}
+                                onChange={e => crear.setData('nombre', capitalize(e.target.value))}
                                 placeholder="Ej: Rionegro"
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
@@ -192,7 +193,7 @@ function TarifaTable({ titulo, tarifas, editando, editar, onAbrirEditar, onEdita
                                             <input
                                                 type="text"
                                                 value={editar.data.nombre}
-                                                onChange={e => editar.setData('nombre', e.target.value)}
+                                                onChange={e => editar.setData('nombre', capitalize(e.target.value))}
                                                 className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-orange-500"
                                             />
                                             <select

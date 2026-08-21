@@ -12,6 +12,7 @@
 import { useForm, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { capitalize } from '@/utils/texto';
 
 export default function Editar({ usuario, roles }) {
     /*
@@ -69,7 +70,7 @@ export default function Editar({ usuario, roles }) {
                                     value={data.nombre}
                                     onChange={e => {
                                         const v = e.target.value;
-                                        setData('nombre', v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+                                        setData('nombre', capitalize(v));
                                     }}
                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
                                 />

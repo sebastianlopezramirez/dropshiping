@@ -20,6 +20,7 @@
 import { useState } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { capitalize } from '@/utils/texto';
 
 export default function Editar({ producto, categorias }) {
 
@@ -135,7 +136,7 @@ export default function Editar({ producto, categorias }) {
                                 value={data.nombre}
                                 onChange={e => {
                                     const v = e.target.value;
-                                    setData('nombre', v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+                                    setData('nombre', capitalize(v));
                                 }}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
@@ -149,7 +150,7 @@ export default function Editar({ producto, categorias }) {
                             <input
                                 type="text"
                                 value={data.descripcion_corta}
-                                onChange={e => setData('descripcion_corta', e.target.value)}
+                                onChange={e => setData('descripcion_corta', capitalize(e.target.value))}
                                 maxLength={300}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />

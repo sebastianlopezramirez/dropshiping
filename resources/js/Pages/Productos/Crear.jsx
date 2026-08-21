@@ -24,6 +24,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { capitalize } from '@/utils/texto';
 
 export default function Crear({ categorias }) {
 
@@ -174,10 +175,7 @@ export default function Crear({ categorias }) {
                                 <input
                                     type="text"
                                     value={data.nombre}
-                                    onChange={e => {
-                                        const v = e.target.value;
-                                        setData('nombre', v.length > 0 ? v.charAt(0).toUpperCase() + v.slice(1) : v);
-                                    }}
+                                    onChange={e => setData('nombre', capitalize(e.target.value))}
                                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-8
                                         ${errors.nombre ? 'border-red-400 bg-red-50'
                                         : duplicados.length > 0 && !forzarCreacion ? 'border-amber-400 bg-amber-50'
@@ -246,7 +244,7 @@ export default function Crear({ categorias }) {
                             <input
                                 type="text"
                                 value={data.descripcion_corta}
-                                onChange={e => setData('descripcion_corta', e.target.value)}
+                                onChange={e => setData('descripcion_corta', capitalize(e.target.value))}
                                 maxLength={300}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="Resumen en 1-2 líneas para tarjetas de producto"
