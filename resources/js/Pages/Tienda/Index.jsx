@@ -9,7 +9,7 @@ import { useState } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
 import { useCart } from '@/Context/CartContext';
 
-export default function Index({ productos, categorias, filtros = {}, categoriaActual = null }) {
+export default function Index({ productos, categorias, filtros = {}, categoriaActual = null, productosNuevos = [] }) {
 
     const [busqueda, setBusqueda]   = useState(filtros.q          || '');
     const [precioMin, setPrecioMin] = useState(filtros.precio_min || '');
@@ -50,7 +50,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         src="/home-page-gadget-store.webp"
                         alt="GadGet Store — Variedad en una sola tienda"
                         className="w-full object-cover"
-                        style={{ maxHeight: '320px' }}
+                        style={{ maxHeight: '240px' }}
                     />
                 </div>
             )}
@@ -115,6 +115,36 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ── PRODUCTOS NUEVOS ──────────────────────────────────────── */}
+            {mostrandoHero && productosNuevos.length > 0 && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+                    {/* Encabezado */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <span className="w-1 h-6 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></span>
+                            <h2 className="text-lg sm:text-xl font-bold text-white">Productos Nuevos</h2>
+                            <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">NEW</span>
+                        </div>
+                        <button
+                            onClick={() => aplicarFiltros()}
+                            className="text-sm text-orange-400 hover:text-orange-300 font-medium transition-colors"
+                        >
+                            Ver todos →
+                        </button>
+                    </div>
+
+                    {/* Grid — 2 columnas en móvil, 4 en desktop */}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                        {productosNuevos.map(producto => (
+                            <TarjetaProducto key={producto.id} producto={producto} cop={cop} />
+                        ))}
+                    </div>
+
+                    {/* Separador */}
+                    <div className="mt-8 border-t border-gray-800"></div>
+                </section>
             )}
 
             {/* ── CONTENIDO ─────────────────────────────────────────────── */}

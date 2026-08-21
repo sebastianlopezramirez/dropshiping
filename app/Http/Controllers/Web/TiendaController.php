@@ -94,10 +94,22 @@ class TiendaController extends Controller
             ->select('id', 'nombre', 'slug')
             ->get();
 
+        // 4 productos más recientes para la sección "Nuevos" (solo sin filtros)
+        $hayFiltros = $request->filled('q') || $request->filled('categoria')
+                   || $request->filled('precio_min') || $request->filled('precio_max');
+
+        $productosNuevos = $hayFiltros ? [] : Producto::with(['categoria', 'media'])
+            ->activos()
+            ->conStock()
+            ->orderBy('creado_en', 'desc')
+            ->limit(4)
+            ->get();
+
         return Inertia::render('Tienda/Index', [
-            'productos'  => $productos,
-            'categorias' => $categorias,
-            'filtros'    => $request->only(['q', 'categoria', 'precio_min', 'precio_max']),
+            'productos'       => $productos,
+            'categorias'      => $categorias,
+            'filtros'         => $request->only(['q', 'categoria', 'precio_min', 'precio_max']),
+            'productosNuevos' => $productosNuevos,
         ]);
     }
 
