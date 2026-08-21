@@ -426,31 +426,58 @@ class PortalController extends Controller
             'imagenes_nuevas.*'   => ['image', 'max:2048'],
         ]);
 
+        // ─── VALIDACIÓN: ¿Ya existe un producto con ese nombre? ─────────────
+        //
+        // ENTENDER — ¿Por qué aquí y no en validate()?
+        //   Porque necesitamos mostrar el producto existente en el mensaje
+        //   para que el proveedor sepa exactamente cuál es el duplicado.
+        //
+        $nombreNormalizado = Str::title(trim($datos['nombre']));
+        $duplicado = Producto::where('nombre', $nombreNormalizado)->first();
+
+        if ($duplicado) {
+            return back()
+                ->withErrors([
+                    'nombre' => "Ya existe un producto con ese nombre en el inventario. "
+                              . "SKU: {$duplicado->sku} — \"{$duplicado->nombre}\". "
+                              . "Si es el mismo producto, contacta al administrador.",
+                ])
+                ->withInput();
+        }
+
         // ─── PASO 1: Crear producto en BD (transacción) ──────────────────────
         // Las imágenes van FUERA de la transacción — son I/O de red (Cloudflare R2).
         // Si falla la subida, el producto queda creado sin imágenes (aceptable),
         // en vez de revertir todo por un error de red.
         $producto = null;
 
-        DB::transaction(function () use ($datos, $proveedor, &$producto) {
-            // Capitalizar nombre: 'camiseta premium' → 'Camiseta Premium'
-            $nombre = Str::title($datos['nombre']);
-
+        DB::transaction(function () use ($datos, $proveedor, &$producto, $nombreNormalizado) {
             // Generar slug único a partir del nombre
-            $slug     = Str::slug($nombre);
+            $slug     = Str::slug($nombreNormalizado);
             $slugBase = $slug;
             $contador = 2;
             while (Producto::where('slug', $slug)->exists()) {
                 $slug = $slugBase . '-' . $contador++;
             }
 
-            // SKU placeholder: PROV-{primeros 8 chars del proveedor_id}-timestamp
-            // El admin puede cambiarlo después desde /productos/{id}/editar
-            $skuPlaceholder = 'PROV-' . strtoupper(substr($proveedor->id, 0, 8)) . '-' . now()->format('ymdHi');
+            // ─── GENERAR SKU AUTOMÁTICO ──────────────────────────────────────
+            //
+            // ENTENDER — Formato: GS-{AAMM}-{4 chars aleatorios en mayúsculas}
+            //   GS   = GadGet Store
+            //   AAMM = año y mes (ej: 2608 = agosto 2026)
+            //   XXXX = 4 caracteres aleatorios para garantizar unicidad
+            //
+            // PENSAR — ¿Por qué aleatorio y no secuencial?
+            //   Secuencial requiere un lock en BD para no duplicar.
+            //   Aleatorio con 4 chars = 36^4 = 1.6 millones de combinaciones.
+            //   Con el bucle while garantizamos que no colisione.
+            //
+            $sku = $this->generarSkuUnico();
+
 
             // Crear el producto → nace INACTIVO
             $producto = Producto::create([
-                'nombre'            => $nombre,
+                'nombre'            => $nombreNormalizado,
                 'slug'              => $slug,
                 'descripcion_corta' => $datos['descripcion_corta'] ?? null,
                 'descripcion'       => $datos['descripcion'] ?? null,
@@ -460,7 +487,7 @@ class PortalController extends Controller
                 'stock_minimo'      => 1,
                 'categoria_id'      => $datos['categoria_id'],
                 'estado'            => 'inactivo', // SIEMPRE — el admin activa
-                'sku'               => $skuPlaceholder,
+                'sku'               => $sku,
                 'peso_kg'           => $datos['peso_kg'] ?? null,
             ]);
 
@@ -510,6 +537,37 @@ class PortalController extends Controller
     |   Agrupamos por mes para mostrar el historial.
     |
     */
+    /*
+    |----------------------------------------------------------------------
+    | generarSkuUnico() — Genera un SKU legible y único para cada producto
+    |----------------------------------------------------------------------
+    |
+    | ENTENDER — Formato: GS-{AAMM}-{XXXX}
+    |
+    |   GS   = GadGet Store
+    |   AAMM = año y mes en 4 dígitos (ej: 2608 = agosto 2026)
+    |   XXXX = 4 caracteres aleatorios en mayúsculas (letras + números)
+    |
+    | Ejemplo: GS-2608-K4X2, GS-2608-AB3Y
+    |
+    | PENSAR — El bucle while garantiza que no se repita.
+    |   Con 36^4 = 1.6M combinaciones, la colisión es prácticamente imposible,
+    |   pero el bucle es la red de seguridad.
+    |
+    */
+    private function generarSkuUnico(): string
+    {
+        $prefijo = 'GS-' . now()->format('ym') . '-';
+
+        do {
+            // 4 caracteres aleatorios: letras mayúsculas A-Z y números 0-9
+            $aleatorio = strtoupper(Str::random(4));
+            $sku = $prefijo . $aleatorio;
+        } while (Producto::where('sku', $sku)->exists());
+
+        return $sku;
+    }
+
     public function pagos(): Response
     {
         $proveedor    = $this->obtenerProveedor();
