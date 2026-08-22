@@ -39,6 +39,8 @@ export default function Index({ productos, categorias, filtros }) {
     const [modalImportar, setModalImportar] = useState(false);
     const [archivoCsv, setArchivoCsv]       = useState(null);
     const [importando, setImportando]        = useState(false);
+    const [previsualizando, setPrevisualizando] = useState(false);
+    const [preview, setPreview]             = useState(null); // { filas, validas, invalidas, total }
     const inputCsvRef = useRef(null);
 
     /*
@@ -57,6 +59,28 @@ export default function Index({ productos, categorias, filtros }) {
     const [categoriaId, setCategoriaId] = useState(filtros.categoria_id || '');
     const [estado, setEstado]           = useState(filtros.estado || '');
 
+    // ── Función: previsualizar archivo ─────────────────────────────────
+    const previsualizarArchivo = async (archivo) => {
+        if (!archivo) return;
+        setPrevisualizando(true);
+        setPreview(null);
+        const formData = new FormData();
+        formData.append('archivo', archivo);
+        try {
+            const resp = await fetch(route('productos.importar.preview'), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: formData,
+            });
+            const json = await resp.json();
+            setPreview(json);
+        } catch (e) {
+            setPreview({ error: 'No se pudo leer el archivo.' });
+        } finally {
+            setPrevisualizando(false);
+        }
+    };
+
     // ── Función: enviar CSV al servidor ────────────────────────────────
     const enviarCsv = () => {
         if (!archivoCsv) return;
@@ -70,6 +94,7 @@ export default function Index({ productos, categorias, filtros }) {
             onSuccess: () => {
                 setModalImportar(false);
                 setArchivoCsv(null);
+                setPreview(null);
                 setImportando(false);
                 if (inputCsvRef.current) inputCsvRef.current.value = '';
             },
@@ -435,73 +460,147 @@ export default function Index({ productos, categorias, filtros }) {
              *   forceFormData: true le dice a Inertia que use FormData.
              */}
             {modalImportar && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl my-8">
 
-                        {/* Encabezado del modal */}
+                        {/* Encabezado */}
                         <div className="flex items-center justify-between p-5 border-b">
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Importar Productos (Excel o CSV)
                             </h3>
                             <button
-                                onClick={() => { setModalImportar(false); setArchivoCsv(null); }}
+                                onClick={() => { setModalImportar(false); setArchivoCsv(null); setPreview(null); }}
                                 className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                            >
-                                ×
-                            </button>
+                            >×</button>
                         </div>
 
-                        {/* Cuerpo del modal */}
+                        {/* Cuerpo */}
                         <div className="p-5 space-y-4">
 
                             {/* Instrucciones */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                                <p className="font-medium mb-1">📊 Formatos aceptados: <strong>Excel (.xlsx)</strong> o CSV</p>
-                                <p className="mt-1 text-xs">
-                                    Columna <strong>nombre</strong> es obligatoria. Las demás son opcionales.<br/>
-                                    Columna <strong>categoria_slug</strong>: usa el slug exacto (ej: <code>decoracion</code>, <code>hogar</code>).
+                                <p className="font-medium mb-1">📊 Formatos: <strong>Excel (.xlsx)</strong> o CSV</p>
+                                <p className="text-xs">
+                                    Columna <strong>nombre</strong> es obligatoria. <strong>categoria_slug</strong>: slug exacto de la categoría.
                                 </p>
                             </div>
 
-                            {/* Input de archivo */}
+                            {/* Selector de archivo */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Seleccionar archivo Excel (.xlsx) o CSV
+                                    Seleccionar archivo
                                 </label>
                                 <input
                                     ref={inputCsvRef}
                                     type="file"
                                     accept=".xlsx,.xls,.csv,.ods,text/csv"
-                                    onChange={(e) => setArchivoCsv(e.target.files[0] || null)}
-                                    className="block w-full text-sm text-gray-500
-                                        file:mr-4 file:py-2 file:px-4
-                                        file:rounded-lg file:border-0
-                                        file:text-sm file:font-medium
-                                        file:bg-indigo-50 file:text-indigo-700
-                                        hover:file:bg-indigo-100 cursor-pointer"
+                                    onChange={(e) => {
+                                        const f = e.target.files[0] || null;
+                                        setArchivoCsv(f);
+                                        setPreview(null);
+                                        if (f) previsualizarArchivo(f);
+                                    }}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
                                 />
                                 {archivoCsv && (
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Archivo: {archivoCsv.name} ({(archivoCsv.size / 1024).toFixed(1)} KB)
+                                        {archivoCsv.name} — {(archivoCsv.size / 1024).toFixed(1)} KB
                                     </p>
                                 )}
                             </div>
+
+                            {/* Cargando preview */}
+                            {previsualizando && (
+                                <div className="text-center py-6 text-gray-500 text-sm">
+                                    ⏳ Analizando archivo...
+                                </div>
+                            )}
+
+                            {/* Error de preview */}
+                            {preview?.error && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                                    ⚠️ {preview.error}
+                                </div>
+                            )}
+
+                            {/* Resumen */}
+                            {preview && !preview.error && (
+                                <div className="flex gap-3 text-sm">
+                                    <span className="bg-gray-100 px-3 py-1 rounded-full font-medium">
+                                        Total: {preview.total}
+                                    </span>
+                                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                                        ✅ Válidas: {preview.validas}
+                                    </span>
+                                    {preview.invalidas > 0 && (
+                                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium">
+                                            ❌ Con error: {preview.invalidas}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Tabla de preview */}
+                            {preview?.filas?.length > 0 && (
+                                <div className="overflow-x-auto max-h-96 border border-gray-200 rounded-lg">
+                                    <table className="w-full text-xs">
+                                        <thead className="bg-gray-50 sticky top-0">
+                                            <tr>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">#</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">Nombre</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">SKU</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">Precio Venta</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">Categoría</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">Estado</th>
+                                                <th className="px-3 py-2 text-left text-gray-600 font-medium">Errores</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {preview.filas.map((f) => (
+                                                <tr key={f.fila} className={f.valida ? 'bg-white hover:bg-green-50' : 'bg-red-50 hover:bg-red-100'}>
+                                                    <td className="px-3 py-2 text-gray-400">{f.fila}</td>
+                                                    <td className="px-3 py-2 font-medium text-gray-800">{f.nombre}</td>
+                                                    <td className="px-3 py-2 text-gray-500">{f.sku || '—'}</td>
+                                                    <td className="px-3 py-2 text-gray-700">{f.precio_venta || '—'}</td>
+                                                    <td className={`px-3 py-2 ${!f.categoria_ok ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
+                                                        {f.categoria_slug || '—'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-gray-600">{f.estado}</td>
+                                                    <td className="px-3 py-2">
+                                                        {f.errores.length > 0 ? (
+                                                            <ul className="list-disc list-inside text-red-600 space-y-0.5">
+                                                                {f.errores.map((e, i) => <li key={i}>{e}</li>)}
+                                                            </ul>
+                                                        ) : (
+                                                            <span className="text-green-600">✓ OK</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Pie del modal */}
+                        {/* Pie */}
                         <div className="flex justify-end gap-3 p-5 border-t">
                             <button
-                                onClick={() => { setModalImportar(false); setArchivoCsv(null); }}
+                                onClick={() => { setModalImportar(false); setArchivoCsv(null); setPreview(null); }}
                                 className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={enviarCsv}
-                                disabled={!archivoCsv || importando}
+                                disabled={!archivoCsv || importando || !preview || preview.validas === 0}
                                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {importando ? 'Importando...' : 'Importar Productos'}
+                                {importando
+                                    ? 'Importando...'
+                                    : preview?.validas > 0
+                                        ? `Importar ${preview.validas} producto(s) válido(s)`
+                                        : 'Importar Productos'}
                             </button>
                         </div>
 

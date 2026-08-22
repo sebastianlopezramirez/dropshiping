@@ -617,6 +617,112 @@ class ProductoController extends Controller
 
     /*
     |----------------------------------------------------------------------
+    | PREVIEW IMPORTAR — POST /productos/importar/preview
+    |----------------------------------------------------------------------
+    | Parsea el archivo SIN guardar nada y devuelve JSON con la vista previa
+    | de cada fila: { fila, nombre, sku, precio_venta, categoria_slug, estado, errores[] }
+    */
+    public function previewImportar(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:csv,txt,xlsx,xls,ods|max:10240',
+        ]);
+
+        $archivo   = $request->file('archivo');
+        $extension = strtolower($archivo->getClientOriginalExtension());
+        $filas     = [];
+
+        if (in_array($extension, ['xlsx', 'xls', 'ods'])) {
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($archivo->getRealPath());
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($archivo->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            foreach ($sheet->getRowIterator() as $row) {
+                $celdas = [];
+                foreach ($row->getCellIterator() as $celda) {
+                    $celdas[] = trim((string) $celda->getFormattedValue());
+                }
+                $filas[] = $celdas;
+            }
+        } else {
+            $handle = fopen($archivo->getRealPath(), 'r');
+            $primera = fgetcsv($handle, 2000, ',');
+            $primera[0] = ltrim($primera[0], "\xEF\xBB\xBF");
+            $filas[] = array_map('trim', $primera);
+            while (($row = fgetcsv($handle, 2000, ',')) !== false) {
+                $filas[] = $row;
+            }
+            fclose($handle);
+        }
+
+        if (empty($filas)) {
+            return response()->json(['error' => 'El archivo está vacío.'], 422);
+        }
+
+        $encabezados     = $filas[0];
+        $categoriasCache = Categoria::pluck('id', 'slug')->toArray();
+        $skusEnArchivo   = [];
+        $resultado       = [];
+        $numFila         = 2;
+
+        foreach (array_slice($filas, 1) as $columnas) {
+            if (empty(array_filter($columnas, fn($v) => $v !== ''))) { $numFila++; continue; }
+
+            $datos  = array_combine(
+                $encabezados,
+                array_map('trim', array_slice($columnas, 0, count($encabezados)))
+            );
+            $erroresFila = [];
+
+            $nombre = $datos['nombre'] ?? '';
+            if (empty($nombre)) $erroresFila[] = "'nombre' es obligatorio";
+
+            $sku = !empty($datos['sku']) ? $datos['sku'] : null;
+            if ($sku && Producto::where('sku', $sku)->exists())
+                $erroresFila[] = "SKU '{$sku}' ya existe en la BD";
+            if ($sku && in_array($sku, $skusEnArchivo))
+                $erroresFila[] = "SKU '{$sku}' duplicado en el archivo";
+            if ($sku) $skusEnArchivo[] = $sku;
+
+            $categoriaOk = true;
+            if (!empty($datos['categoria_slug']) && !isset($categoriasCache[$datos['categoria_slug']])) {
+                $erroresFila[]  = "Categoría '{$datos['categoria_slug']}' no existe";
+                $categoriaOk    = false;
+            }
+
+            $estadosValidos = ['activo', 'inactivo', 'borrador'];
+            $estado = $datos['estado'] ?? '';
+            if (!empty($estado) && !in_array($estado, $estadosValidos))
+                $erroresFila[] = "Estado '{$estado}' inválido (usa: activo, inactivo, borrador)";
+
+            $resultado[] = [
+                'fila'           => $numFila,
+                'nombre'         => $nombre ?: '—',
+                'sku'            => $sku ?? '',
+                'precio_venta'   => $datos['precio_venta'] ?? '',
+                'categoria_slug' => $datos['categoria_slug'] ?? '',
+                'categoria_ok'   => $categoriaOk,
+                'estado'         => !empty($estado) ? $estado : 'borrador',
+                'errores'        => $erroresFila,
+                'valida'         => empty($erroresFila),
+            ];
+
+            $numFila++;
+        }
+
+        $validas  = count(array_filter($resultado, fn($r) => $r['valida']));
+        $invalidas = count($resultado) - $validas;
+
+        return response()->json([
+            'filas'    => $resultado,
+            'validas'  => $validas,
+            'invalidas'=> $invalidas,
+            'total'    => count($resultado),
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
     | HELPER PRIVADO: generarSlugUnico()
     |----------------------------------------------------------------------
     |
