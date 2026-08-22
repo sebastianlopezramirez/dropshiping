@@ -152,6 +152,9 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] main button[class*="bg-gray-800"],
     [data-tema="claro"] main button[class*="bg-gray-800"] span,
     [data-tema="claro"] main button[class*="bg-gray-800"] svg { color: #FFFFFF !important; stroke: #FFFFFF !important; font-weight: 700 !important; }
+    /* Override extra para botones con text-white explícito */
+    [data-tema="claro"] main button[class*="bg-gray-800"][class*="text-white"],
+    [data-tema="claro"] main button[class*="bg-gray-700"][class*="text-white"] { color: #FFFFFF !important; }
 
     /* ── SIDEBAR / PANEL FILTROS → textos blancos sobre fondo oscuro ─── */
     [data-tema="claro"] main .bg-gray-900 button.text-gray-400,
