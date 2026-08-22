@@ -14,34 +14,6 @@ import { useCart } from '@/Context/CartContext';
 /* ── ESTILOS MODO CLARO ─────────────────────────────────────────────────── */
 /* Paleta: #06B6D4 cyan logo · #FF6B00 naranja logo · #1C1C1C charcoal      */
 const ESTILOS_CLARO = `
-    /* ── NAVBAR → rosa oscuro ────────────────────────── */
-    [data-tema="claro"] nav.bg-gray-950 {
-        background-color: #C0106F !important;
-        border-color: #A00D5D !important;
-    }
-    /* Logo nav → redondo */
-    [data-tema="claro"] nav img {
-        border-radius: 50% !important;
-        object-fit: cover !important;
-        width: 40px !important;
-        height: 40px !important;
-    }
-    /* Textos e iconos del nav → negro */
-    [data-tema="claro"] nav .text-gray-400,
-    [data-tema="claro"] nav .text-gray-500,
-    [data-tema="claro"] nav .text-yellow-400,
-    [data-tema="claro"] nav .text-blue-300,
-    [data-tema="claro"] nav a,
-    [data-tema="claro"] nav button { color: #111111 !important; }
-    [data-tema="claro"] nav svg { stroke: #111111 !important; }
-    /* Input de búsqueda en nav */
-    [data-tema="claro"] nav input {
-        background-color: #FFFFFF !important;
-        color: #111111 !important;
-        border-color: #A00D5D !important;
-    }
-    [data-tema="claro"] nav input::placeholder { color: #666666 !important; }
-
     /* ── FONDOS ─────────────────────────────────────── */
     /* Fondo base — cyan del logo, un tono más oscuro/vivo */
     [data-tema="claro"] main,
