@@ -67,15 +67,20 @@ export default function Index({ productos, categorias, filtros }) {
         const formData = new FormData();
         formData.append('archivo', archivo);
         try {
-            const resp = await fetch(route('productos.importar.preview'), {
+            const url = '/productos/importar/preview';
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            const resp = await fetch(url, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
                 body: formData,
             });
-            const json = await resp.json();
-            setPreview(json);
+            const text = await resp.text();
+            let json;
+            try { json = JSON.parse(text); }
+            catch (_) { json = { error: `El servidor respondió (${resp.status}): ${text.slice(0, 200)}` }; }
+            setPreview(json.error && resp.ok ? json : (resp.ok ? json : { error: json.message ?? `Error ${resp.status}` }));
         } catch (e) {
-            setPreview({ error: 'No se pudo leer el archivo.' });
+            setPreview({ error: `Error de red: ${e.message}` });
         } finally {
             setPrevisualizando(false);
         }
