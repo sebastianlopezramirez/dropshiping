@@ -148,7 +148,10 @@ const ESTILOS_CLARO = `
     }
     /* Excepción: textos dentro de BOTONES oscuros siempre blancos */
     [data-tema="claro"] main button.bg-gray-800,
-    [data-tema="claro"] main button.bg-gray-800 * { color: #FFFFFF !important; font-weight: 700 !important; }
+    [data-tema="claro"] main button.bg-gray-800 *,
+    [data-tema="claro"] main button[class*="bg-gray-800"],
+    [data-tema="claro"] main button[class*="bg-gray-800"] span,
+    [data-tema="claro"] main button[class*="bg-gray-800"] svg { color: #FFFFFF !important; stroke: #FFFFFF !important; font-weight: 700 !important; }
 
     /* ── SIDEBAR / PANEL FILTROS → textos blancos sobre fondo oscuro ─── */
     [data-tema="claro"] main .bg-gray-900 button.text-gray-400,
