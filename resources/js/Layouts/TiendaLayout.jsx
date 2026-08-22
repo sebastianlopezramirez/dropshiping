@@ -12,86 +12,124 @@ import { Link, router } from '@inertiajs/react';
 import { useCart } from '@/Context/CartContext';
 
 /* ── ESTILOS MODO CLARO ─────────────────────────────────────────────────── */
+/* Paleta: #6366F1 indigo del logo + blanco + negro para botones             */
 const ESTILOS_CLARO = `
-    /* Fondo principal — azul marca muy claro */
+    /* ── FONDOS ─────────────────────────────────────── */
+    /* Fondo base — indigo medio (no tan claro, no tan oscuro) */
     [data-tema="claro"] main,
-    [data-tema="claro"] main .bg-gray-950 { background-color: #EFF6FF !important; }
+    [data-tema="claro"] main .bg-gray-950 {
+        background-color: #C7D2FE !important; /* indigo-200 */
+    }
 
-    /* Tarjetas y secciones blancas */
+    /* Cards y paneles → blanco puro */
     [data-tema="claro"] main .bg-gray-900 { background-color: #FFFFFF !important; }
 
-    /* Superficies secundarias — azul claro */
-    [data-tema="claro"] main .bg-gray-800 { background-color: #DBEAFE !important; }
-    [data-tema="claro"] main .bg-gray-800\\/50 { background-color: rgba(219,234,254,0.7) !important; }
-    [data-tema="claro"] main .bg-gray-700\\/50 { background-color: rgba(191,219,254,0.5) !important; }
+    /* Superficies alternadas → indigo más suave */
+    [data-tema="claro"] main .bg-gray-800         { background-color: #E0E7FF !important; } /* indigo-100 */
+    [data-tema="claro"] main .bg-gray-800\\/50     { background-color: rgba(199,210,254,0.6) !important; }
+    [data-tema="claro"] main .bg-gray-700\\/50     { background-color: rgba(165,180,252,0.4) !important; }
 
-    /* Secciones banda (border-y) — azul un tono más */
-    [data-tema="claro"] main section.bg-gray-900 { background-color: #DBEAFE !important; }
+    /* Secciones banda (border-y) → indigo intermedio */
+    [data-tema="claro"] main section.bg-gray-900  { background-color: #A5B4FC !important; } /* indigo-300 */
 
-    /* Textos */
-    [data-tema="claro"] main .text-white       { color: #0F172A !important; }
-    [data-tema="claro"] main .text-gray-100    { color: #1E293B !important; }
-    [data-tema="claro"] main .text-gray-200    { color: #334155 !important; }
-    [data-tema="claro"] main .text-gray-300    { color: #475569 !important; }
-    [data-tema="claro"] main .text-gray-400    { color: #475569 !important; }
-    [data-tema="claro"] main .text-gray-500    { color: #64748B !important; }
-    [data-tema="claro"] main .text-gray-600    { color: #94A3B8 !important; }
-    [data-tema="claro"] main .text-gray-700    { color: #334155 !important; }
+    /* ── TEXTOS ──────────────────────────────────────── */
+    [data-tema="claro"] main .text-white    { color: #1E1B4B !important; } /* indigo-950 */
+    [data-tema="claro"] main .text-gray-100 { color: #1E1B4B !important; }
+    [data-tema="claro"] main .text-gray-200 { color: #312E81 !important; } /* indigo-900 */
+    [data-tema="claro"] main .text-gray-300 { color: #3730A3 !important; }
+    [data-tema="claro"] main .text-gray-400 { color: #4338CA !important; } /* indigo-700 */
+    [data-tema="claro"] main .text-gray-500 { color: #6366F1 !important; } /* indigo marca */
+    [data-tema="claro"] main .text-gray-600 { color: #818CF8 !important; } /* indigo-400 */
+    [data-tema="claro"] main .text-gray-700 { color: #312E81 !important; }
 
-    /* Bordes */
-    [data-tema="claro"] main .border-gray-800  { border-color: #BFDBFE !important; }
-    [data-tema="claro"] main .border-gray-700  { border-color: #BFDBFE !important; }
-    [data-tema="claro"] main .border-gray-700\\/50 { border-color: rgba(191,219,254,0.8) !important; }
+    /* ── BORDES ──────────────────────────────────────── */
+    [data-tema="claro"] main .border-gray-800      { border-color: #A5B4FC !important; } /* indigo-300 */
+    [data-tema="claro"] main .border-gray-700      { border-color: #A5B4FC !important; }
+    [data-tema="claro"] main .border-gray-700\\/50 { border-color: rgba(165,180,252,0.6) !important; }
 
-    /* Hover estados */
-    [data-tema="claro"] main .hover\\:bg-gray-800:hover { background-color: #DBEAFE !important; }
-    [data-tema="claro"] main .hover\\:bg-gray-700:hover { background-color: #BFDBFE !important; }
-    [data-tema="claro"] main .hover\\:text-gray-200:hover { color: #1E293B !important; }
-    [data-tema="claro"] main .hover\\:text-gray-300:hover { color: #334155 !important; }
-    [data-tema="claro"] main .hover\\:text-white:hover   { color: #0F172A !important; }
+    /* ── HOVER ───────────────────────────────────────── */
+    [data-tema="claro"] main .hover\\:bg-gray-800:hover { background-color: #A5B4FC !important; }
+    [data-tema="claro"] main .hover\\:bg-gray-700:hover { background-color: #818CF8 !important; }
+    [data-tema="claro"] main .hover\\:text-gray-200:hover { color: #1E1B4B !important; }
+    [data-tema="claro"] main .hover\\:text-gray-300:hover { color: #312E81 !important; }
+    [data-tema="claro"] main .hover\\:text-white:hover    { color: #1E1B4B !important; }
 
-    /* Inputs y selects */
+    /* ── INPUTS ──────────────────────────────────────── */
     [data-tema="claro"] main input,
     [data-tema="claro"] main select {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border-color: #BFDBFE !important;
+        color: #1E1B4B !important;
+        border-color: #A5B4FC !important;
     }
-    [data-tema="claro"] main input::placeholder { color: #94A3B8 !important; }
+    [data-tema="claro"] main input::placeholder { color: #818CF8 !important; }
 
-    /* Botones oscuros → navy marca */
-    [data-tema="claro"] main .bg-gray-800:not(input):not(select):not(div) {
-        background-color: #1E3A5F !important;
+    /* ── BOTONES → NEGRO con letra BLANCA ────────────── */
+    [data-tema="claro"] main button.bg-gray-800,
+    [data-tema="claro"] main button.border-gray-700 {
+        background-color: #111827 !important;
+        border-color: #111827 !important;
         color: #FFFFFF !important;
     }
-    [data-tema="claro"] main button.bg-gray-800 {
-        background-color: #1E3A5F !important;
+    /* Botón "Filtros" y cualquier botón con borde gris */
+    [data-tema="claro"] main button.border.border-gray-700,
+    [data-tema="claro"] main button[class*="border-gray-700"],
+    [data-tema="claro"] main button[class*="bg-gray-800"] {
+        background-color: #111827 !important;
+        border-color: #111827 !important;
         color: #FFFFFF !important;
     }
-    [data-tema="claro"] main .border-gray-700.text-gray-400 {
-        border-color: #1E3A5F !important;
-        color: #1E3A5F !important;
+    /* SVG e íconos dentro de botones negros */
+    [data-tema="claro"] main button[class*="bg-gray-800"] svg,
+    [data-tema="claro"] main button[class*="border-gray-700"] svg {
+        color: #FFFFFF !important;
+        stroke: #FFFFFF !important;
+    }
+    /* Botón "Limpiar" */
+    [data-tema="claro"] main button.border-gray-700 {
+        background-color: #111827 !important;
+        border-color: #111827 !important;
+        color: #FFFFFF !important;
+    }
+    /* Hover sobre botones negros → indigo oscuro */
+    [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
+    [data-tema="claro"] main button[class*="border-gray-700"]:hover {
+        background-color: #312E81 !important;
+        border-color: #312E81 !important;
     }
 
-    /* Sombras de cards → azul en vez de negro */
+    /* ── CARDS DE CATEGORÍA ──────────────────────────── */
+    [data-tema="claro"] main button[class*="bg-gray-900"] {
+        background-color: #FFFFFF !important;
+        border-color: #A5B4FC !important;
+        color: #312E81 !important;
+    }
+    [data-tema="claro"] main button[class*="bg-gray-900"]:hover {
+        background-color: #EEF2FF !important;
+        border-color: #6366F1 !important;
+    }
+    [data-tema="claro"] main button[class*="bg-gray-900"] span[class*="text-gray-400"] {
+        color: #4338CA !important;
+    }
+
+    /* ── SOMBRAS ─────────────────────────────────────── */
     [data-tema="claro"] main .hover\\:shadow-orange-900\\/20:hover {
-        box-shadow: 0 10px 15px -3px rgba(59,130,246,0.2) !important;
+        box-shadow: 0 10px 15px -3px rgba(99,102,241,0.25) !important;
     }
 
-    /* Sidebar scroll track */
-    [data-tema="claro"] main .scrollbar-thumb-gray-700 { scrollbar-color: #BFDBFE transparent; }
-
-    /* Footer */
+    /* ── FOOTER ──────────────────────────────────────── */
     [data-tema="claro"] footer {
-        background-color: #DBEAFE !important;
-        border-color: #BFDBFE !important;
+        background-color: #6366F1 !important;
+        border-color: #4F46E5 !important;
     }
-    [data-tema="claro"] footer .text-gray-400 { color: #475569 !important; }
-    [data-tema="claro"] footer .text-gray-500 { color: #64748B !important; }
-    [data-tema="claro"] footer .text-gray-600 { color: #94A3B8 !important; }
-    [data-tema="claro"] footer .border-gray-800 { border-color: #BFDBFE !important; }
+    [data-tema="claro"] footer .text-gray-400,
+    [data-tema="claro"] footer .text-gray-500 { color: #E0E7FF !important; }
+    [data-tema="claro"] footer .text-gray-600  { color: #C7D2FE !important; }
+    [data-tema="claro"] footer .border-gray-800 { border-color: #4F46E5 !important; }
+    [data-tema="claro"] footer h4 { color: #E0E7FF !important; }
+    [data-tema="claro"] footer a  { color: #C7D2FE !important; }
+    [data-tema="claro"] footer a:hover { color: #FB923C !important; } /* naranja del logo */
 
-    /* Transición suave al cambiar tema */
+    /* ── TRANSICIÓN SUAVE ────────────────────────────── */
     [data-tema] main, [data-tema] footer, [data-tema] main * {
         transition: background-color 0.25s ease, color 0.2s ease, border-color 0.2s ease !important;
     }
