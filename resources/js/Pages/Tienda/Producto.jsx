@@ -288,8 +288,8 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                             <h2 className="text-lg font-bold text-white">Descripción del producto</h2>
                             <div className="flex-1 h-px bg-gradient-to-r from-orange-500/30 to-transparent"></div>
                         </div>
-                        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-white text-sm leading-relaxed whitespace-pre-line">
-                            {producto.descripcion}
+                        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                            <p className="text-white text-sm leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
                         </div>
                     </section>
                 )}
