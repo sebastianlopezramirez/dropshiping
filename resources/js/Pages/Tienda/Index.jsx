@@ -182,7 +182,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                             Filtros {hayFiltros && <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>}
                         </button>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                    <div className="gs-categorias grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                         {categoriasRaiz.map(cat => {
                             const emojis = {
                                 tecnologia: '📱', hogar: '🏠', electrodomesticos: '⚡',
