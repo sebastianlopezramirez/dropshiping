@@ -118,7 +118,7 @@ class CategoriaController extends Controller
     |   Si el usuario ingresa uno, lo respetamos.
     |
     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $datos = $request->validate([
             'nombre'      => ['required', 'string', 'max:100', 'unique:categorias,nombre'],
@@ -130,11 +130,21 @@ class CategoriaController extends Controller
             'activo'      => ['boolean'],
         ]);
 
-        // Si el usuario no escribió un slug, generarlo desde el nombre
         $datos['slug']  = $datos['slug'] ?? Str::slug($datos['nombre']);
         $datos['orden'] = $datos['orden'] ?? 0;
 
-        Categoria::create($datos);
+        $categoria = Categoria::create($datos);
+
+        // Si la petición es AJAX (fetch desde el formulario de producto), devolver JSON
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id'       => $categoria->id,
+                'nombre'   => $categoria->nombre,
+                'slug'     => $categoria->slug,
+                'padre_id' => $categoria->padre_id,
+                'activo'   => $categoria->activo,
+            ], 201);
+        }
 
         return redirect()
             ->route('categorias.index')

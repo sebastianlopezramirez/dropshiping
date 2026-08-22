@@ -22,9 +22,64 @@
 */
 
 import { useState, useEffect, useRef } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { capitalize } from '@/utils/texto';
+
+// ─── Mini modal para crear categoría inline ───────────────────────────────
+function MiniCrearCategoria({ padreId, onCreada, onCerrar, esAdmin }) {
+    const [nombre, setNombre] = useState('');
+    const [guardando, setGuardando] = useState(false);
+    const [error, setError] = useState('');
+
+    const guardar = async () => {
+        if (!nombre.trim()) { setError('El nombre es obligatorio'); return; }
+        setGuardando(true); setError('');
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            const body = new FormData();
+            body.append('nombre', nombre.trim());
+            if (padreId) body.append('padre_id', padreId);
+            body.append('activo', '1');
+            const resp = await fetch('/categorias', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                body,
+            });
+            const json = await resp.json();
+            if (!resp.ok) { setError(json.message ?? 'Error al crear la categoría'); return; }
+            onCreada(json);
+        } catch (e) { setError('Error de red: ' + e.message); }
+        finally { setGuardando(false); }
+    };
+
+    if (!esAdmin) return null;
+    return (
+        <div className="mt-2 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <p className="text-xs font-semibold text-indigo-700 mb-2">
+                {padreId ? '+ Nueva subcategoría' : '+ Nueva categoría padre'}
+            </p>
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={nombre}
+                    onChange={e => setNombre(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && guardar()}
+                    placeholder="Nombre..."
+                    className="flex-1 border border-indigo-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    autoFocus
+                />
+                <button onClick={guardar} disabled={guardando}
+                    className="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50">
+                    {guardando ? '...' : 'Crear'}
+                </button>
+                <button onClick={onCerrar}
+                    className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+        </div>
+    );
+}
 
 export default function Crear({ categorias }) {
 
@@ -56,17 +111,37 @@ export default function Crear({ categorias }) {
     });
 
     // ─── CATEGORÍAS EN CASCADA ─────────────────────────────────────────────
-    const [categoriaPadreId, setCategoriaPadreId] = useState('');
+    const { auth } = usePage().props;
+    const esAdmin = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
 
-    const categoriasPadre = categorias.filter(c => !c.padre_id);
+    const [categoriasLocales, setCategoriasLocales] = useState(categorias);
+    const [categoriaPadreId, setCategoriaPadreId]   = useState('');
+    const [miniPadre, setMiniPadre]   = useState(false); // mostrar mini-form padre
+    const [miniHija, setMiniHija]     = useState(false); // mostrar mini-form hija
+
+    const categoriasPadre = categoriasLocales.filter(c => !c.padre_id);
     const subcategorias   = categoriaPadreId
-        ? categorias.filter(c => String(c.padre_id) === String(categoriaPadreId))
+        ? categoriasLocales.filter(c => String(c.padre_id) === String(categoriaPadreId))
         : [];
 
     const handleCategoriaPadre = (id) => {
         setCategoriaPadreId(id);
-        const tieneHijos = categorias.some(c => String(c.padre_id) === String(id));
+        setMiniHija(false);
+        const tieneHijos = categoriasLocales.some(c => String(c.padre_id) === String(id));
         setData('categoria_id', tieneHijos ? '' : id);
+    };
+
+    const alCrearPadre = (nueva) => {
+        setCategoriasLocales(prev => [...prev, nueva]);
+        setCategoriaPadreId(String(nueva.id));
+        setData('categoria_id', String(nueva.id));
+        setMiniPadre(false);
+    };
+
+    const alCrearHija = (nueva) => {
+        setCategoriasLocales(prev => [...prev, nueva]);
+        setData('categoria_id', String(nueva.id));
+        setMiniHija(false);
     };
 
     // ─── SKU PREVIEW (solo visual, el servidor genera el definitivo) ──────
@@ -370,30 +445,56 @@ export default function Crear({ categorias }) {
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
                                 <div className="flex flex-col gap-2">
-                                    {/* Paso 1: Categoría principal */}
-                                    <select
-                                        value={categoriaPadreId}
-                                        onChange={e => handleCategoriaPadre(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    >
-                                        <option value="">— Selecciona una categoría —</option>
-                                        {categoriasPadre.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                        ))}
-                                    </select>
-
-                                    {/* Paso 2: Subcategoría (aparece solo si hay padre elegido) */}
-                                    {subcategorias.length > 0 && (
+                                    {/* Paso 1: Categoría padre */}
+                                    <div className="flex gap-2 items-center">
                                         <select
-                                            value={data.categoria_id}
-                                            onChange={e => setData('categoria_id', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            value={categoriaPadreId}
+                                            onChange={e => handleCategoriaPadre(e.target.value)}
+                                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         >
-                                            <option value="">— Selecciona una subcategoría —</option>
-                                            {subcategorias.map(sub => (
-                                                <option key={sub.id} value={sub.id}>{sub.nombre}</option>
+                                            <option value="">— Selecciona categoría —</option>
+                                            {categoriasPadre.map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
                                             ))}
                                         </select>
+                                        {esAdmin && (
+                                            <button type="button" onClick={() => { setMiniPadre(v => !v); setMiniHija(false); }}
+                                                title="Crear nueva categoría padre"
+                                                className="shrink-0 px-2 py-2 text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 text-sm font-bold">
+                                                +
+                                            </button>
+                                        )}
+                                    </div>
+                                    {miniPadre && (
+                                        <MiniCrearCategoria padreId={null} esAdmin={esAdmin}
+                                            onCreada={alCrearPadre} onCerrar={() => setMiniPadre(false)} />
+                                    )}
+
+                                    {/* Paso 2: Subcategoría */}
+                                    {categoriaPadreId && (
+                                        <div className="flex gap-2 items-center">
+                                            <select
+                                                value={data.categoria_id}
+                                                onChange={e => setData('categoria_id', e.target.value)}
+                                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                <option value={categoriaPadreId}>— Sin subcategoría —</option>
+                                                {subcategorias.map(sub => (
+                                                    <option key={sub.id} value={sub.id}>{sub.nombre}</option>
+                                                ))}
+                                            </select>
+                                            {esAdmin && (
+                                                <button type="button" onClick={() => { setMiniHija(v => !v); setMiniPadre(false); }}
+                                                    title="Crear nueva subcategoría"
+                                                    className="shrink-0 px-2 py-2 text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 text-sm font-bold">
+                                                    +
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {miniHija && (
+                                        <MiniCrearCategoria padreId={categoriaPadreId} esAdmin={esAdmin}
+                                            onCreada={alCrearHija} onCerrar={() => setMiniHija(false)} />
                                     )}
                                 </div>
                                 <Error campo="categoria_id" />
