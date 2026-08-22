@@ -92,14 +92,16 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                         const hijos      = hijosDe(padre.id);
                                         const expandido  = padreExpandido === padre.id;
                                         const hijoActivo = hijos.some(h => h.slug === filtros.categoria);
-                                        const activo     = filtros.categoria === padre.slug || hijoActivo;
+                                        const activo     = hijoActivo;
                                         return (
                                             <div key={padre.id}>
                                                 <button
                                                     onClick={() => {
                                                         setPadreExpandido(expandido ? null : padre.id);
-                                                        aplicarFiltros({ categoria: padre.slug });
-                                                        if (hijos.length === 0) setFiltroMovil(false);
+                                                        if (hijos.length === 0) {
+                                                            aplicarFiltros({ categoria: padre.slug });
+                                                            setFiltroMovil(false);
+                                                        }
                                                     }}
                                                     className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center gap-2
                                                         ${activo ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 border border-orange-500/30' : 'text-gray-400 hover:bg-gray-800'}`}>
@@ -338,13 +340,15 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                             const hijos      = hijosDe(padre.id);
                                             const expandido  = padreExpandido === padre.id;
                                             const hijoActivo = hijos.some(h => h.slug === filtros.categoria);
-                                            const activo     = filtros.categoria === padre.slug || hijoActivo;
+                                            const activo     = hijoActivo;
                                             return (
                                                 <div key={padre.id}>
                                                     <button
                                                         onClick={() => {
                                                             setPadreExpandido(expandido ? null : padre.id);
-                                                            aplicarFiltros({ categoria: padre.slug });
+                                                            if (hijos.length === 0) {
+                                                                aplicarFiltros({ categoria: padre.slug });
+                                                            }
                                                         }}
                                                         className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center gap-2
                                                             ${activo
