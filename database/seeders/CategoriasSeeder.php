@@ -59,6 +59,7 @@ class CategoriasSeeder extends Seeder
                     ['nombre' => 'Cámaras y Fotografía',      'orden' => 7],
                     ['nombre' => 'Gaming',                    'orden' => 8],
                     ['nombre' => 'Accesorios Tech',           'orden' => 9],
+                    ['nombre' => 'Relojes',                   'orden' => 10],
                 ],
             ],
 
