@@ -178,6 +178,18 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] main button.bg-gray-800,
     [data-tema="claro"] main button.bg-gray-800 * { color: #FFFFFF !important; font-weight: 700 !important; }
 
+    /* ── SIDEBAR / PANEL FILTROS → textos blancos sobre fondo oscuro ─── */
+    [data-tema="claro"] main .bg-gray-900 button.text-gray-400,
+    [data-tema="claro"] main .bg-gray-900 button span,
+    [data-tema="claro"] main .bg-gray-900 button { color: #FFFFFF !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-gray-500 { color: #D1D5DB !important; }
+    /* Ítem activo sigue siendo naranja */
+    [data-tema="claro"] main .bg-gray-900 .text-orange-400 { color: #FB923C !important; }
+
+    /* ── "RECIÉN LLEGADOS" y títulos de sección → NEGRO ─── */
+    [data-tema="claro"] main h2.text-white,
+    [data-tema="claro"] main h2.text-white * { color: #111111 !important; font-weight: 700 !important; }
+
     /* Excepciones: textos dentro de cards se mantienen como están */
     [data-tema="claro"] main .bg-gray-900 .text-white,
     [data-tema="claro"] main .bg-gray-900 .text-gray-100,
@@ -390,7 +402,7 @@ export default function TiendaLayout({ children }) {
             </a>
 
             <a href="tel:+573137921336" title="Llámanos"
-                className="fixed bottom-6 right-4 z-50 w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 text-white rounded-full shadow-lg shadow-orange-900/40 flex items-center justify-center transition-transform duration-200 hover:scale-110">
+                className="fixed bottom-6 right-4 z-50 w-14 h-14 bg-orange-500 hover:bg-orange-400 text-white rounded-full shadow-lg shadow-orange-900/40 flex items-center justify-center transition-transform duration-200 hover:scale-110">
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                     <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                 </svg>
