@@ -68,10 +68,18 @@ class TiendaController extends Controller
         }
 
         // Filtro: por categoría (slug)
+        // Si es categoría padre → incluir también productos de sus subcategorías
+        // Si es subcategoría → filtro directo
         if ($request->filled('categoria')) {
             $cat = Categoria::where('slug', $request->categoria)->first();
             if ($cat) {
-                $query->where('categoria_id', $cat->id);
+                if (is_null($cat->padre_id)) {
+                    $hijos = Categoria::where('padre_id', $cat->id)->pluck('id');
+                    $ids   = $hijos->push($cat->id);
+                    $query->whereIn('categoria_id', $ids);
+                } else {
+                    $query->where('categoria_id', $cat->id);
+                }
             }
         }
 
