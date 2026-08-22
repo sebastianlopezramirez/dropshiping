@@ -175,7 +175,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         </div>
                         {/* Botón filtros móvil — visible solo en móvil */}
                         <button onClick={() => setFiltroMovil(true)}
-                            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700 transition-colors">
+                            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                             </svg>
@@ -295,7 +295,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         <span className="text-gray-500 font-normal text-sm ml-2">({productos.total})</span>
                     </h2>
                     <button onClick={() => setFiltroMovil(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700 transition-colors">
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
