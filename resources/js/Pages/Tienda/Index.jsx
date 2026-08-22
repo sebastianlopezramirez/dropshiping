@@ -188,12 +188,72 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto
                             scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
                             {productosNuevos.map(producto => (
-                                <div key={producto.id} className="shrink-0 w-36 sm:w-44">
+                                <div key={producto.id} className="shrink-0 w-24 sm:w-32">
                                     <TarjetaProducto producto={producto} cop={cop} />
                                 </div>
                             ))}
                             {/* Espaciado final para que el último card no quede bajo el fade */}
                             <div className="shrink-0 w-8"></div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* ── CATEGORÍAS DESTACADAS ─────────────────────────────────── */}
+            {mostrandoHero && categoriasRaiz.length > 0 && (
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex items-center gap-3 mb-5">
+                        <div className="flex flex-col gap-0.5">
+                            <span className="w-5 h-0.5 bg-orange-500 rounded-full"></span>
+                            <span className="w-3 h-0.5 bg-pink-500 rounded-full"></span>
+                        </div>
+                        <h2 className="text-lg sm:text-xl font-bold text-white">Explora por categoría</h2>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {categoriasRaiz.map(cat => {
+                            const emojis = {
+                                tecnologia: '📱', hogar: '🏠', electrodomesticos: '⚡',
+                                moda: '👗', 'belleza-y-cuidado-personal': '💄',
+                                'deportes-y-fitness': '🏋️', 'juguetes-y-bebes': '🧸',
+                                mascotas: '🐾', 'libros-y-entretenimiento': '📚',
+                                'autos-y-motos': '🚗',
+                            };
+                            const emoji = emojis[cat.slug] || '🛍️';
+                            return (
+                                <button key={cat.id}
+                                    onClick={() => aplicarFiltros({ categoria: cat.slug })}
+                                    className="group flex flex-col items-center gap-2 bg-gray-900 border border-gray-800 rounded-2xl px-3 py-4
+                                        hover:border-orange-500/50 hover:bg-gray-800 transition-all duration-200">
+                                    <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-200">{emoji}</span>
+                                    <span className="text-xs text-center text-gray-400 group-hover:text-orange-400 font-medium leading-tight transition-colors">
+                                        {cat.nombre}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* ── CONFIANZA Y CONVERSIÓN ────────────────────────────────── */}
+            {mostrandoHero && (
+                <section className="bg-gray-900 border-y border-gray-800 py-6">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                                { icon: '🚚', titulo: 'Envío a todo Colombia', desc: 'Cubrimos todos los municipios' },
+                                { icon: '🔒', titulo: 'Pago 100% seguro', desc: 'Wompi, PSE y tarjetas débito/crédito' },
+                                { icon: '💬', titulo: 'Soporte por WhatsApp', desc: 'Respuesta en menos de 1 hora' },
+                                { icon: '🔄', titulo: 'Devoluciones fáciles', desc: 'Hasta 30 días después de tu compra' },
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-start gap-3 p-4 rounded-2xl bg-gray-800/50 border border-gray-700/50">
+                                    <span className="text-2xl shrink-0">{item.icon}</span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-white">{item.titulo}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
