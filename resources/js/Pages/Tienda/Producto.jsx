@@ -70,6 +70,18 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
+                {/* ── BOTÓN VOLVER ────────────────────────────────────────── */}
+                <div className="mb-4">
+                    <Link
+                        href={producto.categoria
+                            ? route('tienda.categoria', producto.categoria.slug)
+                            : route('tienda.index')}
+                        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-orange-400 transition-colors"
+                    >
+                        ← {producto.categoria ? producto.categoria.nombre : 'Tienda'}
+                    </Link>
+                </div>
+
                 {/* ── BREADCRUMB ──────────────────────────────────────────── */}
                 <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
                     <Link href={route('tienda.index')} className="hover:text-orange-400 transition-colors">

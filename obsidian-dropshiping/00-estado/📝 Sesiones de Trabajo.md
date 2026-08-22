@@ -12,6 +12,46 @@ descripcion: "Registro de todas las sesiones de desarrollo"
 
 ---
 
+## Sesión 14 — 2026-08-22
+
+**Duración:** ~3 horas
+**Fase:** FASE 3 — Productos (import fix) + FASE 8 — Tienda (UI fixes)
+
+**Completado:**
+
+### Importador masivo (ProductoController.php)
+- [x] Fix `categoria_slug`: regenerado Excel con `navidad` (no `Temporada-Navidad`)
+- [x] Debug "0 importados / 39 errores" → causa: `stock_minimo` NOT NULL en DB
+- [x] Fix: `stock` y `stock_minimo` default `0` (antes devolvía `null` con celda vacía)
+- [x] Mejora debug: `catch (\Throwable $e)` + `get_class($e)` + "Primer error →" en banner
+- [x] Creado `productos_importar.xlsx` con 39 productos navidad en estado `borrador`
+
+### Admin — Catálogo (Productos/Index.jsx)
+- [x] Filtros colapsables: estado `mostrarFiltros` + botón "⚙ Filtros ▼" toggle
+- [x] Botón "🗑 Vaciar catálogo" (solo `super_administrador`, solo si hay productos)
+- [x] Ruta `DELETE productos/borrar-todos` con middleware `role:super_administrador`
+- [x] `borrarTodos()` en ProductoController: borra media Spatie + elimina todos los productos
+
+### Tienda Pública (Tienda/Index.jsx)
+- [x] Botón filtros: removido `lg:hidden` (ahora visible en desktop también)
+- [x] Botón filtros: fondo `bg-[#2c2c2c]` (carbon) con texto blanco
+- [x] Overlay del drawer: removido `lg:hidden`
+
+### Tienda Pública — Descripción en modo luz (Tienda/Producto.jsx)
+- [x] Fix: `text-white` movido a `<p>` hijo dentro del `div.bg-gray-900`
+- [x] Causa: CSS `:not(.bg-gray-900 *)` se aplicaba al div mismo (no era hijo de sí mismo)
+
+### Documentación (Obsidian)
+- [x] Creado [[Proceso — Subir Productos Caroleste]] con workflow de 5 pasos
+
+**⚠️ PENDIENTE PUSH:**
+- [ ] `git add -A && git commit -m "fix: stock_minimo default 0 + descripcion texto blanco en modo luz"` 
+- [ ] `git push origin main`
+- [ ] Si hay lock files: `Remove-Item ".git\*.lock"` en PowerShell primero
+- [ ] Luego probar importar los 39 productos de navidad
+
+---
+
 ## Sesión 13 — 2026-08-22
 
 **Duración:** ~4 horas
