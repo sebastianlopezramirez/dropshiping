@@ -609,7 +609,8 @@ class ProductoController extends Controller
 
         $mensaje = "{$creados} producto(s) importado(s) correctamente.";
         if (!empty($errores)) {
-            $mensaje .= ' ' . count($errores) . ' fila(s) con advertencia o error.';
+            $mensaje .= ' ' . count($errores) . ' fila(s) con error. ';
+            $mensaje .= 'Primer error → ' . $errores[0];
         }
 
         return back()->with('exito', $mensaje)->with('errores_importacion', $errores);
