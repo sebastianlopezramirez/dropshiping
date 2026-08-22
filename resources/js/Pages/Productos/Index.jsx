@@ -213,7 +213,7 @@ export default function Index({ productos, categorias, filtros }) {
                                 onClick={() => setModalImportar(true)}
                                 className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
                             >
-                                ↑ Importar CSV
+                                ↑ Importar Excel / CSV
                             </button>
                         )}
                         <Link
@@ -441,7 +441,7 @@ export default function Index({ productos, categorias, filtros }) {
                         {/* Encabezado del modal */}
                         <div className="flex items-center justify-between p-5 border-b">
                             <h3 className="text-lg font-semibold text-gray-900">
-                                Importar Productos desde CSV
+                                Importar Productos (Excel o CSV)
                             </h3>
                             <button
                                 onClick={() => { setModalImportar(false); setArchivoCsv(null); }}
@@ -454,36 +454,24 @@ export default function Index({ productos, categorias, filtros }) {
                         {/* Cuerpo del modal */}
                         <div className="p-5 space-y-4">
 
-                            {/* Instrucciones + plantilla */}
+                            {/* Instrucciones */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                                <p className="font-medium mb-1">📋 Formato del CSV:</p>
-                                <p className="font-mono text-xs bg-white border rounded px-2 py-1 mt-1">
-                                    sku, nombre, precio_costo, precio_venta, stock, descripcion_corta
-                                </p>
-                                <p className="mt-2 text-xs">
-                                    Los campos obligatorios son <strong>nombre</strong> y <strong>precio_venta</strong>.
-                                    Los demás son opcionales.
+                                <p className="font-medium mb-1">📊 Formatos aceptados: <strong>Excel (.xlsx)</strong> o CSV</p>
+                                <p className="mt-1 text-xs">
+                                    Columna <strong>nombre</strong> es obligatoria. Las demás son opcionales.<br/>
+                                    Columna <strong>categoria_slug</strong>: usa el slug exacto (ej: <code>decoracion</code>, <code>hogar</code>).
                                 </p>
                             </div>
-
-                            {/* Descargar plantilla */}
-                            <a
-                                href="/plantilla-productos.csv"
-                                download
-                                className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
-                            >
-                                ⬇ Descargar plantilla CSV
-                            </a>
 
                             {/* Input de archivo */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Seleccionar archivo CSV
+                                    Seleccionar archivo Excel (.xlsx) o CSV
                                 </label>
                                 <input
                                     ref={inputCsvRef}
                                     type="file"
-                                    accept=".csv,text/csv"
+                                    accept=".xlsx,.xls,.csv,.ods,text/csv"
                                     onChange={(e) => setArchivoCsv(e.target.files[0] || null)}
                                     className="block w-full text-sm text-gray-500
                                         file:mr-4 file:py-2 file:px-4

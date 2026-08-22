@@ -473,30 +473,63 @@ class ProductoController extends Controller
     public function importar(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|file|mimes:csv,txt|max:5120',
+            'archivo' => 'required|file|mimes:csv,txt,xlsx,xls,ods|max:10240',
         ]);
 
-        $archivo = $request->file('archivo');
-        $handle  = fopen($archivo->getRealPath(), 'r');
+        $archivo    = $request->file('archivo');
+        $extension  = strtolower($archivo->getClientOriginalExtension());
+        $filas      = [];
 
-        // Leer encabezados (primera fila) — quitar BOM UTF-8 si existe
-        $primeraFila = fgetcsv($handle, 2000, ',');
-        $primeraFila[0] = ltrim($primeraFila[0], "\xEF\xBB\xBF");
-        $encabezados = array_map('trim', $primeraFila);
+        // ── LEER FILAS SEGÚN FORMATO ─────────────────────────────────────
+        if (in_array($extension, ['xlsx', 'xls', 'ods'])) {
+            // Excel / ODS → PhpSpreadsheet
+            $reader      = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($archivo->getRealPath());
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($archivo->getRealPath());
+            $sheet       = $spreadsheet->getActiveSheet();
 
-        // Cache de categorías para no hacer query por cada fila
-        $categoriasCache = \App\Models\Categoria::pluck('id', 'slug')->toArray();
+            foreach ($sheet->getRowIterator() as $row) {
+                $celdas = [];
+                foreach ($row->getCellIterator() as $celda) {
+                    $celdas[] = trim((string) $celda->getFormattedValue());
+                }
+                $filas[] = $celdas;
+            }
+        } else {
+            // CSV — leer con fgetcsv
+            $handle = fopen($archivo->getRealPath(), 'r');
+            $primera = fgetcsv($handle, 2000, ',');
+            $primera[0] = ltrim($primera[0], "\xEF\xBB\xBF");
+            $filas[] = array_map('trim', $primera);
+            while (($row = fgetcsv($handle, 2000, ',')) !== false) {
+                $filas[] = $row;
+            }
+            fclose($handle);
+        }
+
+        if (empty($filas)) {
+            return back()->with('error', 'El archivo está vacío.');
+        }
+
+        // Primera fila = encabezados
+        $encabezados = $filas[0];
+
+        // Cache de categorías
+        $categoriasCache = Categoria::pluck('id', 'slug')->toArray();
 
         $creados = 0;
         $errores = [];
         $fila    = 2;
 
-        while (($columnas = fgetcsv($handle, 2000, ',')) !== false) {
-            // Saltar filas vacías
-            if (empty(array_filter($columnas))) { $fila++; continue; }
+        foreach (array_slice($filas, 1) as $columnas) {
+            // Saltar filas vacías (ejemplo o en blanco)
+            if (empty(array_filter($columnas, fn($v) => $v !== ''))) { $fila++; continue; }
 
-            // Mapear columna → valor por nombre de encabezado
-            $datos = array_combine($encabezados, array_map('trim', array_slice($columnas, 0, count($encabezados))));
+            // Mapear encabezado → valor
+            $datos = array_combine(
+                $encabezados,
+                array_map('trim', array_slice($columnas, 0, count($encabezados)))
+            );
 
             // VALIDAR: nombre obligatorio
             $nombre = $datos['nombre'] ?? '';
@@ -573,8 +606,6 @@ class ProductoController extends Controller
 
             $fila++;
         }
-
-        fclose($handle);
 
         $mensaje = "{$creados} producto(s) importado(s) correctamente.";
         if (!empty($errores)) {
