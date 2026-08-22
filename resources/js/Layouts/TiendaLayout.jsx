@@ -70,16 +70,17 @@ const ESTILOS_CLARO = `
         border-color: #0E7490 !important;
     }
 
-    /* ── BOTONES CATEGORÍAS VISUALES → NARANJA del logo ─ */
+    /* ── BOTONES CATEGORÍAS VISUALES → CHARCOAL + texto blanco ─ */
     [data-tema="claro"] main .gs-categorias button {
-        background-color: #FF6B00 !important;
-        border-color: #FF6B00 !important;
+        background-color: #1C1C1C !important;
+        border-color: #1C1C1C !important;
         color: #FFFFFF !important;
     }
-    [data-tema="claro"] main .gs-categorias button span { color: #FFFFFF !important; }
+    [data-tema="claro"] main .gs-categorias button span,
+    [data-tema="claro"] main .gs-categorias button .text-gray-400 { color: #FFFFFF !important; }
     [data-tema="claro"] main .gs-categorias button:hover {
-        background-color: #E55F00 !important;
-        border-color: #E55F00 !important;
+        background-color: #333333 !important;
+        border-color: #06B6D4 !important;
         transform: scale(1.03);
     }
 
