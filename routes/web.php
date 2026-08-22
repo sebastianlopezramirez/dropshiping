@@ -172,6 +172,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
          ->name('productos.importar')
          ->middleware('role:super_administrador|administrador|proveedor');
 
+    Route::delete('productos/borrar-todos', [ProductoController::class, 'borrarTodos'])
+         ->name('productos.borrarTodos')
+         ->middleware('role:super_administrador');
+
     Route::post('productos/importar/preview', [ProductoController::class, 'previewImportar'])
          ->name('productos.importar.preview')
          ->middleware('role:super_administrador|administrador|proveedor');

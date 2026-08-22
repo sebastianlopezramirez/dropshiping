@@ -58,6 +58,7 @@ export default function Index({ productos, categorias, filtros }) {
     const [buscar, setBuscar]           = useState(filtros.buscar || '');
     const [categoriaId, setCategoriaId] = useState(filtros.categoria_id || '');
     const [estado, setEstado]           = useState(filtros.estado || '');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false); // filtros colapsables
 
     // ── Función: previsualizar archivo ─────────────────────────────────
     const previsualizarArchivo = async (archivo) => {
@@ -220,15 +221,28 @@ export default function Index({ productos, categorias, filtros }) {
                     </div>
                 )}
 
-                {/* ── ENCABEZADO: título + botón crear ───────────────── */}
-                <div className="flex items-center justify-between mb-6">
+                {/* ── ENCABEZADO: título + botones ───────────────────── */}
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Catálogo de Productos</h1>
                         <p className="text-sm text-gray-500 mt-1">
                             {productos.total} productos en total
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Botón Filtros ▼ colapsable */}
+                        <button
+                            type="button"
+                            onClick={() => setMostrarFiltros(v => !v)}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg border transition ${
+                                mostrarFiltros
+                                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
+                            ⚙ Filtros {mostrarFiltros ? '▲' : '▼'}
+                        </button>
+
                         {esAdmin && (
                             <Link
                                 href={route('categorias.index')}
@@ -237,7 +251,22 @@ export default function Index({ productos, categorias, filtros }) {
                                 Categorías
                             </Link>
                         )}
-                        {/* Botón importar CSV — admin, super admin y proveedor */}
+
+                        {/* Vaciar catálogo — solo super_administrador */}
+                        {auth.roles?.includes('super_administrador') && productos.total > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (confirm(`¿Eliminar TODOS los ${productos.total} productos? Esta acción NO se puede deshacer.`)) {
+                                        router.delete(route('productos.borrarTodos'), { preserveScroll: false });
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition border border-red-200"
+                            >
+                                🗑 Vaciar catálogo
+                            </button>
+                        )}
+
                         {puedeImportar && (
                             <button
                                 onClick={() => setModalImportar(true)}
@@ -255,11 +284,11 @@ export default function Index({ productos, categorias, filtros }) {
                     </div>
                 </div>
 
-                {/* ── FORMULARIO DE FILTROS ───────────────────────────── */}
-                <form onSubmit={aplicarFiltros} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+                {/* ── FORMULARIO DE FILTROS (colapsable) ─────────────── */}
+                {mostrarFiltros && (
+                <form onSubmit={aplicarFiltros} className="bg-white rounded-xl shadow-sm border border-indigo-100 p-4 mb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 
-                        {/* Búsqueda por nombre */}
                         <input
                             type="text"
                             placeholder="Buscar por nombre..."
@@ -268,7 +297,6 @@ export default function Index({ productos, categorias, filtros }) {
                             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
 
-                        {/* Filtro por categoría */}
                         <select
                             value={categoriaId}
                             onChange={e => setCategoriaId(e.target.value)}
@@ -280,7 +308,6 @@ export default function Index({ productos, categorias, filtros }) {
                             ))}
                         </select>
 
-                        {/* Filtro por estado */}
                         <select
                             value={estado}
                             onChange={e => setEstado(e.target.value)}
@@ -293,7 +320,6 @@ export default function Index({ productos, categorias, filtros }) {
                             <option value="inactivo">Inactivo</option>
                         </select>
 
-                        {/* Botones */}
                         <div className="flex gap-2">
                             <button
                                 type="submit"
@@ -311,6 +337,7 @@ export default function Index({ productos, categorias, filtros }) {
                         </div>
                     </div>
                 </form>
+                )}
 
                 {/* ── TABLA DE PRODUCTOS ──────────────────────────────── */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

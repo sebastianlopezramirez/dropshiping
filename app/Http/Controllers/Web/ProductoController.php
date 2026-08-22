@@ -600,8 +600,8 @@ class ProductoController extends Controller
 
                 $creados++;
 
-            } catch (\Exception $e) {
-                $errores[] = "Fila {$fila}: error — {$e->getMessage()}";
+            } catch (\Throwable $e) {
+                $errores[] = "Fila {$fila}: error — " . get_class($e) . ': ' . $e->getMessage();
             }
 
             $fila++;
@@ -719,6 +719,26 @@ class ProductoController extends Controller
             'invalidas'=> $invalidas,
             'total'    => count($resultado),
         ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | borrarTodos() — Eliminar TODOS los productos (solo super_administrador)
+    |----------------------------------------------------------------------
+    */
+    public function borrarTodos(): RedirectResponse
+    {
+        // Eliminar media (imágenes) de cada producto antes de borrar
+        $productos = \App\Models\Producto::all();
+        foreach ($productos as $p) {
+            try { $p->clearMediaCollection('imagenes'); } catch (\Throwable) {}
+        }
+
+        \App\Models\Producto::query()->delete();
+
+        return redirect()
+            ->route('productos.index')
+            ->with('exito', 'Todos los productos han sido eliminados del catálogo.');
     }
 
     /*
