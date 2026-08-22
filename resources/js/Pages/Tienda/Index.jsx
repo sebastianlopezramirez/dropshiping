@@ -66,7 +66,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 
             {/* ── DRAWER FILTROS MÓVIL ──────────────────────────────────── */}
             {filtroMovil && (
-                <div className="fixed inset-0 z-50 lg:hidden">
+                <div className="fixed inset-0 z-50">
                     <div className="absolute inset-0 bg-black/60" onClick={() => setFiltroMovil(false)} />
                     <div className="absolute bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 rounded-t-2xl p-6 space-y-5 max-h-[85vh] overflow-y-auto">
                         <div className="flex items-center justify-between">
@@ -173,9 +173,9 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                             </div>
                             <h2 className="text-lg sm:text-xl font-bold text-white">Explora por categoría</h2>
                         </div>
-                        {/* Botón filtros móvil — visible solo en móvil */}
+                        {/* Botón filtros — visible en todos los tamaños */}
                         <button onClick={() => setFiltroMovil(true)}
-                            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 transition-colors">
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-[#2c2c2c] text-white hover:bg-gray-700 border border-gray-600 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                             </svg>
