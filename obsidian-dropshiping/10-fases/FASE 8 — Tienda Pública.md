@@ -5,7 +5,7 @@ type: fase
 estado: completada
 fase_numero: 8
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-22
 related: ["[[FASE 7 — Marketing]]", "[[FASE 9 — Analytics]]"]
 ---
 
@@ -24,7 +24,7 @@ Un catálogo público accesible sin login. Cualquier visitante puede:
 | Archivo | Descripción |
 |---|---|
 | `app/Http/Controllers/Web/TiendaController.php` | 3 métodos públicos |
-| `resources/js/Layouts/TiendaLayout.jsx` | Navbar + Footer sin auth |
+| `resources/js/Layouts/TiendaLayout.jsx` | Navbar + Footer + Tema claro |
 | `resources/js/Pages/Tienda/Index.jsx` | Catálogo con filtros y grid |
 | `resources/js/Pages/Tienda/Producto.jsx` | Detalle con SEO completo |
 
@@ -38,32 +38,26 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
 });
 ```
 
-> ⚠️ **Regla crítica de orden**: `/tienda/categoria/{slug}` DEBE ir ANTES de `/tienda/{slug}`.
-> Sin ese orden, Laravel resuelve "categoria" como un slug de producto.
+## Mejoras — Sesión 13 (2026-08-22)
 
-## SEO con Inertia `<Head>`
+### Tema Claro (`ESTILOS_CLARO` en TiendaLayout.jsx)
+Inyectado con `{temaClaro && <style>{ESTILOS_CLARO}</style>}` usando `[data-tema="claro"]`.
 
-```jsx
-<Head>
-    <title>{seo.titulo}</title>
-    <meta name="description" content={seo.descripcion} />
-    <meta property="og:title" content={seo.titulo} />
-    <meta property="og:image" content={seo.imagen} />
-    <meta property="og:url" content={seo.url} />
-    <meta name="twitter:card" content="summary_large_image" />
-</Head>
-```
+| Elemento | Cambio |
+|---|---|
+| Footer | Fondo `#FF1493`, títulos h4 blancos, textos negros |
+| Logo footer | `/logo.webp` circular (`rounded-full w-16 h-16`) |
+| Textos fuera de cards | Negro `#111111` negrilla (`:not(.bg-gray-9xx *)`) |
+| Botón "Filtros" | `text-white` en móvil y desktop |
+| Sidebar categorías | `.bg-gray-900 button` → texto blanco |
+| Título "Recién llegados" | `main h2.text-white` → negro |
+| Botón flotante llamada | `bg-orange-500` naranja sólido |
 
-Se usa `<Head>` de Inertia (no raw HTML) para que las meta tags se gestionen correctamente en el ciclo de vida SPA.
+### Sección Categorías (Index.jsx)
+- Antes: grid 3 columnas de cards con imagen y fondo
+- Ahora: lista 2 columnas, cada item = `emoji + nombre` en fila
+- Clase `gs-categorias` preservada para CSS targeting
 
-## Decisiones de diseño
-
-- **`TarjetaProducto` definida FUERA del componente principal**: evita remount en cada render y pérdida de estado
-- **Búsqueda**: `ilike` en PostgreSQL (case-insensitive), pasada como query param `?q=`
-- **Grid**: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4`
-- **Badge de descuento**: cálculo `(precio_venta - precio_oferta) / precio_venta * 100`
-- **Botón WhatsApp**: `https://wa.me/?text=` con nombre + URL del producto
-
-## Bugs resueltos en esta fase
-
-- **Vite manifest no encontrado**: el build no se había corrido después de crear los nuevos archivos JSX → `npm run build` en PowerShell
+## Pendiente
+- [ ] Sitemap XML automático
+- [ ] Open Graph images dinámicas

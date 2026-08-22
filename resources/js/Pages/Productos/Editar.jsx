@@ -43,6 +43,26 @@ export default function Editar({ producto, categorias }) {
     // Inertia v2 con forceFormData envía un PUT real → PHP descarta el body.
     // Solución estándar: enviar POST con _method:'put' (method spoofing de Laravel).
     // Laravel lee _method del FormData y trata el request como PUT internamente.
+    // ─── CATEGORÍAS EN CASCADA ─────────────────────────────────────────────
+    // Inicializar padre desde el producto actual
+    const initialPadreId = (() => {
+        const cat = categorias.find(c => String(c.id) === String(producto.categoria_id));
+        if (!cat) return '';
+        return cat.padre_id ? String(cat.padre_id) : String(cat.id);
+    })();
+    const [categoriaPadreId, setCategoriaPadreId] = useState(initialPadreId);
+
+    const categoriasPadre = categorias.filter(c => !c.padre_id);
+    const subcategorias   = categoriaPadreId
+        ? categorias.filter(c => String(c.padre_id) === String(categoriaPadreId))
+        : [];
+
+    const handleCategoriaPadre = (id) => {
+        setCategoriaPadreId(id);
+        const tieneHijos = categorias.some(c => String(c.padre_id) === String(id));
+        setData('categoria_id', tieneHijos ? '' : id);
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         // Campo de method spoofing — Laravel lo intercepta antes de validar
         _method:           'put',
@@ -254,16 +274,30 @@ export default function Editar({ producto, categorias }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                                <select
-                                    value={data.categoria_id}
-                                    onChange={e => setData('categoria_id', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                >
-                                    <option value="">Sin categoría</option>
-                                    {categorias.map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                    ))}
-                                </select>
+                                <div className="flex flex-col gap-2">
+                                    <select
+                                        value={categoriaPadreId}
+                                        onChange={e => handleCategoriaPadre(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
+                                        <option value="">— Selecciona una categoría —</option>
+                                        {categoriasPadre.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                        ))}
+                                    </select>
+                                    {subcategorias.length > 0 && (
+                                        <select
+                                            value={data.categoria_id}
+                                            onChange={e => setData('categoria_id', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="">— Selecciona subcategoría —</option>
+                                            {subcategorias.map(sub => (
+                                                <option key={sub.id} value={sub.id}>{sub.nombre}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
                                 <Error campo="categoria_id" />
                             </div>
 

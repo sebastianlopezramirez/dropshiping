@@ -65,7 +65,8 @@ export default function Crear({ categorias }) {
 
     const handleCategoriaPadre = (id) => {
         setCategoriaPadreId(id);
-        setData('categoria_id', '');
+        const tieneHijos = categorias.some(c => String(c.padre_id) === String(id));
+        setData('categoria_id', tieneHijos ? '' : id);
     };
 
     // ─── SKU PREVIEW (solo visual, el servidor genera el definitivo) ──────

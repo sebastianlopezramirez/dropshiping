@@ -70,7 +70,8 @@ export default function CrearProducto({ categorias }) {
 
     const handleCategoriaPadre = (id) => {
         setCategoriaPadreId(id);
-        setData('categoria_id', ''); // limpiar subcategoría al cambiar padre
+        const tieneHijos = categorias.some(c => String(c.padre_id) === String(id));
+        setData('categoria_id', tieneHijos ? '' : id);
     };
 
     // ─── VERIFICACIÓN DE NOMBRE DUPLICADO (tiempo real) ─────────────────
