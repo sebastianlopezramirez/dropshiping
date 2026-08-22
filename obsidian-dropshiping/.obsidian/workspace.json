@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "40-arquitectura/Stack Tecnológico.md",
+                "file": "90-credenciales/👥 Roles y Accesos — GadGet Store.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Stack Tecnológico"
+              "title": "👥 Roles y Accesos — GadGet Store"
             }
           }
         ]
@@ -190,27 +190,31 @@
   },
   "active": "647d40d44db7ed6a",
   "lastOpenFiles": [
+    "90-credenciales/🔐 Credenciales — Master.md.tmp.5248.abe38a44680a",
+    "30-modulos/🗂️ Categorías — GadGet Store.md",
+    "30-modulos/🗂️ Categorías — GadGet Store.md.tmp.5248.970dcc2cd85e",
+    "90-credenciales/🔐 Credenciales — Master.md",
+    "90-credenciales/👥 Roles y Accesos — GadGet Store.md",
+    "90-credenciales/🔐 Credenciales — Master.md.tmp.15872.4fc9fd06b129",
+    "90-credenciales/👥 Roles y Accesos — GadGet Store.md.tmp.15872.b38839431c0b",
+    "00-estado/📊 Tablero de Fases.md",
+    "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.9289df84b094",
+    "00-estado/🐛 Bugs y Pendientes.md",
+    "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.fb914c76564b",
+    "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.5f0e24ca5a2e",
+    "40-arquitectura/Stack Tecnológico.md",
     "10-fases/FASE 10 — Infraestructura.md",
     "10-fases/FASE 6 — Portal de Proveedores.md",
     "10-fases/FASE 3 — Productos y Catálogo.md",
-    "90-credenciales/🔐 Credenciales — Master.md",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.6360.afca6f6f6983",
     "00-estado/📊 Tablero de Fases.md.tmp.6360.c959a7566498",
     "00-estado/📊 Tablero de Fases.md.tmp.6360.d0044dfafb24",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.10948.5598584429fd",
-    "00-estado/📊 Tablero de Fases.md.tmp.10948.a74365f198a0",
-    "00-estado/📊 Tablero de Fases.md.tmp.10948.bdf5bc3a478b",
-    "00-estado/📊 Tablero de Fases.md.tmp.10948.33733d60c2f3",
-    "00-estado/📊 Tablero de Fases.md.tmp.10948.9bb88cc245a5",
     "60-decisiones/Sistema de Imágenes — Spatie + R2.md",
-    "60-decisiones/Sistema de Imágenes — Spatie + R2.md.tmp.10948.8ff2ce3cad3b",
-    "00-estado/🐛 Bugs y Pendientes.md.tmp.9984.d75c60d4d105",
     "10-fases/FASE 9 — Analytics.md",
     "10-fases/FASE 8 — Tienda Pública.md",
-    "00-estado/📊 Tablero de Fases.md",
     "10-fases/FASE 7 — Marketing.md",
     "00-estado/📝 Sesiones de Trabajo.md",
-    "00-estado/🐛 Bugs y Pendientes.md",
     "10-fases/FASE 5 — Financiero y Wompi.md",
     "20-mocs/MOC — Módulos.md",
     "10-fases/FASE 4 — Pedidos y Logística.md"

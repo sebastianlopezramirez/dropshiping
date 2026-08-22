@@ -2,7 +2,7 @@
 tags: [credenciales, seguridad, accesos]
 tipo: credenciales
 estado: activo
-ultima_actualizacion: 2026-08-04
+ultima_actualizacion: 2026-08-21
 advertencia: "NO subir este archivo a GitHub ni compartir públicamente"
 ---
 
@@ -114,15 +114,59 @@ php artisan migrate:status
 
 ---
 
-## 🏗️ Infraestructura (Producción — a definir)
+## 🚀 Railway (Producción)
 
-| Servicio | Estado |
+| Campo | Valor |
 |---|---|
-| Servidor web | ⏳ Por definir (VPS / Railway / Fly.io) |
-| Dominio | ⏳ Por definir |
-| SSL | ⏳ Por definir (Cloudflare / Let's Encrypt) |
-| Redis | ⏳ Por definir (Upstash / Railway) |
-| Email transaccional | ⏳ Por definir (Resend / SendGrid) |
+| URL producción | `https://courageous-flexibility-production-1a54.up.railway.app` |
+| Proyecto | `dropshipping` / `production` |
+| Servicio app | `courageous-flexibility` |
+| Región | EU West (Amsterdam) |
+| PHP | 8.3.33 |
+| Node | 22.23.2 |
+| GitHub repo | `sebastianlopezramirez/dropshiping` (branch: `main`) |
+| Deploy | Automático al hacer `git push origin main` |
+| Console | Railway → servicio → pestaña Console |
+
+### Comandos Railway (correr desde Console):
+```bash
+php artisan migrate --force
+php artisan db:seed --class=TarifaDomicilioSeeder --force
+php artisan cache:clear
+```
+
+---
+
+## 👥 Usuarios del Sistema
+
+| Nombre | Email | Contraseña | Rol |
+|---|---|---|---|
+| Sebastian | `selora1988@gmail.com` | `Admin2024!` | `super_administrador` |
+
+> 🔄 **Pendiente**: Crear usuarios para proveedores y administradores adicionales desde `/usuarios`
+
+---
+
+## 📞 Contacto del Negocio
+
+| Campo | Valor |
+|---|---|
+| WhatsApp negocio | `3137921336` (formato WA: `573137921336`) |
+| Email contacto | `selora1988@gmail.com` |
+
+---
+
+## 🏗️ Infraestructura (Producción)
+
+| Servicio | Estado | Detalle |
+|---|---|---|
+| Servidor web | ✅ Railway | `courageous-flexibility` |
+| Base de datos | ✅ Railway PostgreSQL | `postgres-volume` |
+| Imágenes | ✅ Cloudflare R2 | Variables en Railway |
+| Dominio | ⏳ Por definir | — |
+| SSL | ✅ Railway (automático) | HTTPS incluido |
+| Redis | ⏳ Por definir | Upstash / Railway |
+| Email transaccional | ⏳ Por definir | Resend / SendGrid |
 
 ---
 
@@ -131,7 +175,8 @@ php artisan migrate:status
 | Fecha | Cambio | Quién |
 |---|---|---|
 | 2026-08-04 | Configuración inicial — PostgreSQL + usuario admin | Sebastian / Claude |
+| 2026-08-21 | Agregado Railway producción, WhatsApp negocio, tabla usuarios | Sebastian / Claude |
 
 ---
 
-*Nota relacionada: [[MOC — Decisiones Técnicas]]*
+*Notas relacionadas: [[MOC — Decisiones Técnicas]] · [[👥 Roles y Accesos — GadGet Store]] · [[🗂️ Categorías — GadGet Store]]*

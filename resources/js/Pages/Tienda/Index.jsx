@@ -18,6 +18,15 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
     const [categoriasAbiertas, setCategoriasAbiertas] = useState(true);
     const [precioAbierto, setPrecioAbierto]   = useState(true);
 
+    // Categorías jerárquicas
+    const categoriasRaiz   = categorias.filter(c => c.padre_id === null);
+    const hijosDe          = (padreId) => categorias.filter(c => c.padre_id === padreId);
+    const [padreExpandido, setPadreExpandido] = useState(() => {
+        if (!filtros.categoria) return null;
+        const activa = categorias.find(c => c.slug === filtros.categoria);
+        return activa?.padre_id ?? activa?.id ?? null;
+    });
+
     const aplicarFiltros = (extra = {}) => {
         const params = {};
         if (busqueda)  params.q          = busqueda;
@@ -79,14 +88,48 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                             ${!filtros.categoria ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 border border-orange-500/30' : 'text-gray-400 hover:bg-gray-800'}`}>
                                         Todas las categorías
                                     </button>
-                                    {categorias.map(cat => (
-                                        <button key={cat.id}
-                                            onClick={() => { aplicarFiltros({ categoria: cat.slug }); setFiltroMovil(false); }}
-                                            className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors
-                                                ${filtros.categoria === cat.slug ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 border border-orange-500/30' : 'text-gray-400 hover:bg-gray-800'}`}>
-                                            {cat.nombre}
-                                        </button>
-                                    ))}
+                                    {categoriasRaiz.map(padre => {
+                                        const hijos      = hijosDe(padre.id);
+                                        const expandido  = padreExpandido === padre.id;
+                                        const hijoActivo = hijos.some(h => h.slug === filtros.categoria);
+                                        const activo     = filtros.categoria === padre.slug || hijoActivo;
+                                        return (
+                                            <div key={padre.id}>
+                                                <button
+                                                    onClick={() => {
+                                                        setPadreExpandido(expandido ? null : padre.id);
+                                                        aplicarFiltros({ categoria: padre.slug });
+                                                        if (hijos.length === 0) setFiltroMovil(false);
+                                                    }}
+                                                    className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center gap-2
+                                                        ${activo ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 border border-orange-500/30' : 'text-gray-400 hover:bg-gray-800'}`}>
+                                                    <span className="flex-1">{padre.nombre}</span>
+                                                    {hijos.length > 0 && (
+                                                        <svg className={`w-3 h-3 shrink-0 transition-transform ${expandido ? 'rotate-180' : ''}`}
+                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                                {expandido && hijos.length > 0 && (
+                                                    <div className="ml-3 mt-0.5 mb-1 space-y-0.5 border-l border-gray-700 pl-3">
+                                                        {hijos.map(hijo => (
+                                                            <button
+                                                                key={hijo.id}
+                                                                onClick={() => { aplicarFiltros({ categoria: hijo.slug }); setFiltroMovil(false); }}
+                                                                className={`w-full text-left text-xs px-2 py-1.5 rounded-lg transition-colors
+                                                                    ${filtros.categoria === hijo.slug
+                                                                        ? 'text-orange-400 font-semibold'
+                                                                        : 'text-gray-500 hover:text-gray-200 hover:bg-gray-800'}`}
+                                                            >
+                                                                {hijo.nombre}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -119,31 +162,40 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 
             {/* ── PRODUCTOS NUEVOS ──────────────────────────────────────── */}
             {mostrandoHero && productosNuevos.length > 0 && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+                <section className="bg-gray-900 border-y border-gray-800 py-6">
                     {/* Encabezado */}
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <span className="w-1 h-6 bg-gradient-to-b from-orange-500 to-pink-500 rounded-full"></span>
-                            <h2 className="text-lg sm:text-xl font-bold text-white">Productos Nuevos</h2>
-                            <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">NEW</span>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-3">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="w-5 h-0.5 bg-orange-500 rounded-full"></span>
+                                <span className="w-3 h-0.5 bg-pink-500 rounded-full"></span>
+                            </div>
+                            <h2 className="text-lg sm:text-xl font-bold text-white">Recién llegados</h2>
+                            <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full tracking-wide">NEW</span>
                         </div>
                         <button
                             onClick={() => aplicarFiltros()}
-                            className="text-sm text-orange-400 hover:text-orange-300 font-medium transition-colors"
+                            className="text-sm text-orange-400 hover:text-orange-300 font-medium transition-colors flex items-center gap-1"
                         >
-                            Ver todos →
+                            Ver todos <span className="text-base">→</span>
                         </button>
                     </div>
 
-                    {/* Grid — 2 columnas en móvil, 4 en desktop */}
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                        {productosNuevos.map(producto => (
-                            <TarjetaProducto key={producto.id} producto={producto} cop={cop} />
-                        ))}
+                    {/* Carrusel horizontal */}
+                    <div className="relative">
+                        {/* Fade derecho */}
+                        <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-gray-900 to-transparent z-10"></div>
+                        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto
+                            scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                            {productosNuevos.map(producto => (
+                                <div key={producto.id} className="shrink-0 w-36 sm:w-44">
+                                    <TarjetaProducto producto={producto} cop={cop} />
+                                </div>
+                            ))}
+                            {/* Espaciado final para que el último card no quede bajo el fade */}
+                            <div className="shrink-0 w-8"></div>
+                        </div>
                     </div>
-
-                    {/* Separador */}
-                    <div className="mt-8 border-t border-gray-800"></div>
                 </section>
             )}
 
@@ -198,19 +250,51 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                             Todas
                                         </button>
 
-                                        {categorias.map(cat => (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => aplicarFiltros({ categoria: cat.slug })}
-                                                className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center gap-2
-                                                    ${filtros.categoria === cat.slug
-                                                        ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 font-semibold'
-                                                        : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`}
-                                            >
-                                                {filtros.categoria === cat.slug && <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0"></span>}
-                                                {cat.nombre}
-                                            </button>
-                                        ))}
+                                        {categoriasRaiz.map(padre => {
+                                            const hijos      = hijosDe(padre.id);
+                                            const expandido  = padreExpandido === padre.id;
+                                            const hijoActivo = hijos.some(h => h.slug === filtros.categoria);
+                                            const activo     = filtros.categoria === padre.slug || hijoActivo;
+                                            return (
+                                                <div key={padre.id}>
+                                                    <button
+                                                        onClick={() => {
+                                                            setPadreExpandido(expandido ? null : padre.id);
+                                                            aplicarFiltros({ categoria: padre.slug });
+                                                        }}
+                                                        className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors flex items-center gap-2
+                                                            ${activo
+                                                                ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 text-orange-400 font-semibold'
+                                                                : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}`}
+                                                    >
+                                                        {activo && <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0"></span>}
+                                                        <span className="flex-1">{padre.nombre}</span>
+                                                        {hijos.length > 0 && (
+                                                            <svg className={`w-3 h-3 shrink-0 transition-transform ${expandido ? 'rotate-180' : ''}`}
+                                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                    {expandido && hijos.length > 0 && (
+                                                        <div className="ml-3 mt-0.5 mb-1 space-y-0.5 border-l border-gray-700 pl-3">
+                                                            {hijos.map(hijo => (
+                                                                <button
+                                                                    key={hijo.id}
+                                                                    onClick={() => aplicarFiltros({ categoria: hijo.slug })}
+                                                                    className={`w-full text-left text-xs px-2 py-1.5 rounded-lg transition-colors
+                                                                        ${filtros.categoria === hijo.slug
+                                                                            ? 'text-orange-400 font-semibold'
+                                                                            : 'text-gray-500 hover:text-gray-200 hover:bg-gray-800'}`}
+                                                                >
+                                                                    {hijo.nombre}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
