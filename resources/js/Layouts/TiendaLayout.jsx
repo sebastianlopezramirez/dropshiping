@@ -112,6 +112,35 @@ const ESTILOS_CLARO = `
     /* Línea divisoria footer */
     [data-tema="claro"] footer .border-gray-800 { border-color: #CC0070 !important; }
 
+    /* ── TEXTOS FUERA DE CARDS (sobre fondo cyan) → NEGRO NEGRILLA ─── */
+    /* Títulos de sección */
+    [data-tema="claro"] main h1:not(.bg-gray-900 h1):not(.bg-gray-800 h1),
+    [data-tema="claro"] main h2:not(.bg-gray-900 h2):not(.bg-gray-800 h2),
+    [data-tema="claro"] main h3:not(.bg-gray-900 h3):not(.bg-gray-800 h3) {
+        color: #111111 !important;
+        font-weight: 700 !important;
+    }
+    /* Textos generales sobre el fondo */
+    [data-tema="claro"] main .text-white:not(.bg-gray-900 *):not(.bg-gray-800 *):not(.bg-gray-700 *),
+    [data-tema="claro"] main .text-gray-100:not(.bg-gray-900 *):not(.bg-gray-800 *),
+    [data-tema="claro"] main .text-gray-200:not(.bg-gray-900 *):not(.bg-gray-800 *),
+    [data-tema="claro"] main .text-gray-300:not(.bg-gray-900 *):not(.bg-gray-800 *) {
+        color: #111111 !important;
+        font-weight: 600 !important;
+    }
+    /* Labels y textos secundarios sobre el fondo */
+    [data-tema="claro"] main .text-gray-400:not(.bg-gray-900 *):not(.bg-gray-800 *),
+    [data-tema="claro"] main .text-gray-500:not(.bg-gray-900 *):not(.bg-gray-800 *) {
+        color: #1C1C1C !important;
+        font-weight: 600 !important;
+    }
+    /* Excepciones: textos dentro de cards se mantienen como están */
+    [data-tema="claro"] main .bg-gray-900 .text-white,
+    [data-tema="claro"] main .bg-gray-900 .text-gray-100,
+    [data-tema="claro"] main .bg-gray-900 .text-gray-200,
+    [data-tema="claro"] main .bg-gray-900 .text-gray-300 { color: #FFFFFF !important; font-weight: inherit !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-gray-400 { color: #A0AEC0 !important; font-weight: inherit !important; }
+
     /* ── TRANSICIÓN SUAVE ────────────────────────────── */
     [data-tema] main, [data-tema] footer, [data-tema] main * {
         transition: background-color 0.25s ease, color 0.2s ease, border-color 0.2s ease !important;
@@ -271,9 +300,11 @@ export default function TiendaLayout({ children }) {
                         <div>
                             <div className="mb-3">
                                 <img
-                                    src={temaClaro ? '/logo-color.png' : '/logo.webp'}
+                                    src="/logo.webp"
                                     alt="GadGet Store"
-                                    className="h-16 w-auto"
+                                    className={temaClaro
+                                        ? "h-16 w-16 rounded-full object-cover border-2 border-white shadow-lg"
+                                        : "h-12 w-auto"}
                                 />
                             </div>
                             <p className="text-sm text-gray-400 leading-relaxed">
