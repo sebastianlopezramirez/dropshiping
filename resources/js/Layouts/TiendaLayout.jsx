@@ -53,19 +53,31 @@ const ESTILOS_CLARO = `
     }
     [data-tema="claro"] main input::placeholder { color: #67E8F9 !important; }
 
-    /* ── BOTONES GRISES → NEGRO con letra BLANCA ─────── */
+    /* ── BOTONES GRISES → NEGRO con letra BLANCA NEGRILLA ─────── */
     [data-tema="claro"] main button[class*="bg-gray-800"],
-    [data-tema="claro"] main button[class*="border-gray-700"] {
+    [data-tema="claro"] main button[class*="border-gray-700"],
+    [data-tema="claro"] main button[class*="bg-gray-700"],
+    [data-tema="claro"] main button[class*="bg-gray-600"] {
         background-color: #111111 !important;
         border-color: #111111 !important;
         color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    [data-tema="claro"] main button[class*="bg-gray-800"] *,
+    [data-tema="claro"] main button[class*="border-gray-700"] *,
+    [data-tema="claro"] main button[class*="bg-gray-700"] *,
+    [data-tema="claro"] main button[class*="bg-gray-600"] * {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"] svg,
     [data-tema="claro"] main button[class*="border-gray-700"] svg {
         stroke: #FFFFFF !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
-    [data-tema="claro"] main button[class*="border-gray-700"]:hover {
+    [data-tema="claro"] main button[class*="border-gray-700"]:hover,
+    [data-tema="claro"] main button[class*="bg-gray-700"]:hover,
+    [data-tema="claro"] main button[class*="bg-gray-600"]:hover {
         background-color: #0E7490 !important;
         border-color: #0E7490 !important;
     }
