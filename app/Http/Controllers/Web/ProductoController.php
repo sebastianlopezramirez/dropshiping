@@ -578,8 +578,8 @@ class ProductoController extends Controller
                     'precio_oferta'     => !empty($datos['precio_oferta']) ? $precio($datos['precio_oferta']) : null,
 
                     // Inventario
-                    'stock'             => isset($datos['stock'])         && $datos['stock']         !== '' ? (int) $datos['stock']         : null,
-                    'stock_minimo'      => isset($datos['stock_minimo'])  && $datos['stock_minimo']  !== '' ? (int) $datos['stock_minimo']  : null,
+                    'stock'             => isset($datos['stock'])        && $datos['stock']        !== '' ? (int) $datos['stock']        : 0,
+                    'stock_minimo'      => isset($datos['stock_minimo']) && $datos['stock_minimo'] !== '' ? (int) $datos['stock_minimo'] : 0,
 
                     // Categoría
                     'categoria_id'      => $categoriaId,
