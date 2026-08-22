@@ -424,68 +424,149 @@ class ProductoController extends Controller
     | IMPORTAR MASIVO — POST /productos/importar
     |----------------------------------------------------------------------
     |
-    | Recibe un archivo CSV con columnas:
-    |   sku, nombre, precio_costo, precio_venta, stock, descripcion_corta
+    | ENTENDER — ¿Qué hace?
+    |   Recibe un CSV y crea productos con TODOS los campos disponibles.
     |
-    | Por cada fila válida crea un producto en estado 'borrador'.
-    | Retorna resumen: cuántos se crearon y cuáles fallaron.
+    | PENSAR — Columnas aceptadas en el CSV (todas opcionales excepto nombre):
+    |
+    |   OBLIGATORIO:
+    |     nombre          → Nombre del producto
+    |
+    |   IDENTIFICACIÓN:
+    |     sku             → Código único (si existe en BD se omite)
+    |
+    |   PRECIOS (sin símbolos, ej: 150000):
+    |     precio_costo    → Costo de compra
+    |     precio_venta    → Precio público
+    |     precio_oferta   → Precio con descuento (opcional)
+    |
+    |   INVENTARIO:
+    |     stock           → Unidades disponibles
+    |     stock_minimo    → Alerta de stock bajo
+    |
+    |   DESCRIPCIÓN:
+    |     descripcion_corta → Resumen breve (max ~160 chars)
+    |     descripcion       → Descripción larga HTML o texto
+    |
+    |   CATEGORÍA:
+    |     categoria_slug  → Slug de la categoría (ej: tecnologia, hogar)
+    |
+    |   DIMENSIONES Y PESO:
+    |     peso_kg         → Peso en kilogramos (ej: 0.5)
+    |     largo_cm        → Largo en centímetros
+    |     ancho_cm        → Ancho en centímetros
+    |     alto_cm         → Alto en centímetros
+    |
+    |   SEO:
+    |     meta_titulo     → Título SEO (si vacío usa nombre)
+    |     meta_descripcion → Descripción SEO (si vacío usa descripcion_corta)
+    |
+    |   ESTADO:
+    |     estado          → activo | inactivo | borrador (default: borrador)
+    |
+    | EJEMPLO de cabecera CSV:
+    |   sku,nombre,descripcion_corta,descripcion,precio_costo,precio_venta,
+    |   precio_oferta,stock,stock_minimo,categoria_slug,peso_kg,largo_cm,
+    |   ancho_cm,alto_cm,meta_titulo,meta_descripcion,estado
     |
     */
     public function importar(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|file|mimes:csv,txt|max:2048',
+            'archivo' => 'required|file|mimes:csv,txt|max:5120',
         ]);
 
         $archivo = $request->file('archivo');
         $handle  = fopen($archivo->getRealPath(), 'r');
 
-        // Leer encabezados (primera fila)
-        $encabezados = array_map('trim', fgetcsv($handle, 1000, ','));
+        // Leer encabezados (primera fila) — quitar BOM UTF-8 si existe
+        $primeraFila = fgetcsv($handle, 2000, ',');
+        $primeraFila[0] = ltrim($primeraFila[0], "\xEF\xBB\xBF");
+        $encabezados = array_map('trim', $primeraFila);
+
+        // Cache de categorías para no hacer query por cada fila
+        $categoriasCache = \App\Models\Categoria::pluck('id', 'slug')->toArray();
 
         $creados = 0;
         $errores = [];
-        $fila    = 2; // empieza en 2 porque la 1 es el encabezado
+        $fila    = 2;
 
-        while (($columnas = fgetcsv($handle, 1000, ',')) !== false) {
-            // Saltar filas completamente vacías
-            if (empty(array_filter($columnas))) {
-                $fila++;
-                continue;
-            }
+        while (($columnas = fgetcsv($handle, 2000, ',')) !== false) {
+            // Saltar filas vacías
+            if (empty(array_filter($columnas))) { $fila++; continue; }
 
-            // Mapear columnas por nombre de encabezado
-            $datos = array_combine($encabezados, array_map('trim', $columnas));
+            // Mapear columna → valor por nombre de encabezado
+            $datos = array_combine($encabezados, array_map('trim', array_slice($columnas, 0, count($encabezados))));
 
+            // VALIDAR: nombre obligatorio
             $nombre = $datos['nombre'] ?? '';
             if (empty($nombre)) {
-                $errores[] = "Fila {$fila}: nombre vacío, se omitió.";
-                $fila++;
-                continue;
+                $errores[] = "Fila {$fila}: 'nombre' vacío — se omitió.";
+                $fila++; continue;
+            }
+
+            // VALIDAR: SKU único
+            $sku = !empty($datos['sku']) ? $datos['sku'] : null;
+            if ($sku && Producto::where('sku', $sku)->exists()) {
+                $errores[] = "Fila {$fila}: SKU '{$sku}' ya existe — se omitió.";
+                $fila++; continue;
             }
 
             try {
-                $sku = !empty($datos['sku']) ? $datos['sku'] : null;
+                // Helper: limpiar precio (acepta "$ 1.500.000" o "1500000")
+                $precio = fn($v) => (float) preg_replace('/[^0-9.]/', '', str_replace(',', '.', $v ?? '0'));
 
-                // Si el SKU ya existe, saltar
-                if ($sku && Producto::where('sku', $sku)->exists()) {
-                    $errores[] = "Fila {$fila}: SKU '{$sku}' ya existe, se omitió.";
-                    $fila++;
-                    continue;
+                // Resolver categoría por slug
+                $categoriaId = null;
+                if (!empty($datos['categoria_slug'])) {
+                    $categoriaId = $categoriasCache[$datos['categoria_slug']] ?? null;
+                    if (!$categoriaId) {
+                        $errores[] = "Fila {$fila}: categoría '{$datos['categoria_slug']}' no existe — producto creado sin categoría.";
+                    }
                 }
 
+                // Estado válido
+                $estadosValidos = ['activo', 'inactivo', 'borrador'];
+                $estado = in_array($datos['estado'] ?? '', $estadosValidos) ? $datos['estado'] : 'borrador';
+
                 Producto::create([
-                    'nombre'           => $nombre,
-                    'slug'             => $this->generarSlugUnico($nombre),
-                    'sku'              => $sku,
-                    'descripcion_corta'=> $datos['descripcion_corta'] ?? null,
-                    'precio_costo'     => (float) str_replace(['$', '.', ','], ['', '', '.'], $datos['precio_costo'] ?? 0),
-                    'precio_venta'     => (float) str_replace(['$', '.', ','], ['', '', '.'], $datos['precio_venta'] ?? 0),
-                    'stock'            => isset($datos['stock']) && $datos['stock'] !== '' ? (int) $datos['stock'] : null,
-                    'estado'           => 'borrador',
+                    // Identificación
+                    'nombre'            => $nombre,
+                    'slug'              => $this->generarSlugUnico($nombre),
+                    'sku'               => $sku,
+
+                    // Descripción
+                    'descripcion_corta' => $datos['descripcion_corta'] ?? null,
+                    'descripcion'       => $datos['descripcion']       ?? null,
+
+                    // Precios
+                    'precio_costo'      => $precio($datos['precio_costo']  ?? '0'),
+                    'precio_venta'      => $precio($datos['precio_venta']  ?? '0'),
+                    'precio_oferta'     => !empty($datos['precio_oferta']) ? $precio($datos['precio_oferta']) : null,
+
+                    // Inventario
+                    'stock'             => isset($datos['stock'])         && $datos['stock']         !== '' ? (int) $datos['stock']         : null,
+                    'stock_minimo'      => isset($datos['stock_minimo'])  && $datos['stock_minimo']  !== '' ? (int) $datos['stock_minimo']  : null,
+
+                    // Categoría
+                    'categoria_id'      => $categoriaId,
+
+                    // Dimensiones
+                    'peso_kg'           => !empty($datos['peso_kg'])   ? (float) $datos['peso_kg']   : null,
+                    'largo_cm'          => !empty($datos['largo_cm'])  ? (float) $datos['largo_cm']  : null,
+                    'ancho_cm'          => !empty($datos['ancho_cm'])  ? (float) $datos['ancho_cm']  : null,
+                    'alto_cm'           => !empty($datos['alto_cm'])   ? (float) $datos['alto_cm']   : null,
+
+                    // SEO
+                    'meta_titulo'       => $datos['meta_titulo']       ?? null,
+                    'meta_descripcion'  => $datos['meta_descripcion']  ?? null,
+
+                    // Estado
+                    'estado'            => $estado,
                 ]);
 
                 $creados++;
+
             } catch (\Exception $e) {
                 $errores[] = "Fila {$fila}: error — {$e->getMessage()}";
             }
@@ -495,9 +576,9 @@ class ProductoController extends Controller
 
         fclose($handle);
 
-        $mensaje = "{$creados} productos importados correctamente.";
+        $mensaje = "{$creados} producto(s) importado(s) correctamente.";
         if (!empty($errores)) {
-            $mensaje .= ' ' . count($errores) . ' filas con error.';
+            $mensaje .= ' ' . count($errores) . ' fila(s) con advertencia o error.';
         }
 
         return back()->with('exito', $mensaje)->with('errores_importacion', $errores);
