@@ -89,11 +89,28 @@ const ESTILOS_CLARO = `
         box-shadow: 0 10px 15px -3px rgba(6,182,212,0.3) !important;
     }
 
-    /* ── FOOTER → cyan oscuro ────────────────────────── */
+    /* ── FOOTER → rosa #FF1493 ──────────────────────── */
     [data-tema="claro"] footer {
-        background-color: #0E7490 !important;
-        border-color: #0891B2 !important;
+        background-color: #FF1493 !important;
+        border-color: #CC0070 !important;
     }
+    /* Títulos footer → blanco negrilla */
+    [data-tema="claro"] footer h4 {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    /* Texto, párrafos y listas footer → negro */
+    [data-tema="claro"] footer p,
+    [data-tema="claro"] footer li,
+    [data-tema="claro"] footer a,
+    [data-tema="claro"] footer .text-gray-400,
+    [data-tema="claro"] footer .text-gray-500,
+    [data-tema="claro"] footer .text-gray-600 {
+        color: #111111 !important;
+    }
+    [data-tema="claro"] footer a:hover { color: #FFFFFF !important; }
+    /* Línea divisoria footer */
+    [data-tema="claro"] footer .border-gray-800 { border-color: #CC0070 !important; }
 
     /* ── TRANSICIÓN SUAVE ────────────────────────────── */
     [data-tema] main, [data-tema] footer, [data-tema] main * {
@@ -253,7 +270,11 @@ export default function TiendaLayout({ children }) {
 
                         <div>
                             <div className="mb-3">
-                                <img src="/logo.webp" alt="GadGet Store" className="h-12 w-auto" />
+                                <img
+                                    src={temaClaro ? '/logo-color.png' : '/logo.webp'}
+                                    alt="GadGet Store"
+                                    className="h-16 w-auto"
+                                />
                             </div>
                             <p className="text-sm text-gray-400 leading-relaxed">
                                 Variedad en una sola tienda. Los mejores gadgets y accesorios con entrega a todo Colombia.
