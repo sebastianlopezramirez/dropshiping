@@ -45,7 +45,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
         style: 'currency', currency: 'COP', maximumFractionDigits: 0
     });
 
-    const hayFiltros = filtros.q || filtros.categoria || filtros.precio_min || filtros.precio_max;
+    const hayFiltros = filtros.q || filtros.categoria || filtros.precio_min || filtros.precio_max || filtros.todos;
     const mostrandoHero = !hayFiltros && !categoriaActual;
 
     return (
@@ -209,30 +209,26 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
             {/* ── PRODUCTOS NUEVOS ──────────────────────────────────────── */}
             {mostrandoHero && productosNuevos.length > 0 && (
                 <section className="bg-gray-900 border-y border-gray-800 py-6">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-3">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="w-5 h-0.5 bg-orange-500 rounded-full"></span>
-                                <span className="w-3 h-0.5 bg-pink-500 rounded-full"></span>
-                            </div>
-                            <h2 className="text-lg sm:text-xl font-bold text-white">Recién llegados</h2>
-                            <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full tracking-wide">NEW</span>
-                        </div>
-                        <button onClick={() => aplicarFiltros()}
-                            className="text-sm text-orange-400 hover:text-orange-300 font-medium transition-colors flex items-center gap-1">
-                            Ver todos <span className="text-base">→</span>
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-gray-900 to-transparent z-10"></div>
-                        <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto
-                            scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-                            {productosNuevos.map(producto => (
-                                <div key={producto.id} className="shrink-0 w-24 sm:w-32">
-                                    <TarjetaProducto producto={producto} cop={cop} />
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-3">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="w-5 h-0.5 bg-orange-500 rounded-full"></span>
+                                    <span className="w-3 h-0.5 bg-pink-500 rounded-full"></span>
                                 </div>
+                                <h2 className="text-lg sm:text-xl font-bold text-white">Recién llegados</h2>
+                                <span className="bg-gradient-to-r from-orange-500 to-pink-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full tracking-wide">NEW</span>
+                            </div>
+                            <button onClick={() => aplicarFiltros({ todos: '1' })}
+                                className="text-sm text-orange-400 hover:text-orange-300 font-medium transition-colors flex items-center gap-1">
+                                Ver todos <span className="text-base">→</span>
+                            </button>
+                        </div>
+                        {/* Grid 4 columnas × 2 filas */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                            {productosNuevos.map(producto => (
+                                <TarjetaProducto key={producto.id} producto={producto} cop={cop} />
                             ))}
-                            <div className="shrink-0 w-8"></div>
                         </div>
                     </div>
                 </section>
@@ -287,8 +283,8 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                 </section>
             )}
 
-            {/* ── CONTENIDO ─────────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {/* ── CONTENIDO (solo cuando hay filtros activos o categoría) ── */}
+            {!mostrandoHero && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
                 {/* Botón filtros móvil */}
                 <div className="lg:hidden flex items-center justify-between mb-4">
@@ -505,7 +501,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                         )}
                     </div>
                 </div>
-            </div>
+            </div>}
         </TiendaLayout>
     );
 }

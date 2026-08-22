@@ -102,13 +102,13 @@ class TiendaController extends Controller
             ->activos()
             ->conStock()
             ->orderBy('creado_en', 'desc')
-            ->limit(4)
+            ->limit(8)
             ->get();
 
         return Inertia::render('Tienda/Index', [
             'productos'       => $productos,
             'categorias'      => $categorias,
-            'filtros'         => $request->only(['q', 'categoria', 'precio_min', 'precio_max']),
+            'filtros'         => $request->only(['q', 'categoria', 'precio_min', 'precio_max', 'todos']),
             'productosNuevos' => $productosNuevos,
         ]);
     }
