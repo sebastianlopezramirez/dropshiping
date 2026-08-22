@@ -146,6 +146,10 @@ const ESTILOS_CLARO = `
         color: #1C1C1C !important;
         font-weight: 600 !important;
     }
+    /* Excepción: textos dentro de BOTONES oscuros siempre blancos */
+    [data-tema="claro"] main button.bg-gray-800,
+    [data-tema="claro"] main button.bg-gray-800 * { color: #FFFFFF !important; font-weight: 700 !important; }
+
     /* Excepciones: textos dentro de cards se mantienen como están */
     [data-tema="claro"] main .bg-gray-900 .text-white,
     [data-tema="claro"] main .bg-gray-900 .text-gray-100,
