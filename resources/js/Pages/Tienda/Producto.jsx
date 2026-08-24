@@ -47,7 +47,26 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
         router.visit(route('tienda.carrito'));
     };
 
-    const msgPedido   = encodeURIComponent(`Hola, quiero pedir:\n\n*${producto.nombre}*\n${seo.url}`);
+    const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
+
+    const msgEnvio    = encodeURIComponent(
+        `Hola, quiero que me *envíen* este producto:\n\n` +
+        `*${producto.nombre}*\n` +
+        `Precio: ${cop(precioMostrar)}\n` +
+        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
+        `${seo.url}\n\n` +
+        `Por favor envíame los datos bancarios para hacer el pago por transferencia.`
+    );
+
+    const msgRecogida = encodeURIComponent(
+        `Hola, voy a *recoger en el almacén* este producto:\n\n` +
+        `*${producto.nombre}*\n` +
+        `Precio: ${cop(precioMostrar)}\n` +
+        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
+        `${seo.url}\n\n` +
+        `Por favor envíame los datos bancarios para hacer el pago por transferencia.`
+    );
+
     const msgPregunta = encodeURIComponent(`Hola, tengo una pregunta sobre:\n\n*${producto.nombre}*\n${seo.url}`);
 
     return (
@@ -240,31 +259,33 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                         {/* CTAs */}
                         <div className="space-y-3">
 
-                            {/* Comprar ahora */}
-                            <button
-                                onClick={handleComprarAhora}
-                                className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                Comprar ahora
-                            </button>
+                            {/* Opción 1: Envío a domicilio (solo si permite_despacho) */}
+                            {whatsapp && producto.permite_despacho && (
+                                <a
+                                    href={`https://wa.me/${whatsapp}?text=${msgEnvio}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                >
+                                    <IconWA className="w-5 h-5" />
+                                    Quiero que me lo envíen
+                                </a>
+                            )}
 
-                            {/* Agregar al carrito */}
-                            <button
-                                onClick={handleAgregarCarrito}
-                                className={`flex items-center justify-center gap-2.5 w-full border-2 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all ${
-                                    agregado
-                                        ? 'border-green-500 text-green-400 bg-green-500/10'
-                                        : 'border-orange-500 text-orange-400 hover:bg-orange-500/10'
-                                }`}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                {agregado ? '¡Agregado!' : 'Agregar al carrito'}
-                            </button>
+                            {/* Opción 2: Recoger en almacén (siempre disponible) */}
+                            {whatsapp && (
+                                <a
+                                    href={`https://wa.me/${whatsapp}?text=${msgRecogida}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    className={`flex items-center justify-center gap-2.5 w-full font-semibold text-base px-6 py-3.5 rounded-2xl transition-all ${
+                                        producto.permite_despacho
+                                            ? 'border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10'
+                                            : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-900/30'
+                                    }`}
+                                >
+                                    <IconWA className="w-5 h-5" />
+                                    Voy a recogerlo en el almacén
+                                </a>
+                            )}
 
                             {/* Preguntar por WhatsApp */}
                             {whatsapp && (

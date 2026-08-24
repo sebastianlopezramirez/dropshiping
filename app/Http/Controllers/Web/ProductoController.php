@@ -202,6 +202,7 @@ class ProductoController extends Controller
             'stock_minimo'      => 'nullable|integer|min:0',
             'categoria_id'      => 'nullable|string',
             'estado'            => 'required|in:activo,borrador,agotado,inactivo',
+            'permite_despacho'  => 'nullable|boolean',
             'peso_kg'           => 'nullable|numeric|min:0',
             'largo_cm'          => 'nullable|numeric|min:0',
             'ancho_cm'          => 'nullable|numeric|min:0',
@@ -213,6 +214,9 @@ class ProductoController extends Controller
             'imagenes_nuevas'   => 'nullable|array',
             'imagenes_nuevas.*' => 'image|max:5120|mimes:jpeg,jpg,png,webp',
         ]);
+
+        // permite_despacho viene como checkbox → puede estar ausente (false) o presente (true)
+        $datos['permite_despacho'] = $request->boolean('permite_despacho', true);
 
         // ─── VALIDACIÓN: nombre duplicado (si no se forzó) ───────────────
         $nombreNormalizado = Str::title(trim($datos['nombre']));
@@ -327,6 +331,7 @@ class ProductoController extends Controller
             'stock_minimo'      => 'nullable|integer|min:0',
             'categoria_id'      => 'nullable|string',
             'estado'            => 'required|in:activo,borrador,agotado,inactivo',
+            'permite_despacho'  => 'nullable|boolean',
             'peso_kg'           => 'nullable|numeric|min:0',
             'largo_cm'          => 'nullable|numeric|min:0',
             'ancho_cm'          => 'nullable|numeric|min:0',
@@ -337,6 +342,8 @@ class ProductoController extends Controller
             'imagenes_nuevas'   => 'nullable|array',
             'imagenes_nuevas.*' => 'image|max:2048',
         ]);
+
+        $datos['permite_despacho'] = $request->boolean('permite_despacho', true);
 
         // ─── PASO 1: Actualizar datos del producto en BD ──────────────────
         DB::transaction(function () use ($datos, $producto) {
