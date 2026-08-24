@@ -103,7 +103,7 @@ export default function Crear({ categorias }) {
         stock_minimo:      5,
         categoria_id:      '',
         estado:            'borrador',
-        permite_despacho:  true,
+        permite_contraentrega: false,
         peso_kg:           '',
         meta_titulo:       '',
         meta_descripcion:  '',
@@ -519,25 +519,25 @@ export default function Crear({ categorias }) {
                                 <Error campo="estado" />
                             </div>
 
-                            {/* Permite despacho */}
+                            {/* Contraentrega */}
                             <div className="col-span-full">
                                 <label className="flex items-center gap-3 cursor-pointer select-none">
                                     <div className="relative">
                                         <input
                                             type="checkbox"
                                             className="sr-only"
-                                            checked={data.permite_despacho}
-                                            onChange={e => setData('permite_despacho', e.target.checked)}
+                                            checked={data.permite_contraentrega}
+                                            onChange={e => setData('permite_contraentrega', e.target.checked)}
                                         />
-                                        <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_despacho ? 'bg-indigo-500' : 'bg-gray-300'}`} />
-                                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${data.permite_despacho ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_contraentrega ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                                        <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${data.permite_contraentrega ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </div>
                                     <div>
-                                        <span className="text-sm font-medium text-gray-700">Permite despacho a domicilio</span>
+                                        <span className="text-sm font-medium text-gray-700">Permite contraentrega</span>
                                         <p className="text-xs text-gray-500">
-                                            {data.permite_despacho
-                                                ? 'El cliente podrá elegir: envío a domicilio o recogida en almacén.'
-                                                : 'Solo recogida en almacén (productos delicados o de alto valor).'}
+                                            {data.permite_contraentrega
+                                                ? 'El cliente paga al recibir. Se le pedirá dirección y se le informará el tiempo de entrega.'
+                                                : 'Pago por transferencia antes del envío. Cliente puede elegir: envío a domicilio o reclamar en almacén.'}
                                         </p>
                                     </div>
                                 </label>

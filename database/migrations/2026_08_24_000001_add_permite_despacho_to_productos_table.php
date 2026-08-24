@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('productos', function (Blueprint $table) {
-            $table->boolean('permite_despacho')->default(true)->after('estado');
+            $table->boolean('permite_contraentrega')->default(false)->after('estado');
         });
     }
 
     public function down(): void
     {
         Schema::table('productos', function (Blueprint $table) {
-            $table->dropColumn('permite_despacho');
+            $table->dropColumn('permite_contraentrega');
         });
     }
 };

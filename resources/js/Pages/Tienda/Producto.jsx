@@ -49,25 +49,34 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
 
     const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
 
-    const msgEnvio    = encodeURIComponent(
-        `Hola, quiero que me *envíen* este producto:\n\n` +
+    // Sin contraentrega: pago por transferencia primero
+    const msgEnvioTransferencia = encodeURIComponent(
+        `Hola! Me interesa este producto:\n\n` +
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
         `${seo.url}\n\n` +
-        `Por favor envíame los datos bancarios para hacer el pago por transferencia.`
+        `Quiero que me lo *envíen a domicilio*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
     );
 
-    const msgRecogida = encodeURIComponent(
-        `Hola, voy a *recoger en el almacén* este producto:\n\n` +
+    const msgReclamarAlmacen = encodeURIComponent(
+        `Hola! Me interesa este producto:\n\n` +
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
         `${seo.url}\n\n` +
-        `Por favor envíame los datos bancarios para hacer el pago por transferencia.`
+        `Quiero *reclamarlo en el almacén*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
     );
 
-    const msgPregunta = encodeURIComponent(`Hola, tengo una pregunta sobre:\n\n*${producto.nombre}*\n${seo.url}`);
+    // Con contraentrega: el cliente paga al recibir
+    const msgEnvioContraentrega = encodeURIComponent(
+        `Hola! Me interesa este producto:\n\n` +
+        `*${producto.nombre}*\n` +
+        `Precio: ${cop(precioMostrar)}\n` +
+        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
+        `${seo.url}\n\n` +
+        `Quiero que me lo *envíen a domicilio* (pago contraentrega). Por favor indíquenme la dirección de envío y el tiempo de entrega estimado.`
+    );
 
     return (
         <TiendaLayout>
@@ -259,45 +268,37 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                         {/* CTAs */}
                         <div className="space-y-3">
 
-                            {/* Opción 1: Envío a domicilio (solo si permite_despacho) */}
-                            {whatsapp && producto.permite_despacho && (
+                            {whatsapp && producto.permite_contraentrega ? (
+                                /* ── CONTRAENTREGA ACTIVA: pago al recibir ─── */
                                 <a
-                                    href={`https://wa.me/${whatsapp}?text=${msgEnvio}`}
+                                    href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
                                     target="_blank" rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
                                 >
                                     <IconWA className="w-5 h-5" />
-                                    Quiero que me lo envíen
+                                    Enviar a domicilio
                                 </a>
-                            )}
-
-                            {/* Opción 2: Recoger en almacén (siempre disponible) */}
-                            {whatsapp && (
-                                <a
-                                    href={`https://wa.me/${whatsapp}?text=${msgRecogida}`}
-                                    target="_blank" rel="noopener noreferrer"
-                                    className={`flex items-center justify-center gap-2.5 w-full font-semibold text-base px-6 py-3.5 rounded-2xl transition-all ${
-                                        producto.permite_despacho
-                                            ? 'border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10'
-                                            : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-lg shadow-orange-900/30'
-                                    }`}
-                                >
-                                    <IconWA className="w-5 h-5" />
-                                    Voy a recogerlo en el almacén
-                                </a>
-                            )}
-
-                            {/* Preguntar por WhatsApp */}
-                            {whatsapp && (
-                                <a
-                                    href={`https://wa.me/${whatsapp}?text=${msgPregunta}`}
-                                    target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 border border-gray-700 text-gray-400 hover:bg-gray-800 font-medium text-sm px-6 py-3 rounded-2xl transition-colors w-full"
-                                >
-                                    <IconWA className="w-4 h-4" />
-                                    Preguntar antes de comprar
-                                </a>
-                            )}
+                            ) : whatsapp ? (
+                                /* ── SIN CONTRAENTREGA: transferencia primero ─ */
+                                <>
+                                    <a
+                                        href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                    >
+                                        <IconWA className="w-5 h-5" />
+                                        Enviar a domicilio
+                                    </a>
+                                    <a
+                                        href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all"
+                                    >
+                                        <IconWA className="w-5 h-5" />
+                                        Reclamar en el almacén
+                                    </a>
+                                </>
+                            ) : null}
 
                             <a
                                 href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}

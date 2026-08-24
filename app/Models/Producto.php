@@ -107,7 +107,7 @@ class Producto extends Model implements HasMedia
         'alto_cm',
         'categoria_id',
         'estado',
-        'permite_despacho',
+        'permite_contraentrega',
         'meta_titulo',
         'meta_descripcion',
     ];
@@ -134,7 +134,7 @@ class Producto extends Model implements HasMedia
         return [
             'imagenes'          => 'array',    // JSONB → array PHP
             'atributos'         => 'array',    // JSONB → array PHP
-            'permite_despacho'  => 'boolean',
+            'permite_contraentrega' => 'boolean',
             'precio_costo'    => 'decimal:2',
             'precio_venta'    => 'decimal:2',
             'precio_oferta'   => 'decimal:2',
