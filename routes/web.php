@@ -42,6 +42,7 @@ use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Tienda\CarritoController;
 use App\Http\Controllers\Web\TarifaController;
 use App\Http\Controllers\Web\MarketingExportController;
+use App\Http\Controllers\Web\LeadController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -97,6 +98,10 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
     // GET  /tienda/pedido/{numero}/gracias → página de confirmación
     Route::get('pedido/{numero}/gracias', [CarritoController::class, 'gracias'])
          ->name('pedido.gracias');
+
+    // POST /tienda/lead   → guardar datos del cliente interesado en un producto
+    Route::post('lead', [LeadController::class, 'guardar'])
+         ->name('lead');
 
     // GET /tienda/{slug} — Detalle de un producto (va AL FINAL)
     Route::get('{slug}', [TiendaController::class, 'show'])

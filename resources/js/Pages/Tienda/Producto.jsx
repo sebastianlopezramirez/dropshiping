@@ -15,6 +15,44 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
     const [agregado, setAgregado] = useState(false);
     const { agregarItem } = useCart();
 
+    // ── FORMULARIO DE LEAD ──────────────────────────────────────────────────
+    const [lead, setLead]               = useState({ nombre: '', celular: '', email: '' });
+    const [aceptaDatos, setAceptaDatos] = useState(false);
+    const [leadGuardado, setLeadGuardado] = useState(false);
+    const [leadEnviando, setLeadEnviando] = useState(false);
+    const [leadError, setLeadError]     = useState('');
+
+    const handleLeadSubmit = async (e) => {
+        e.preventDefault();
+        if (!aceptaDatos) { setLeadError('Debes aceptar el tratamiento de datos.'); return; }
+        setLeadError('');
+        setLeadEnviando(true);
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            const res = await fetch(route('tienda.lead'), {
+                method:  'POST',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Accept':        'application/json',
+                    'X-CSRF-TOKEN':  token,
+                },
+                body: JSON.stringify({
+                    nombre:    lead.nombre,
+                    celular:   lead.celular,
+                    email:     lead.email || null,
+                    producto:  producto.nombre,
+                    categoria: producto.categoria?.nombre ?? null,
+                }),
+            });
+            if (res.ok) { setLeadGuardado(true); }
+            else        { setLeadError('Ocurrió un error. Inténtalo de nuevo.'); }
+        } catch {
+            setLeadError('Sin conexión. Inténtalo de nuevo.');
+        } finally {
+            setLeadEnviando(false);
+        }
+    };
+
     const imagenes = producto.media?.length > 0
         ? producto.media.map(m => m.original_url)
         : (producto.imagenes || []);
@@ -49,32 +87,36 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
 
     const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
 
+    // Saludo con nombre del cliente si ya lo capturamos
+    const saludo = lead.nombre ? `Hola! Soy *${lead.nombre}*` : `Hola!`;
+    const telCliente = lead.celular ? `\nMi WhatsApp: ${lead.celular}` : '';
+
     // Sin contraentrega: pago por transferencia primero
     const msgEnvioTransferencia = encodeURIComponent(
-        `Hola! Me interesa este producto:\n\n` +
+        `${saludo}, me interesa este producto:\n\n` +
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}\n\n` +
+        `${seo.url}${telCliente}\n\n` +
         `Quiero que me lo *envíen a domicilio*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
     );
 
     const msgReclamarAlmacen = encodeURIComponent(
-        `Hola! Me interesa este producto:\n\n` +
+        `${saludo}, me interesa este producto:\n\n` +
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}\n\n` +
+        `${seo.url}${telCliente}\n\n` +
         `Quiero *reclamarlo en el almacén*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
     );
 
     // Con contraentrega: el cliente paga al recibir
     const msgEnvioContraentrega = encodeURIComponent(
-        `Hola! Me interesa este producto:\n\n` +
+        `${saludo}, me interesa este producto:\n\n` +
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}\n\n` +
+        `${seo.url}${telCliente}\n\n` +
         `Quiero que me lo *envíen a domicilio* (pago contraentrega). Por favor indíquenme la dirección de envío y el tiempo de entrega estimado.`
     );
 
@@ -268,37 +310,130 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                         {/* CTAs */}
                         <div className="space-y-3">
 
-                            {whatsapp && producto.permite_contraentrega ? (
-                                /* ── CONTRAENTREGA ACTIVA: pago al recibir ─── */
-                                <a
-                                    href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
-                                    target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
-                                >
-                                    <IconWA className="w-5 h-5" />
-                                    Enviar a domicilio
-                                </a>
-                            ) : whatsapp ? (
-                                /* ── SIN CONTRAENTREGA: transferencia primero ─ */
+                            {/* ── FORMULARIO DE DATOS (paso previo a WA) ──── */}
+                            {!leadGuardado ? (
+                                <form onSubmit={handleLeadSubmit}
+                                    className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3">
+
+                                    <div>
+                                        <p className="text-white font-semibold text-sm">¿Quieres hacer un pedido?</p>
+                                        <p className="text-gray-500 text-xs mt-0.5">Déjanos tus datos y te contactamos por WhatsApp.</p>
+                                    </div>
+
+                                    {/* Nombre */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                            Nombre completo <span className="text-orange-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={lead.nombre}
+                                            onChange={e => setLead(l => ({ ...l, nombre: e.target.value }))}
+                                            placeholder="Tu nombre"
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                                        />
+                                    </div>
+
+                                    {/* Teléfono */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                            WhatsApp / Teléfono <span className="text-orange-400">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={lead.celular}
+                                            onChange={e => setLead(l => ({ ...l, celular: e.target.value }))}
+                                            placeholder="3001234567"
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                                        />
+                                    </div>
+
+                                    {/* Email (opcional) */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                            Correo electrónico <span className="text-gray-600">(opcional)</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={lead.email}
+                                            onChange={e => setLead(l => ({ ...l, email: e.target.value }))}
+                                            placeholder="tucorreo@email.com"
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                                        />
+                                    </div>
+
+                                    {/* Acepta datos — Ley 1581 */}
+                                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={aceptaDatos}
+                                            onChange={e => setAceptaDatos(e.target.checked)}
+                                            className="mt-0.5 accent-orange-500 w-4 h-4 shrink-0"
+                                        />
+                                        <span className="text-xs text-gray-500 leading-snug">
+                                            Autorizo el tratamiento de mis datos personales conforme a la{' '}
+                                            <span className="text-orange-400">Ley 1581 de 2012</span> para recibir
+                                            información sobre pedidos y promociones de GadGet Store.
+                                        </span>
+                                    </label>
+
+                                    {leadError && (
+                                        <p className="text-xs text-red-400">{leadError}</p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={leadEnviando}
+                                        className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all"
+                                    >
+                                        {leadEnviando ? 'Guardando...' : 'Continuar con el pedido →'}
+                                    </button>
+                                </form>
+                            ) : (
+                                /* ── BOTONES WA (aparecen tras guardar lead) ─ */
                                 <>
-                                    <a
-                                        href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
-                                    >
-                                        <IconWA className="w-5 h-5" />
-                                        Enviar a domicilio
-                                    </a>
-                                    <a
-                                        href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all"
-                                    >
-                                        <IconWA className="w-5 h-5" />
-                                        Reclamar en el almacén
-                                    </a>
+                                    <div className="bg-gray-900 border border-green-800/40 rounded-2xl px-4 py-2.5 flex items-center gap-2">
+                                        <span className="text-green-400 text-sm">✓</span>
+                                        <p className="text-gray-300 text-sm">
+                                            ¡Listo, <span className="text-white font-medium">{lead.nombre}</span>! Ahora elige cómo recibir tu pedido:
+                                        </p>
+                                    </div>
+
+                                    {whatsapp && producto.permite_contraentrega ? (
+                                        /* ── CONTRAENTREGA ACTIVA: pago al recibir ─── */
+                                        <a
+                                            href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                        >
+                                            <IconWA className="w-5 h-5" />
+                                            Enviar a domicilio
+                                        </a>
+                                    ) : whatsapp ? (
+                                        /* ── SIN CONTRAENTREGA: transferencia primero ─ */
+                                        <>
+                                            <a
+                                                href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                            >
+                                                <IconWA className="w-5 h-5" />
+                                                Enviar a domicilio
+                                            </a>
+                                            <a
+                                                href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
+                                                target="_blank" rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all"
+                                            >
+                                                <IconWA className="w-5 h-5" />
+                                                Reclamar en el almacén
+                                            </a>
+                                        </>
+                                    ) : null}
                                 </>
-                            ) : null}
+                            )}
 
                             <a
                                 href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}
