@@ -427,7 +427,7 @@ Route::middleware(['auth', 'verified', 'role:proveedor|super_administrador'])
     // Editar un producto propio
     Route::get('productos/{producto}/editar', [PortalController::class, 'editarProducto'])
          ->name('productos.editar');
-    Route::put('productos/{producto}', [PortalController::class, 'actualizarProducto'])
+    Route::post('productos/{producto}', [PortalController::class, 'actualizarProducto'])
          ->name('productos.actualizar');
 
     // Pedidos que incluyen sus productos

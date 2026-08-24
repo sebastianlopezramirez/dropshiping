@@ -46,8 +46,9 @@ export default function CrearProducto({ categorias }) {
         stock:             '',
         categoria_id:      '',
         peso_kg:           '',
-        imagenes_nuevas:   [],
-        forzar_creacion:   0,   // 1 cuando el usuario confirma crear aunque ya exista
+        imagenes_nuevas:        [],
+        permite_contraentrega:  false,
+        forzar_creacion:        0,
     });
 
     // ─── SKU PREVIEW (solo visual, el servidor genera el definitivo) ──────
@@ -117,9 +118,8 @@ export default function CrearProducto({ categorias }) {
     const [previews, setPreviews] = useState([]);
 
     const handleImagenes = (e) => {
-        const archivos = Array.from(e.target.files);
+        const archivos   = Array.from(e.target.files).slice(0, 3);
         setData('imagenes_nuevas', archivos);
-        // Crear URLs temporales para mostrar preview
         setPreviews(archivos.map(f => URL.createObjectURL(f)));
     };
 
@@ -430,18 +430,47 @@ export default function CrearProducto({ categorias }) {
                         </div>
                     </div>
 
+                    {/* ─── CONTRAENTREGA ───────────────────────────────── */}
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h3 className="font-semibold text-gray-800">Opciones de entrega</h3>
+                        </div>
+                        <div className="px-6 py-5">
+                            <label className="flex items-center gap-3 cursor-pointer select-none">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={data.permite_contraentrega}
+                                        onChange={e => setData('permite_contraentrega', e.target.checked)}
+                                    />
+                                    <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_contraentrega ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${data.permite_contraentrega ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                                <div>
+                                    <span className="text-sm font-medium text-gray-700">Permite contraentrega</span>
+                                    <p className="text-xs text-gray-500">
+                                        {data.permite_contraentrega
+                                            ? 'El cliente puede pagar al recibir el producto.'
+                                            : 'El cliente paga por transferencia antes del envío o recogida.'}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     {/* ─── IMÁGENES ────────────────────────────────────── */}
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                             <h3 className="font-semibold text-gray-800">Imágenes del producto</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">Máx. 2MB por imagen. La primera será la imagen principal.</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Máximo 3 imágenes · 2MB por imagen · La primera será la principal.</p>
                         </div>
                         <div className="px-6 py-5">
                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
                                 <div className="text-center">
                                     <p className="text-2xl mb-1">📸</p>
                                     <p className="text-sm text-gray-600">Haz click para seleccionar imágenes</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WEBP · múltiples permitidas</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WEBP · máximo 3 fotos</p>
                                 </div>
                                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagenes} />
                             </label>

@@ -202,8 +202,8 @@ class PortalController extends Controller
 
         return Inertia::render('Portal/EditarProducto', [
             'proveedor' => $proveedor,
-            'producto'  => $producto->load('categoria'),
-            'pivot'     => $pivot,  // precio y stock del proveedor
+            'producto'  => $producto->load(['categoria', 'media']),
+            'pivot'     => $pivot,
         ]);
     }
 
@@ -235,14 +235,37 @@ class PortalController extends Controller
         abort_if(!$tienePivot, 403, 'No tienes acceso a este producto.');
 
         $datos = $request->validate([
-            'descripcion' => ['nullable', 'string', 'max:2000'],
-            'precio'      => ['required', 'numeric', 'min:0'],
-            'stock'       => ['required', 'integer', 'min:0'],
+            'descripcion'            => ['nullable', 'string', 'max:2000'],
+            'precio'                 => ['required', 'numeric', 'min:0'],
+            'stock'                  => ['required', 'integer', 'min:0'],
+            'permite_contraentrega'  => ['nullable', 'boolean'],
+            'imagenes_nuevas'        => ['nullable', 'array', 'max:3'],
+            'imagenes_nuevas.*'      => ['image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'eliminar_imagenes'      => ['nullable', 'array'],
+            'eliminar_imagenes.*'    => ['integer'],
         ]);
 
-        // Actualizar descripción en la tabla productos
-        if (isset($datos['descripcion'])) {
-            $producto->update(['descripcion' => $datos['descripcion']]);
+        // Actualizar campos en la tabla productos
+        $producto->update([
+            'descripcion'           => $datos['descripcion'] ?? $producto->descripcion,
+            'permite_contraentrega' => $request->boolean('permite_contraentrega', false),
+        ]);
+
+        // Eliminar imágenes marcadas por el proveedor
+        if (!empty($datos['eliminar_imagenes'])) {
+            foreach ($datos['eliminar_imagenes'] as $mediaId) {
+                $media = $producto->getMedia('imagenes')->firstWhere('id', $mediaId);
+                if ($media) $media->delete();
+            }
+        }
+
+        // Subir imágenes nuevas (respetando el límite de 3 en total)
+        if ($request->hasFile('imagenes_nuevas')) {
+            $existentes = $producto->getMedia('imagenes')->count();
+            $disponibles = max(0, 3 - $existentes);
+            foreach (array_slice($request->file('imagenes_nuevas'), 0, $disponibles) as $archivo) {
+                $producto->addMedia($archivo)->toMediaCollection('imagenes');
+            }
         }
 
         // Actualizar precio y stock en la pivot producto_proveedor
@@ -464,9 +487,12 @@ class PortalController extends Controller
             'stock'               => ['required', 'integer', 'min:0'],
             'categoria_id'        => ['nullable', 'string', 'exists:categorias,id'],
             'peso_kg'             => ['nullable', 'numeric', 'min:0'],
-            'imagenes_nuevas'     => ['nullable', 'array'],
-            'imagenes_nuevas.*'   => ['image', 'max:2048'],
+            'imagenes_nuevas'        => ['nullable', 'array', 'max:3'],
+            'imagenes_nuevas.*'      => ['image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'permite_contraentrega'  => ['nullable', 'boolean'],
         ]);
+
+        $datos['permite_contraentrega'] = $request->boolean('permite_contraentrega', false);
 
         // ─── VALIDACIÓN: ¿Ya existe un producto con ese nombre? ─────────────
         //
@@ -532,9 +558,10 @@ class PortalController extends Controller
                 'stock'             => $datos['stock'],
                 'stock_minimo'      => 1,
                 'categoria_id'      => $datos['categoria_id'],
-                'estado'            => 'inactivo', // SIEMPRE — el admin activa
-                'sku'               => $sku,
-                'peso_kg'           => $datos['peso_kg'] ?? null,
+                'estado'                => 'inactivo', // SIEMPRE — el admin activa
+                'permite_contraentrega' => $datos['permite_contraentrega'] ?? false,
+                'sku'                   => $sku,
+                'peso_kg'               => $datos['peso_kg'] ?? null,
             ]);
 
             // Vincular al proveedor en la tabla pivot

@@ -139,9 +139,13 @@ php artisan cache:clear
 
 ## 👥 Usuarios del Sistema
 
-| Nombre | Email | Contraseña | Rol |
-|---|---|---|---|
-| Sebastian | `selora1988@gmail.com` | `Admin2024!` | `super_administrador` |
+| Nombre        | Email                  | Contraseña   | Rol                   |
+| ------------- | ---------------------- | ------------ | --------------------- |
+| Sebastian     | `selora1988@gmail.com` | `Admin2024!` | `super_administrador` |
+| proveedor     | Proveedor@test.com     |              | proveedor             |
+| administrador | admin@test.com         |              | admin                 |
+| cliente       | cliente@test.com       |              | cliente               |
+|               |                        |              |                       |
 
 > 🔄 **Pendiente**: Crear usuarios para proveedores y administradores adicionales desde `/usuarios`
 

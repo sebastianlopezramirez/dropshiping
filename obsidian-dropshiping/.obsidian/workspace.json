@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "00-estado/🐛 Bugs y Pendientes.md",
+                "file": "90-credenciales/🔐 Credenciales — Master.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "🐛 Bugs y Pendientes"
+              "title": "🔐 Credenciales — Master"
             }
           }
         ]
@@ -190,10 +190,11 @@
   },
   "active": "647d40d44db7ed6a",
   "lastOpenFiles": [
+    "90-credenciales/👥 Roles y Accesos — GadGet Store.md",
+    "00-estado/🐛 Bugs y Pendientes.md",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.18520.a38e6d3fd205",
     "30-modulos/Proceso — Subir Productos Caroleste.md",
     "30-modulos/Proceso — Subir Productos Caroleste.md.tmp.18520.3978ff31702d",
-    "90-credenciales/👥 Roles y Accesos — GadGet Store.md",
     "90-credenciales/🔐 Credenciales — Master.md.tmp.5248.abe38a44680a",
     "30-modulos/🗂️ Categorías — GadGet Store.md",
     "30-modulos/🗂️ Categorías — GadGet Store.md.tmp.5248.970dcc2cd85e",
@@ -202,7 +203,6 @@
     "90-credenciales/👥 Roles y Accesos — GadGet Store.md.tmp.15872.b38839431c0b",
     "00-estado/📊 Tablero de Fases.md",
     "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.9289df84b094",
-    "00-estado/🐛 Bugs y Pendientes.md",
     "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.fb914c76564b",
     "90-credenciales/🔐 Credenciales — Master.md.tmp.17456.5f0e24ca5a2e",
     "40-arquitectura/Stack Tecnológico.md",
@@ -210,7 +210,6 @@
     "10-fases/FASE 6 — Portal de Proveedores.md",
     "10-fases/FASE 3 — Productos y Catálogo.md",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.6360.afca6f6f6983",
-    "00-estado/📊 Tablero de Fases.md.tmp.6360.c959a7566498",
     "60-decisiones/Sistema de Imágenes — Spatie + R2.md",
     "10-fases/FASE 9 — Analytics.md",
     "10-fases/FASE 8 — Tienda Pública.md",

@@ -3,31 +3,63 @@
 | PÁGINA: Portal/EditarProducto.jsx
 |--------------------------------------------------------------------------
 |
-| Formulario para que el proveedor edite su relación con un producto.
-|
-| PENSAR — ¿Qué puede editar el proveedor?
-|   ✅ precio     → su precio en la pivot producto_proveedor
-|   ✅ stock      → su stock en la pivot producto_proveedor
-|   ✅ descripcion → en la tabla productos (info del producto)
+| ENTENDER — ¿Qué puede editar el proveedor?
+|   ✅ precio              → su precio en la pivot producto_proveedor
+|   ✅ stock               → su stock en la pivot producto_proveedor
+|   ✅ descripcion         → en la tabla productos
+|   ✅ permite_contraentrega → si el producto acepta pago contraentrega
+|   ✅ imagenes            → agregar (máx 3 en total) y eliminar las propias
 |
 |   ❌ nombre, sku, categoría, estado → solo el admin puede cambiarlos
 |
 */
 
+import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 
 export default function EditarProducto({ proveedor, producto, pivot }) {
 
-    const { data, setData, put, processing, errors } = useForm({
-        precio:       pivot?.precio      ?? '',
-        stock:        pivot?.stock       ?? 0,
-        descripcion:  producto.descripcion ?? '',
+    const imagenes = producto.media ?? [];
+
+    const { data, setData, post, processing, errors } = useForm({
+        _method:                'put',
+        precio:                 pivot?.precio               ?? '',
+        stock:                  pivot?.stock                ?? 0,
+        descripcion:            producto.descripcion        ?? '',
+        permite_contraentrega:  producto.permite_contraentrega ?? false,
+        imagenes_nuevas:        [],
+        eliminar_imagenes:      [],
     });
+
+    // Previews de imágenes nuevas seleccionadas
+    const [previews, setPreviews]             = useState([]);
+    // IDs de imágenes existentes marcadas para eliminar
+    const [marcadasEliminar, setMarcadas]     = useState([]);
+
+    const totalImagenes = imagenes.length - marcadasEliminar.length + previews.length;
+
+    const handleImagenes = (e) => {
+        const archivos    = Array.from(e.target.files);
+        const disponibles = 3 - (imagenes.length - marcadasEliminar.length);
+        const seleccion   = archivos.slice(0, disponibles);
+        setData('imagenes_nuevas', seleccion);
+        setPreviews(seleccion.map(f => URL.createObjectURL(f)));
+    };
+
+    const toggleEliminar = (id) => {
+        const nuevas = marcadasEliminar.includes(id)
+            ? marcadasEliminar.filter(i => i !== id)
+            : [...marcadasEliminar, id];
+        setMarcadas(nuevas);
+        setData('eliminar_imagenes', nuevas);
+        // Limpiar nuevas si ahora hay espacio
+        if (nuevas.length > marcadasEliminar.length) setPreviews([]);
+    };
 
     const submit = (e) => {
         e.preventDefault();
-        put(route('portal.productos.actualizar', producto.id));
+        post(route('portal.productos.actualizar', producto.id), { forceFormData: true });
     };
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', {
@@ -66,7 +98,7 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
 
                 <form onSubmit={submit} className="space-y-6">
 
-                    {/* Mis datos (pivot) */}
+                    {/* ─── MIS CONDICIONES ─────────────────────────────── */}
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
                         <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">
                             Mis condiciones
@@ -96,9 +128,33 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                                 {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock}</p>}
                             </div>
                         </div>
+
+                        {/* Contraentrega */}
+                        <div>
+                            <label className="flex items-center gap-3 cursor-pointer select-none">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only"
+                                        checked={data.permite_contraentrega}
+                                        onChange={e => setData('permite_contraentrega', e.target.checked)}
+                                    />
+                                    <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_contraentrega ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${data.permite_contraentrega ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </div>
+                                <div>
+                                    <span className="text-sm font-medium text-gray-700">Permite contraentrega</span>
+                                    <p className="text-xs text-gray-500">
+                                        {data.permite_contraentrega
+                                            ? 'El cliente paga al recibir el producto.'
+                                            : 'El cliente paga por transferencia antes del envío o recogida.'}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
-                    {/* Descripción del producto */}
+                    {/* ─── DESCRIPCIÓN ─────────────────────────────────── */}
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
                         <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">
                             Descripción del producto
@@ -113,7 +169,87 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                         </div>
                     </div>
 
-                    {/* Campos de solo lectura — solo informativos */}
+                    {/* ─── IMÁGENES ────────────────────────────────────── */}
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+                        <div className="border-b border-gray-100 pb-2 flex items-center justify-between">
+                            <h3 className="font-semibold text-gray-800">Imágenes del producto</h3>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                totalImagenes >= 3 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                            }`}>
+                                {totalImagenes}/3
+                            </span>
+                        </div>
+
+                        {/* Imágenes existentes */}
+                        {imagenes.length > 0 && (
+                            <div>
+                                <p className="text-xs text-gray-500 mb-2">Imágenes actuales — marca las que quieras eliminar:</p>
+                                <div className="flex flex-wrap gap-3">
+                                    {imagenes.map((media, i) => {
+                                        const marcada = marcadasEliminar.includes(media.id);
+                                        return (
+                                            <div key={media.id} className="relative">
+                                                <img
+                                                    src={media.original_url}
+                                                    className={`w-20 h-20 object-cover rounded-lg border-2 transition-all ${
+                                                        marcada ? 'opacity-30 border-red-400' : 'border-gray-200'
+                                                    }`}
+                                                />
+                                                {i === 0 && !marcada && (
+                                                    <span className="absolute -top-1.5 -left-1.5 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                                                        Principal
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleEliminar(media.id)}
+                                                    className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shadow transition-colors ${
+                                                        marcada
+                                                            ? 'bg-emerald-500 text-white'
+                                                            : 'bg-red-500 text-white hover:bg-red-600'
+                                                    }`}
+                                                    title={marcada ? 'Restaurar' : 'Eliminar'}
+                                                >
+                                                    {marcada ? '↩' : '×'}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Agregar nuevas (solo si hay espacio) */}
+                        {totalImagenes < 3 && (
+                            <div>
+                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
+                                    <div className="text-center">
+                                        <p className="text-xl mb-0.5">📸</p>
+                                        <p className="text-xs text-gray-600">Agregar imágenes</p>
+                                        <p className="text-xs text-gray-400">JPG, PNG, WEBP · máx. 2MB · quedan {3 - totalImagenes} espacios</p>
+                                    </div>
+                                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagenes} />
+                                </label>
+                                {previews.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {previews.map((url, i) => (
+                                            <img key={i} src={url} className="w-16 h-16 object-cover rounded-lg border border-emerald-200" />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {totalImagenes >= 3 && (
+                            <p className="text-xs text-amber-600">Límite de 3 imágenes alcanzado. Elimina una para agregar otra.</p>
+                        )}
+
+                        {errors['imagenes_nuevas.0'] && (
+                            <p className="text-xs text-red-600">{errors['imagenes_nuevas.0']}</p>
+                        )}
+                    </div>
+
+                    {/* ─── SOLO LECTURA ────────────────────────────────── */}
                     <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
                         <p className="font-medium text-gray-700 mb-2">Campos del administrador (solo lectura)</p>
                         <div className="grid grid-cols-2 gap-2">
