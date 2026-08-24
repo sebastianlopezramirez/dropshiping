@@ -18,6 +18,8 @@ class LeadController extends Controller
             'nombre'    => ['required', 'string', 'max:150'],
             'celular'   => ['required', 'string', 'max:20'],
             'email'     => ['nullable', 'email', 'max:150'],
+            'municipio' => ['required', 'string', 'max:100'],
+            'direccion' => ['nullable', 'string', 'max:300'],
             'producto'  => ['nullable', 'string', 'max:200'],
             'categoria' => ['nullable', 'string', 'max:100'],
         ]);
@@ -30,7 +32,7 @@ class LeadController extends Controller
         ConsentimientoMarketing::create([
             'nombre'            => $datos['nombre'],
             'celular'           => $datos['celular'],
-            'municipio'         => 'Por confirmar',   // se captura luego por WA
+            'municipio'         => $datos['municipio'],
             'categoria_interes' => $categoriaInteres,
             'consentimiento_en' => now(),
         ]);

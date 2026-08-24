@@ -15,8 +15,33 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
     const [agregado, setAgregado] = useState(false);
     const { agregarItem } = useCart();
 
+    // ── MUNICIPIOS ──────────────────────────────────────────────────────────
+    const MUNICIPIOS = {
+        'Medellín — Comunas': [
+            'Popular', 'Santa Cruz', 'Manrique', 'Aranjuez', 'Castilla',
+            'Doce de Octubre', 'Robledo', 'Villa Hermosa', 'Buenos Aires',
+            'La Candelaria (Centro)', 'Laureles-Estadio', 'La América',
+            'San Javier', 'El Poblado', 'Guayabal', 'Belén',
+        ],
+        'Medellín — Corregimientos': [
+            'San Cristóbal', 'Altavista', 'San Antonio de Prado',
+            'Santa Elena', 'Palmitas',
+        ],
+        'Área Metropolitana': [
+            'Bello', 'Itagüí', 'Envigado', 'Sabaneta', 'La Estrella',
+            'Caldas', 'Copacabana', 'Girardota', 'Barbosa',
+        ],
+        'Otras ciudades — Colombia': [
+            'Bogotá', 'Cali', 'Barranquilla', 'Cartagena', 'Cúcuta',
+            'Bucaramanga', 'Pereira', 'Manizales', 'Santa Marta',
+            'Ibagué', 'Pasto', 'Montería', 'Villavicencio', 'Armenia',
+            'Valledupar', 'Neiva', 'Rionegro', 'Apartadó', 'Turbo',
+            'Caucasia', 'Quibdó', 'Otra ciudad',
+        ],
+    };
+
     // ── FORMULARIO DE LEAD ──────────────────────────────────────────────────
-    const [lead, setLead]               = useState({ nombre: '', celular: '', email: '' });
+    const [lead, setLead] = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
     const [aceptaDatos, setAceptaDatos] = useState(false);
     const [leadGuardado, setLeadGuardado] = useState(false);
     const [leadEnviando, setLeadEnviando] = useState(false);
@@ -40,6 +65,8 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                     nombre:    lead.nombre,
                     celular:   lead.celular,
                     email:     lead.email || null,
+                    municipio: lead.municipio,
+                    direccion: lead.direccion || null,
                     producto:  producto.nombre,
                     categoria: producto.categoria?.nombre ?? null,
                 }),
@@ -87,9 +114,11 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
 
     const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
 
-    // Saludo con nombre del cliente si ya lo capturamos
-    const saludo = lead.nombre ? `Hola! Soy *${lead.nombre}*` : `Hola!`;
-    const telCliente = lead.celular ? `\nMi WhatsApp: ${lead.celular}` : '';
+    // Datos del cliente para mensajes WA
+    const saludo     = lead.nombre    ? `Hola! Soy *${lead.nombre}*` : `Hola!`;
+    const telCliente = lead.celular   ? `\nMi celular: ${lead.celular}` : '';
+    const mpio       = lead.municipio ? `\nMunicipio: ${lead.municipio}` : '';
+    const dir        = lead.direccion ? `\nDirección: ${lead.direccion}` : '';
 
     // Sin contraentrega: pago por transferencia primero
     const msgEnvioTransferencia = encodeURIComponent(
@@ -97,8 +126,9 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}${telCliente}\n\n` +
-        `Quiero que me lo *envíen a domicilio*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
+        `${seo.url}` +
+        `${telCliente}${mpio}${dir}\n\n` +
+        `Quiero que me lo *envíen a domicilio*. Por favor compártame los datos bancarios de GadGet Store para realizar el pago por transferencia.`
     );
 
     const msgReclamarAlmacen = encodeURIComponent(
@@ -106,8 +136,9 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}${telCliente}\n\n` +
-        `Quiero *reclamarlo en el almacén*. Por favor compártame los datos de la cuenta de GadGet Store para realizar el pago por transferencia.`
+        `${seo.url}` +
+        `${telCliente}${mpio}\n\n` +
+        `Quiero *reclamarlo en el almacén*. Por favor compártame los datos bancarios de GadGet Store para realizar el pago por transferencia.`
     );
 
     // Con contraentrega: el cliente paga al recibir
@@ -116,8 +147,9 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
         `*${producto.nombre}*\n` +
         `Precio: ${cop(precioMostrar)}\n` +
         (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}${telCliente}\n\n` +
-        `Quiero que me lo *envíen a domicilio* (pago contraentrega). Por favor indíquenme la dirección de envío y el tiempo de entrega estimado.`
+        `${seo.url}` +
+        `${telCliente}${mpio}${dir}\n\n` +
+        `Quiero que me lo *envíen a domicilio* (pago contraentrega). Por favor confírmeme el tiempo de entrega estimado.`
     );
 
     return (
@@ -346,6 +378,43 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                                             value={lead.celular}
                                             onChange={e => setLead(l => ({ ...l, celular: e.target.value }))}
                                             placeholder="3001234567"
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
+                                        />
+                                    </div>
+
+                                    {/* Municipio / Ciudad */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                            Municipio / Ciudad <span className="text-orange-400">*</span>
+                                        </label>
+                                        <select
+                                            required
+                                            value={lead.municipio}
+                                            onChange={e => setLead(l => ({ ...l, municipio: e.target.value }))}
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
+                                        >
+                                            <option value="">— Selecciona tu ciudad —</option>
+                                            {Object.entries(MUNICIPIOS).map(([grupo, lista]) => (
+                                                <optgroup key={grupo} label={grupo}>
+                                                    {lista.map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
+                                                </optgroup>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Dirección */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-1">
+                                            Dirección de entrega <span className="text-orange-400">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={lead.direccion}
+                                            onChange={e => setLead(l => ({ ...l, direccion: e.target.value }))}
+                                            placeholder="Calle 50 #30-20, Apto 401"
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
                                         />
                                     </div>
