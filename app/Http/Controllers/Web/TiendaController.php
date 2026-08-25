@@ -38,6 +38,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use App\Models\Producto;
+use App\Models\TarifaDomicilio;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -150,9 +151,16 @@ class TiendaController extends Controller
                 ->get();
         }
 
+        // Tarifas de domicilio activas (mismas que usa el carrito)
+        $tarifas = TarifaDomicilio::activas()
+            ->orderBy('tipo')
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'tipo', 'precio']);
+
         return Inertia::render('Tienda/Producto', [
             'producto'     => $producto,
             'relacionados' => $relacionados,
+            'tarifas'      => $tarifas,
             // Número de WhatsApp del negocio (sin +, sin espacios)
             // config/services.php → services.whatsapp.numero → env WHATSAPP_NUMERO
             'whatsapp'     => config('services.whatsapp.numero', ''),

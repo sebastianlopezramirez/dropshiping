@@ -9,36 +9,15 @@ import { useState } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
 import { useCart } from '@/Context/CartContext';
 
-export default function Producto({ producto, relacionados, seo, whatsapp }) {
+export default function Producto({ producto, relacionados, seo, whatsapp, tarifas = [] }) {
 
     const [imagenActiva, setImagenActiva] = useState(0);
     const [agregado, setAgregado] = useState(false);
     const { agregarItem } = useCart();
 
-    // ── MUNICIPIOS ──────────────────────────────────────────────────────────
-    const MUNICIPIOS = {
-        'Medellín — Comunas': [
-            'Popular', 'Santa Cruz', 'Manrique', 'Aranjuez', 'Castilla',
-            'Doce de Octubre', 'Robledo', 'Villa Hermosa', 'Buenos Aires',
-            'La Candelaria (Centro)', 'Laureles-Estadio', 'La América',
-            'San Javier', 'El Poblado', 'Guayabal', 'Belén',
-        ],
-        'Medellín — Corregimientos': [
-            'San Cristóbal', 'Altavista', 'San Antonio de Prado',
-            'Santa Elena', 'Palmitas',
-        ],
-        'Área Metropolitana': [
-            'Bello', 'Itagüí', 'Envigado', 'Sabaneta', 'La Estrella',
-            'Caldas', 'Copacabana', 'Girardota', 'Barbosa',
-        ],
-        'Otras ciudades — Colombia': [
-            'Bogotá', 'Cali', 'Barranquilla', 'Cartagena', 'Cúcuta',
-            'Bucaramanga', 'Pereira', 'Manizales', 'Santa Marta',
-            'Ibagué', 'Pasto', 'Montería', 'Villavicencio', 'Armenia',
-            'Valledupar', 'Neiva', 'Rionegro', 'Apartadó', 'Turbo',
-            'Caucasia', 'Quibdó', 'Otra ciudad',
-        ],
-    };
+    // ── TARIFAS agrupadas (igual que Carrito) ───────────────────────────────
+    const areaMetro = tarifas.filter(t => t.tipo === 'area_metro');
+    const ciudades  = tarifas.filter(t => t.tipo === 'ciudad');
 
     // ── FORMULARIO DE LEAD ──────────────────────────────────────────────────
     const [lead, setLead] = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
@@ -394,13 +373,20 @@ export default function Producto({ producto, relacionados, seo, whatsapp }) {
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
                                         >
                                             <option value="">— Selecciona tu ciudad —</option>
-                                            {Object.entries(MUNICIPIOS).map(([grupo, lista]) => (
-                                                <optgroup key={grupo} label={grupo}>
-                                                    {lista.map(m => (
-                                                        <option key={m} value={m}>{m}</option>
+                                            {areaMetro.length > 0 && (
+                                                <optgroup label="— Área Metropolitana de Medellín —">
+                                                    {areaMetro.map(t => (
+                                                        <option key={t.id} value={t.nombre}>{t.nombre}</option>
                                                     ))}
                                                 </optgroup>
-                                            ))}
+                                            )}
+                                            {ciudades.length > 0 && (
+                                                <optgroup label="— Otras ciudades —">
+                                                    {ciudades.map(t => (
+                                                        <option key={t.id} value={t.nombre}>{t.nombre}</option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
                                         </select>
                                     </div>
 
