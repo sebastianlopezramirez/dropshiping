@@ -36,6 +36,8 @@ export default function Dashboard({
 }) {
     const [año, setAño]  = useState(periodo.año);
     const [mes, setMes]  = useState(periodo.mes);
+    // dia = 0 significa "todo el mes" (sin filtro de día)
+    const [dia, setDia]  = useState(periodo.dia ?? 0);
 
     const meses = [
         'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -53,7 +55,9 @@ export default function Dashboard({
     };
 
     const aplicarPeriodo = () => {
-        router.get(route('reportes.financiero'), { año, mes }, { preserveState: true });
+        const params = { año, mes };
+        if (dia > 0) params.dia = dia;
+        router.get(route('reportes.financiero'), params, { preserveState: true });
     };
 
     // Colores por categoría de gasto
@@ -78,23 +82,37 @@ export default function Dashboard({
             <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
                 {/* ── SELECTOR DE PERÍODO ──────────────────────────────── */}
-                <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                     <span className="text-sm font-medium text-gray-700">Período:</span>
+                    {/* Mes */}
                     <select value={mes} onChange={e => setMes(Number(e.target.value))}
                         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         {meses.map((m, i) => (
                             <option key={i+1} value={i+1}>{m}</option>
                         ))}
                     </select>
+                    {/* Año */}
                     <input type="number" value={año} onChange={e => setAño(Number(e.target.value))}
                         min="2024" max="2030"
                         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    {/* Día (opcional) — 0 = todo el mes */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-400">Día:</span>
+                        <input type="number" value={dia === 0 ? '' : dia}
+                            placeholder="Todos"
+                            onChange={e => setDia(e.target.value === '' ? 0 : Math.min(31, Math.max(1, Number(e.target.value))))}
+                            min="1" max="31"
+                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        {dia > 0 && (
+                            <button onClick={() => setDia(0)} className="text-xs text-gray-400 hover:text-red-500">✕</button>
+                        )}
+                    </div>
                     <button onClick={aplicarPeriodo}
                         className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
                         Ver
                     </button>
                     <span className="ml-auto text-sm text-gray-500">
-                        {meses[mes-1]} {año}
+                        {dia > 0 ? `${dia} de ` : ''}{meses[mes-1]} {año}
                     </span>
                 </div>
 

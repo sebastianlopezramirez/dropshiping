@@ -120,32 +120,26 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
     }).format(valor ?? 0);
 
     // Color del badge según el estado
+    // PENSAR: 4 estados simples → flujo claro para el admin
     const colorEstado = {
-        pendiente:      'bg-yellow-100 text-yellow-800',
-        confirmado:     'bg-blue-100 text-blue-800',
-        en_preparacion: 'bg-purple-100 text-purple-800',
-        enviado:        'bg-indigo-100 text-indigo-800',
-        entregado:      'bg-green-100 text-green-800',
-        devuelto:       'bg-orange-100 text-orange-800',
-        cancelado:      'bg-red-100 text-red-800',
+        pendiente:  'bg-yellow-100 text-yellow-800',
+        confirmado: 'bg-blue-100 text-blue-800',
+        entregado:  'bg-green-100 text-green-800',
+        cancelado:  'bg-red-100 text-red-800',
     };
 
-    // Siguiente estado lógico para el botón de avance rápido
+    // Siguiente estado lógico: pendiente → confirmado → entregado
+    // (confirmado requiere modal de pago — ver cambiarEstado())
     const siguienteEstado = {
-        pendiente:      'confirmado',
-        confirmado:     'en_preparacion',
-        en_preparacion: 'enviado',
-        enviado:        'entregado',
+        pendiente:  'confirmado',
+        confirmado: 'entregado',
     };
 
     const etiquetaEstado = {
-        pendiente:      'Pendiente',
-        confirmado:     'Confirmado',
-        en_preparacion: 'En preparación',
-        enviado:        'Enviado',
-        entregado:      'Entregado',
-        devuelto:       'Devuelto',
-        cancelado:      'Cancelado',
+        pendiente:  'Pendiente',
+        confirmado: 'Confirmado',
+        entregado:  'Entregado',
+        cancelado:  'Cancelado',
     };
 
     return (
@@ -168,7 +162,7 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
                     {[
                         { label: 'Pedidos hoy',  valor: estadisticas.total_hoy,  color: 'text-indigo-600' },
                         { label: 'Pendientes',   valor: estadisticas.pendientes, color: 'text-yellow-600' },
-                        { label: 'En tránsito',  valor: estadisticas.enviados,   color: 'text-blue-600' },
+                        { label: 'Confirmados',  valor: estadisticas.enviados,   color: 'text-blue-600' },
                         { label: 'Ventas del mes', valor: formatearPrecio(estadisticas.total_mes), color: 'text-green-600' },
                     ].map((stat, i) => (
                         <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">

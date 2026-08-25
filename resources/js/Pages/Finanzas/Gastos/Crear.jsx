@@ -7,7 +7,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Crear({ categorias }) {
+export default function Crear({ categorias, pedidos = [] }) {
+
+    const fmt = (v) => new Intl.NumberFormat('es-CO', {
+        style: 'currency', currency: 'COP', minimumFractionDigits: 0,
+    }).format(v ?? 0);
 
     const { data, setData, post, processing, errors } = useForm({
         categoria:   '',
@@ -15,6 +19,7 @@ export default function Crear({ categorias }) {
         monto:       '',
         fecha_gasto: new Date().toISOString().split('T')[0], // hoy
         notas:       '',
+        pedido_id:   '',   // opcional: vincular a un pedido específico
     });
 
     const submit = (e) => {
@@ -84,6 +89,29 @@ export default function Crear({ categorias }) {
                                     className={inputClass('fecha_gasto')} />
                                 {errors.fecha_gasto && <p className="text-red-500 text-xs mt-1">{errors.fecha_gasto}</p>}
                             </div>
+                        </div>
+
+                        {/* Vincular a pedido (opcional) */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Pedido asociado
+                                <span className="ml-1 text-xs text-gray-400">(opcional — para gastos específicos como domicilio)</span>
+                            </label>
+                            <select value={data.pedido_id}
+                                onChange={e => setData('pedido_id', e.target.value)}
+                                className={inputClass('pedido_id')}>
+                                <option value="">— Gasto general del negocio —</option>
+                                {pedidos.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.numero_pedido} · {p.cliente_nombre} · {fmt(p.total)}
+                                    </option>
+                                ))}
+                            </select>
+                            {data.pedido_id && (
+                                <p className="text-xs text-indigo-600 mt-1">
+                                    Este gasto se asociará al pedido seleccionado para trazabilidad completa.
+                                </p>
+                            )}
                         </div>
 
                         <div>

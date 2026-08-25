@@ -34,6 +34,7 @@ use App\Models\Cupon;
 use App\Models\ItemPedido;
 use App\Models\Pedido;
 use App\Models\Producto;
+use App\Models\Transaccion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -86,7 +87,7 @@ class PedidoController extends Controller
         $estadisticas = [
             'total_hoy'      => Pedido::whereDate('creado_en', today())->count(),
             'pendientes'     => Pedido::where('estado', Pedido::ESTADO_PENDIENTE)->count(),
-            'enviados'       => Pedido::where('estado', Pedido::ESTADO_ENVIADO)->count(),
+            'enviados'       => Pedido::where('estado', Pedido::ESTADO_CONFIRMADO)->count(),
             'total_mes'      => Pedido::delMes()->sum('total'),
         ];
 
@@ -401,13 +402,25 @@ class PedidoController extends Controller
     public function cambiarEstado(Request $request, Pedido $pedido)
     {
         $request->validate([
-            'estado' => ['required', Rule::in(Pedido::todosLosEstados())],
+            'estado'                  => ['required', Rule::in(Pedido::todosLosEstados())],
+            // Solo requerido al confirmar; indica cómo pagó el cliente
+            'metodo_pago_confirmacion' => [
+                Rule::requiredIf(fn() => $request->estado === Pedido::ESTADO_CONFIRMADO),
+                'nullable',
+                Rule::in([
+                    Transaccion::METODO_EFECTIVO,
+                    Transaccion::METODO_TRANSFERENCIA,
+                    Transaccion::METODO_NEQUI,
+                    Transaccion::METODO_TARJETA_CREDITO,
+                    Transaccion::METODO_TARJETA_DEBITO,
+                    Transaccion::METODO_OTRO,
+                ]),
+            ],
         ]);
 
         $estadoAnterior = $pedido->estado;
         $nuevoEstado    = $request->estado;
 
-        // Si se cancela, registramos la fecha de cancelación
         $cancelado_en = $nuevoEstado === Pedido::ESTADO_CANCELADO ? now() : null;
 
         $pedido->update([
@@ -415,9 +428,30 @@ class PedidoController extends Controller
             'cancelado_en' => $cancelado_en,
         ]);
 
-        // ── RESTAURAR STOCK al cancelar ────────────────────────────────────
-        // El stock se descuenta cuando el cliente hace el pedido.
-        // Si el admin cancela, se devuelven las unidades al inventario.
+        // ── AL CONFIRMAR: crear Transacción aprobada automáticamente ───────
+        // Esto es lo que alimenta el Dashboard Financiero (Ingresos).
+        // Solo se crea si el pedido pasa de pendiente → confirmado por primera vez.
+        if ($nuevoEstado === Pedido::ESTADO_CONFIRMADO
+            && $estadoAnterior === Pedido::ESTADO_PENDIENTE) {
+
+            // Evitar duplicar si ya existe una transacción aprobada para este pedido
+            $yaExiste = Transaccion::where('pedido_id', $pedido->id)
+                ->where('estado', Transaccion::ESTADO_APROBADA)
+                ->exists();
+
+            if (!$yaExiste) {
+                Transaccion::create([
+                    'pedido_id'   => $pedido->id,
+                    'monto'       => $pedido->total,
+                    'metodo_pago' => $request->metodo_pago_confirmacion,
+                    'estado'      => Transaccion::ESTADO_APROBADA,
+                    'referencia'  => $pedido->numero_pedido,
+                    'notas'       => 'Confirmado por admin — pago registrado al confirmar pedido',
+                ]);
+            }
+        }
+
+        // ── AL CANCELAR: restaurar stock ────────────────────────────────────
         if ($nuevoEstado === Pedido::ESTADO_CANCELADO
             && $estadoAnterior !== Pedido::ESTADO_CANCELADO) {
 

@@ -139,7 +139,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                     <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                {['Pedido', 'Monto', 'Método', 'Estado', 'Fecha', 'Acciones'].map(h => (
+                                {['Fecha y hora', 'Pedido / Cliente', 'Monto', 'Método', 'Estado', 'Acciones'].map(h => (
                                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
                                 ))}
                             </tr>
@@ -155,41 +155,76 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                                     </td>
                                 </tr>
                             ) : (
-                                transacciones.data.map(tx => (
+                                transacciones.data.map(tx => {
+                                    // pagado_en tiene fecha+hora exacta de cuando se confirmó
+                                    const fechaPago = tx.pagado_en
+                                        ? new Date(tx.pagado_en)
+                                        : new Date(tx.creado_en);
+                                    const fechaStr = fechaPago.toLocaleDateString('es-CO', {
+                                        day: '2-digit', month: '2-digit', year: 'numeric',
+                                    });
+                                    const horaStr = fechaPago.toLocaleTimeString('es-CO', {
+                                        hour: '2-digit', minute: '2-digit',
+                                    });
+                                    return (
                                     <tr key={tx.id} className="hover:bg-gray-50 transition">
+
+                                        {/* Fecha y hora exacta */}
+                                        <td className="px-4 py-3">
+                                            <p className="text-sm font-medium text-gray-900">{fechaStr}</p>
+                                            <p className="text-xs text-gray-400">{horaStr}</p>
+                                        </td>
+
+                                        {/* Pedido + cliente + ciudad */}
                                         <td className="px-4 py-3">
                                             {tx.pedido ? (
                                                 <>
                                                     <p className="text-sm font-medium text-indigo-600">{tx.pedido.numero_pedido}</p>
-                                                    <p className="text-xs text-gray-400">{tx.pedido.cliente_nombre}</p>
+                                                    <p className="text-xs text-gray-700">{tx.pedido.cliente_nombre}</p>
+                                                    <p className="text-xs text-gray-400">{tx.pedido.ciudad}</p>
                                                 </>
                                             ) : (
                                                 <span className="text-xs text-gray-400">—</span>
                                             )}
                                         </td>
+
+                                        {/* Monto + referencia */}
                                         <td className="px-4 py-3">
-                                            <p className="text-sm font-semibold text-gray-900">{fmt(tx.monto)}</p>
-                                            {tx.referencia_pago && <p className="text-xs text-gray-400">Ref: {tx.referencia_pago}</p>}
+                                            <p className="text-sm font-bold text-gray-900">{fmt(tx.monto)}</p>
+                                            {tx.referencia_pago && (
+                                                <p className="text-xs text-gray-400">Ref: {tx.referencia_pago}</p>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {etiquetaMetodo[tx.metodo_pago] ?? tx.metodo_pago}
+
+                                        {/* Método con icono */}
+                                        <td className="px-4 py-3">
+                                            <span className="inline-flex items-center gap-1 text-sm text-gray-700">
+                                                {tx.metodo_pago === 'efectivo' ? '💵' :
+                                                 tx.metodo_pago === 'transferencia' ? '🏦' :
+                                                 tx.metodo_pago === 'nequi' ? '📱' :
+                                                 tx.metodo_pago === 'tarjeta_credito' ? '💳' :
+                                                 tx.metodo_pago === 'tarjeta_debito' ? '💳' : '🔄'}
+                                                {etiquetaMetodo[tx.metodo_pago] ?? tx.metodo_pago}
+                                            </span>
                                         </td>
+
+                                        {/* Estado */}
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${colorEstado[tx.estado] ?? 'bg-gray-100'}`}>
                                                 {etiquetaEstado[tx.estado] ?? tx.estado}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-gray-500">
-                                            {new Date(tx.creado_en).toLocaleDateString('es-CO')}
-                                        </td>
+
+                                        {/* Acción */}
                                         <td className="px-4 py-3 text-right">
                                             <Link href={route('transacciones.show', tx.id)}
                                                 className="text-xs text-indigo-600 hover:underline">
-                                                Ver
+                                                Ver detalle
                                             </Link>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </table></div>

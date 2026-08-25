@@ -50,27 +50,38 @@ class ReporteFinancieroController extends Controller
     public function dashboard(Request $request): Response
     {
         // ── PERÍODO SELECCIONADO ──────────────────────────────────────────
+        // PENSAR: Se puede filtrar por año+mes, o por día específico.
+        //   Si viene 'dia', filtramos solo ese día del mes/año.
+        //   Si no viene 'dia', mostramos todo el mes (comportamiento original).
         $año = (int) ($request->año ?? now()->year);
         $mes = (int) ($request->mes ?? now()->month);
+        $dia = $request->filled('dia') ? (int) $request->dia : null;
+
+        // Helper para aplicar el filtro de tiempo a cualquier query
+        $aplicarFiltroTiempo = function ($q, string $campoFecha) use ($año, $mes, $dia) {
+            $q->whereYear($campoFecha, $año)->whereMonth($campoFecha, $mes);
+            if ($dia) $q->whereDay($campoFecha, $dia);
+            return $q;
+        };
 
         // ── 1. INGRESOS ───────────────────────────────────────────────────
-        // Suma de todas las transacciones APROBADAS del período
         $ingresos = Transaccion::aprobadas()
-            ->whereYear('pagado_en', $año)
-            ->whereMonth('pagado_en', $mes)
+            ->when(true, fn($q) => $aplicarFiltroTiempo($q, 'pagado_en'))
             ->sum('monto');
 
         // ── 2. COSTO DE PRODUCTOS ─────────────────────────────────────────
-        // Suma de (precio_costo × cantidad) de pedidos ENTREGADOS del período
-        // Solo contamos pedidos entregados porque representan ventas reales
-        $costoProductos = ItemPedido::whereHas('pedido', function ($q) use ($año, $mes) {
-            $q->where('estado', Pedido::ESTADO_ENTREGADO)
+        $estadosVenta = [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO];
+        $costoProductos = ItemPedido::whereHas('pedido', function ($q) use ($año, $mes, $dia, $estadosVenta) {
+            $q->whereIn('estado', $estadosVenta)
               ->whereYear('creado_en', $año)
               ->whereMonth('creado_en', $mes);
+            if ($dia) $q->whereDay('creado_en', $dia);
         })->sum(DB::raw('precio_costo * cantidad'));
 
         // ── 3. GASTOS OPERATIVOS ──────────────────────────────────────────
-        $gastosOp = GastoOperativo::delPeriodo($año, $mes)->sum('monto');
+        $gastosOp = GastoOperativo::delPeriodo($año, $mes)
+            ->when($dia, fn($q) => $q->whereDay('fecha', $dia))
+            ->sum('monto');
 
         // ── 4. CÁLCULOS FINALES ───────────────────────────────────────────
         $gananciaBruta = $ingresos - $costoProductos;
@@ -87,24 +98,31 @@ class ReporteFinancieroController extends Controller
                             ->toArray();
 
         // ── 6. INGRESOS POR DÍA (para gráfico de líneas) ─────────────────
-        $ingresosPorDia = Transaccion::aprobadas()
-            ->whereYear('pagado_en', $año)
-            ->whereMonth('pagado_en', $mes)
-            ->selectRaw("DATE(pagado_en) as fecha, SUM(monto) as total")
-            ->groupBy('fecha')
-            ->orderBy('fecha')
-            ->get()
-            ->map(fn ($r) => [
-                'fecha' => $r->fecha,
-                'total' => (float) $r->total,
-            ]);
+        // Si hay filtro de día, mostramos por hora; si no, por día del mes
+        if ($dia) {
+            $ingresosPorDia = Transaccion::aprobadas()
+                ->whereYear('pagado_en', $año)->whereMonth('pagado_en', $mes)->whereDay('pagado_en', $dia)
+                ->selectRaw("EXTRACT(HOUR FROM pagado_en) as hora, SUM(monto) as total")
+                ->groupBy('hora')->orderBy('hora')
+                ->get()
+                ->map(fn ($r) => ['fecha' => sprintf('%02d:00', (int)$r->hora), 'total' => (float) $r->total]);
+        } else {
+            $ingresosPorDia = Transaccion::aprobadas()
+                ->whereYear('pagado_en', $año)->whereMonth('pagado_en', $mes)
+                ->selectRaw("DATE(pagado_en) as fecha, SUM(monto) as total")
+                ->groupBy('fecha')->orderBy('fecha')
+                ->get()
+                ->map(fn ($r) => ['fecha' => $r->fecha, 'total' => (float) $r->total]);
+        }
 
         // ── 7. GASTOS POR CATEGORÍA (para gráfico de torta) ──────────────
         $gastosPorCategoria = GastoOperativo::resumenPorCategoria($año, $mes);
 
         // ── 8. TOP 5 PRODUCTOS MÁS VENDIDOS DEL MES ──────────────────────
+        // Solo pedidos confirmados o entregados (ventas reales con pago)
         $topProductos = ItemPedido::whereHas('pedido', fn ($q) =>
-            $q->whereYear('creado_en', $año)->whereMonth('creado_en', $mes)
+            $q->whereIn('estado', [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO])
+              ->whereYear('creado_en', $año)->whereMonth('creado_en', $mes)
         )
         ->selectRaw('nombre_producto, SUM(cantidad) as unidades, SUM(subtotal) as ventas')
         ->groupBy('nombre_producto')
@@ -130,7 +148,7 @@ class ReporteFinancieroController extends Controller
         });
 
         return Inertia::render('Finanzas/Dashboard', [
-            'periodo' => compact('año', 'mes'),
+            'periodo' => compact('año', 'mes', 'dia'),
             'kpis'    => [
                 'ingresos'        => (float) $ingresos,
                 'costo_productos' => (float) $costoProductos,

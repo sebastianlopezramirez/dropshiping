@@ -52,6 +52,7 @@ class GastoOperativo extends Model
         'fecha_gasto',
         'notas',
         'usuario_id',
+        'pedido_id',   // opcional: vincula el gasto a un pedido específico
     ];
 
     // ── CASTS ─────────────────────────────────────────────────────────────
@@ -81,6 +82,15 @@ class GastoOperativo extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    /**
+     * pedido() — El pedido asociado a este gasto (opcional).
+     * Ejemplo: pago al domiciliario del pedido PED-2026-00045.
+     */
+    public function pedido(): BelongsTo
+    {
+        return $this->belongsTo(Pedido::class, 'pedido_id');
     }
 
     // ── SCOPES ────────────────────────────────────────────────────────────

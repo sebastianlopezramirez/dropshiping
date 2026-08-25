@@ -17,6 +17,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\GastoOperativo;
+use App\Models\Pedido;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -74,8 +75,15 @@ class GastoController extends Controller
     */
     public function create(): Response
     {
+        // Pedidos recientes para el selector opcional (últimos 60 días, activos)
+        $pedidos = Pedido::whereIn('estado', [Pedido::ESTADO_PENDIENTE, Pedido::ESTADO_CONFIRMADO])
+            ->where('creado_en', '>=', now()->subDays(60))
+            ->orderBy('creado_en', 'desc')
+            ->get(['id', 'numero_pedido', 'cliente_nombre', 'total']);
+
         return Inertia::render('Finanzas/Gastos/Crear', [
             'categorias' => GastoOperativo::categoriasConEtiqueta(),
+            'pedidos'    => $pedidos,
         ]);
     }
 
@@ -92,6 +100,7 @@ class GastoController extends Controller
             'monto'       => 'required|numeric|min:1',
             'fecha_gasto' => 'required|date',
             'notas'       => 'nullable|string',
+            'pedido_id'   => 'nullable|uuid|exists:pedidos,id',
         ]);
 
         GastoOperativo::create([
@@ -130,6 +139,7 @@ class GastoController extends Controller
             'monto'       => 'required|numeric|min:1',
             'fecha_gasto' => 'required|date',
             'notas'       => 'nullable|string',
+            'pedido_id'   => 'nullable|uuid|exists:pedidos,id',
         ]);
 
         $gasto->update($datos);

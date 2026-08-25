@@ -96,14 +96,15 @@ class Pedido extends Model
     ];
 
     // ─── ESTADOS DISPONIBLES ──────────────────────────────────────────────
-    // Constantes para no usar strings literales en el código
-    const ESTADO_PENDIENTE      = 'pendiente';
-    const ESTADO_CONFIRMADO     = 'confirmado';
-    const ESTADO_EN_PREPARACION = 'en_preparacion';
-    const ESTADO_ENVIADO        = 'enviado';
-    const ESTADO_ENTREGADO      = 'entregado';
-    const ESTADO_DEVUELTO       = 'devuelto';
-    const ESTADO_CANCELADO      = 'cancelado';
+    // PENSAR — 4 estados claros para el flujo del negocio:
+    //   pendiente  → pedido creado, stock reservado, esperando pago
+    //   confirmado → admin confirmó pago → se crea Transaccion automáticamente
+    //   entregado  → producto recibido por el cliente
+    //   cancelado  → pedido anulado → stock restaurado
+    const ESTADO_PENDIENTE  = 'pendiente';
+    const ESTADO_CONFIRMADO = 'confirmado';
+    const ESTADO_ENTREGADO  = 'entregado';
+    const ESTADO_CANCELADO  = 'cancelado';
 
     // ─── BOOT — UUID + NÚMERO DE PEDIDO AUTO-GENERADO ─────────────────────
     protected static function boot(): void
@@ -191,11 +192,6 @@ class Pedido extends Model
         return $query->where('estado', self::ESTADO_CONFIRMADO);
     }
 
-    public function scopeEnviados($query)
-    {
-        return $query->where('estado', self::ESTADO_ENVIADO);
-    }
-
     public function scopeEntregados($query)
     {
         return $query->where('estado', self::ESTADO_ENTREGADO);
@@ -203,8 +199,8 @@ class Pedido extends Model
 
     public function scopeActivos($query)
     {
-        // Pedidos que NO están cancelados ni devueltos
-        return $query->whereNotIn('estado', [self::ESTADO_CANCELADO, self::ESTADO_DEVUELTO]);
+        // Pedidos que NO están cancelados
+        return $query->where('estado', '!=', self::ESTADO_CANCELADO);
     }
 
     public function scopeDelMes($query)
@@ -235,19 +231,16 @@ class Pedido extends Model
     */
     public function puedeEnviarse(): bool
     {
-        return in_array($this->estado, [
-            self::ESTADO_CONFIRMADO,
-            self::ESTADO_EN_PREPARACION,
-        ]);
+        return $this->estado === self::ESTADO_CONFIRMADO;
     }
 
     /*
     | puedeCancelarse() — ¿Aún se puede cancelar?
+    | Solo pedidos entregados y ya cancelados no se pueden cancelar.
     */
     public function puedeCancelarse(): bool
     {
         return !in_array($this->estado, [
-            self::ESTADO_ENVIADO,
             self::ESTADO_ENTREGADO,
             self::ESTADO_CANCELADO,
         ]);
@@ -261,14 +254,11 @@ class Pedido extends Model
     public function colorEstado(): string
     {
         return match($this->estado) {
-            'pendiente'      => 'bg-yellow-100 text-yellow-800',
-            'confirmado'     => 'bg-blue-100 text-blue-800',
-            'en_preparacion' => 'bg-purple-100 text-purple-800',
-            'enviado'        => 'bg-indigo-100 text-indigo-800',
-            'entregado'      => 'bg-green-100 text-green-800',
-            'devuelto'       => 'bg-orange-100 text-orange-800',
-            'cancelado'      => 'bg-red-100 text-red-800',
-            default          => 'bg-gray-100 text-gray-600',
+            'pendiente'  => 'bg-yellow-100 text-yellow-800',
+            'confirmado' => 'bg-blue-100 text-blue-800',
+            'entregado'  => 'bg-green-100 text-green-800',
+            'cancelado'  => 'bg-red-100 text-red-800',
+            default      => 'bg-gray-100 text-gray-600',
         };
     }
 
@@ -301,10 +291,7 @@ class Pedido extends Model
         return [
             self::ESTADO_PENDIENTE,
             self::ESTADO_CONFIRMADO,
-            self::ESTADO_EN_PREPARACION,
-            self::ESTADO_ENVIADO,
             self::ESTADO_ENTREGADO,
-            self::ESTADO_DEVUELTO,
             self::ESTADO_CANCELADO,
         ];
     }
