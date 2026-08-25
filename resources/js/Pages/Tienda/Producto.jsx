@@ -19,16 +19,22 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
     const areaMetro = tarifas.filter(t => t.tipo === 'area_metro');
     const ciudades  = tarifas.filter(t => t.tipo === 'ciudad');
 
-    // ── FORMULARIO DE LEAD ──────────────────────────────────────────────────
-    const [lead, setLead] = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
+    // ── FLUJO DE COMPRA ─────────────────────────────────────────────────────
+    // Estado: 'inicio' → 'formulario' → 'opciones'
+    const [paso, setPaso]           = useState('inicio');
+    const [lead, setLead]           = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
     const [aceptaDatos, setAceptaDatos] = useState(false);
-    const [leadGuardado, setLeadGuardado] = useState(false);
     const [leadEnviando, setLeadEnviando] = useState(false);
-    const [leadError, setLeadError]     = useState('');
+    const [leadError, setLeadError] = useState('');
+
+    // Código de reserva para recogida en tienda (se genera una vez al montar)
+    const [codigoReserva]           = useState(() =>
+        'GS-' + Math.random().toString(36).slice(2, 7).toUpperCase()
+    );
 
     const handleLeadSubmit = async (e) => {
         e.preventDefault();
-        if (!aceptaDatos) { setLeadError('Debes aceptar el tratamiento de datos.'); return; }
+        if (!aceptaDatos) { setLeadError('Debes aceptar el tratamiento de datos para continuar.'); return; }
         setLeadError('');
         setLeadEnviando(true);
         try {
@@ -36,9 +42,9 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
             const res = await fetch(route('tienda.lead'), {
                 method:  'POST',
                 headers: {
-                    'Content-Type':  'application/json',
-                    'Accept':        'application/json',
-                    'X-CSRF-TOKEN':  token,
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                    'X-CSRF-TOKEN': token,
                 },
                 body: JSON.stringify({
                     nombre:    lead.nombre,
@@ -50,7 +56,7 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                     categoria: producto.categoria?.nombre ?? null,
                 }),
             });
-            if (res.ok) { setLeadGuardado(true); }
+            if (res.ok) { setPaso('opciones'); }
             else        { setLeadError('Ocurrió un error. Inténtalo de nuevo.'); }
         } catch {
             setLeadError('Sin conexión. Inténtalo de nuevo.');
@@ -93,42 +99,59 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
     const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
 
-    // Datos del cliente para mensajes WA
-    const saludo     = lead.nombre    ? `Hola! Soy *${lead.nombre}*` : `Hola!`;
-    const telCliente = lead.celular   ? `\nMi celular: ${lead.celular}` : '';
-    const mpio       = lead.municipio ? `\nMunicipio: ${lead.municipio}` : '';
-    const dir        = lead.direccion ? `\nDirección: ${lead.direccion}` : '';
+    // ── MENSAJES WHATSAPP AL ADMIN ──────────────────────────────────────────
+    const CUENTA = 'Bancolombia · Ahorros · No. *01997866718* · GadGet Store';
 
-    // Sin contraentrega: pago por transferencia primero
+    // Pedido con ENVÍO A DOMICILIO — pago por transferencia
     const msgEnvioTransferencia = encodeURIComponent(
-        `${saludo}, me interesa este producto:\n\n` +
-        `*${producto.nombre}*\n` +
-        `Precio: ${cop(precioMostrar)}\n` +
-        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}` +
-        `${telCliente}${mpio}${dir}\n\n` +
-        `Quiero que me lo *envíen a domicilio*. Por favor compártame los datos bancarios de GadGet Store para realizar el pago por transferencia.`
+        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
+        `👤 *Cliente:* ${lead.nombre}\n` +
+        `📞 *Celular:* ${lead.celular}\n` +
+        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
+        `📍 *Municipio:* ${lead.municipio}\n` +
+        `🏠 *Dirección:* ${lead.direccion}\n\n` +
+        `📦 *Producto:* ${producto.nombre}\n` +
+        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
+        `🔢 *Cantidad:* 1\n` +
+        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
+        `🚚 *Modalidad:* Envío a domicilio\n\n` +
+        `💳 *Datos de pago:*\n${CUENTA}\n\n` +
+        `_El cliente espera confirmación y número de cuenta para realizar la transferencia._\n` +
+        `${seo.url}`
     );
 
+    // Pedido con RECOGIDA EN TIENDA — pago directo en local
     const msgReclamarAlmacen = encodeURIComponent(
-        `${saludo}, me interesa este producto:\n\n` +
-        `*${producto.nombre}*\n` +
-        `Precio: ${cop(precioMostrar)}\n` +
-        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}` +
-        `${telCliente}${mpio}\n\n` +
-        `Quiero *reclamarlo en el almacén*. Por favor compártame los datos bancarios de GadGet Store para realizar el pago por transferencia.`
+        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
+        `👤 *Cliente:* ${lead.nombre}\n` +
+        `📞 *Celular:* ${lead.celular}\n` +
+        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
+        `📍 *Municipio:* ${lead.municipio}\n\n` +
+        `📦 *Producto:* ${producto.nombre}\n` +
+        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
+        `🔢 *Cantidad:* 1\n` +
+        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
+        `🏪 *Modalidad:* Recogida en tienda GadGet Store\n` +
+        `🔑 *Código de reserva:* ${codigoReserva}\n\n` +
+        `_El cliente necesita confirmar día y hora para el retiro. Pago directo en tienda al presentar el código._\n` +
+        `${seo.url}`
     );
 
-    // Con contraentrega: el cliente paga al recibir
+    // Pedido con CONTRAENTREGA — pago al recibir
     const msgEnvioContraentrega = encodeURIComponent(
-        `${saludo}, me interesa este producto:\n\n` +
-        `*${producto.nombre}*\n` +
-        `Precio: ${cop(precioMostrar)}\n` +
-        (producto.sku ? `SKU: ${producto.sku}\n` : '') +
-        `${seo.url}` +
-        `${telCliente}${mpio}${dir}\n\n` +
-        `Quiero que me lo *envíen a domicilio* (pago contraentrega). Por favor confírmeme el tiempo de entrega estimado.`
+        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
+        `👤 *Cliente:* ${lead.nombre}\n` +
+        `📞 *Celular:* ${lead.celular}\n` +
+        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
+        `📍 *Municipio:* ${lead.municipio}\n` +
+        `🏠 *Dirección:* ${lead.direccion}\n\n` +
+        `📦 *Producto:* ${producto.nombre}\n` +
+        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
+        `🔢 *Cantidad:* 1\n` +
+        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
+        `🚚 *Modalidad:* Contraentrega (pago al recibir)\n\n` +
+        `_El cliente solicita confirmación del tiempo de entrega estimado._\n` +
+        `${seo.url}`
     );
 
     return (
@@ -318,17 +341,31 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                             )}
                         </div>
 
-                        {/* CTAs */}
+                        {/* CTAs — 3 pasos */}
                         <div className="space-y-3">
 
-                            {/* ── FORMULARIO DE DATOS (paso previo a WA) ──── */}
-                            {!leadGuardado ? (
+                            {/* ── PASO 1: INICIO — Botón Comprar ───────────── */}
+                            {paso === 'inicio' && (
+                                <button
+                                    onClick={() => setPaso('formulario')}
+                                    className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                >
+                                    🛒 Comprar ahora
+                                </button>
+                            )}
+
+                            {/* ── PASO 2: FORMULARIO ───────────────────────── */}
+                            {paso === 'formulario' && (
                                 <form onSubmit={handleLeadSubmit}
                                     className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3">
 
-                                    <div>
-                                        <p className="text-white font-semibold text-sm">¿Quieres hacer un pedido?</p>
-                                        <p className="text-gray-500 text-xs mt-0.5">Déjanos tus datos y te contactamos por WhatsApp.</p>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-white font-semibold text-sm">Datos del pedido</p>
+                                            <p className="text-gray-500 text-xs mt-0.5">Te confirmamos por WhatsApp de inmediato.</p>
+                                        </div>
+                                        <button type="button" onClick={() => setPaso('inicio')}
+                                            className="text-gray-600 hover:text-gray-400 text-xs">✕ Cancelar</button>
                                     </div>
 
                                     {/* Nombre */}
@@ -336,42 +373,34 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                                         <label className="block text-xs text-gray-400 mb-1">
                                             Nombre completo <span className="text-orange-400">*</span>
                                         </label>
-                                        <input
-                                            type="text"
-                                            required
+                                        <input type="text" required
                                             value={lead.nombre}
                                             onChange={e => setLead(l => ({ ...l, nombre: e.target.value }))}
-                                            placeholder="Tu nombre"
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
-                                        />
+                                            placeholder="Tu nombre completo"
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
                                     </div>
 
                                     {/* Teléfono */}
                                     <div>
                                         <label className="block text-xs text-gray-400 mb-1">
-                                            WhatsApp / Teléfono <span className="text-orange-400">*</span>
+                                            WhatsApp / Celular <span className="text-orange-400">*</span>
                                         </label>
-                                        <input
-                                            type="tel"
-                                            required
+                                        <input type="tel" required
                                             value={lead.celular}
                                             onChange={e => setLead(l => ({ ...l, celular: e.target.value }))}
                                             placeholder="3001234567"
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
-                                        />
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
                                     </div>
 
-                                    {/* Municipio / Ciudad */}
+                                    {/* Municipio */}
                                     <div>
                                         <label className="block text-xs text-gray-400 mb-1">
                                             Municipio / Ciudad <span className="text-orange-400">*</span>
                                         </label>
-                                        <select
-                                            required
+                                        <select required
                                             value={lead.municipio}
                                             onChange={e => setLead(l => ({ ...l, municipio: e.target.value }))}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors"
-                                        >
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
                                             <option value="">— Selecciona tu ciudad —</option>
                                             {areaMetro.length > 0 && (
                                                 <optgroup label="— Área Metropolitana de Medellín —">
@@ -395,101 +424,95 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                                         <label className="block text-xs text-gray-400 mb-1">
                                             Dirección de entrega <span className="text-orange-400">*</span>
                                         </label>
-                                        <input
-                                            type="text"
-                                            required
+                                        <input type="text" required
                                             value={lead.direccion}
                                             onChange={e => setLead(l => ({ ...l, direccion: e.target.value }))}
                                             placeholder="Calle 50 #30-20, Apto 401"
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
-                                        />
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
                                     </div>
 
-                                    {/* Email (opcional) */}
+                                    {/* Email opcional */}
                                     <div>
                                         <label className="block text-xs text-gray-400 mb-1">
                                             Correo electrónico <span className="text-gray-600">(opcional)</span>
                                         </label>
-                                        <input
-                                            type="email"
+                                        <input type="email"
                                             value={lead.email}
                                             onChange={e => setLead(l => ({ ...l, email: e.target.value }))}
                                             placeholder="tucorreo@email.com"
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors"
-                                        />
+                                            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
                                     </div>
 
-                                    {/* Acepta datos — Ley 1581 */}
+                                    {/* Acepta datos Ley 1581 */}
                                     <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                                        <input
-                                            type="checkbox"
+                                        <input type="checkbox"
                                             checked={aceptaDatos}
                                             onChange={e => setAceptaDatos(e.target.checked)}
-                                            className="mt-0.5 accent-orange-500 w-4 h-4 shrink-0"
-                                        />
+                                            className="mt-0.5 accent-orange-500 w-4 h-4 shrink-0" />
                                         <span className="text-xs text-gray-500 leading-snug">
-                                            Autorizo el tratamiento de mis datos personales conforme a la{' '}
-                                            <span className="text-orange-400">Ley 1581 de 2012</span> para recibir
-                                            información sobre pedidos y promociones de GadGet Store.
+                                            Autorizo el tratamiento de mis datos conforme a la{' '}
+                                            <span className="text-orange-400">Ley 1581 de 2012</span>{' '}
+                                            para recibir información sobre mi pedido y promociones de GadGet Store.
                                         </span>
                                     </label>
 
-                                    {leadError && (
-                                        <p className="text-xs text-red-400">{leadError}</p>
-                                    )}
+                                    {leadError && <p className="text-xs text-red-400">{leadError}</p>}
 
-                                    <button
-                                        type="submit"
-                                        disabled={leadEnviando}
-                                        className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all"
-                                    >
-                                        {leadEnviando ? 'Guardando...' : 'Continuar con el pedido →'}
+                                    <button type="submit" disabled={leadEnviando}
+                                        className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all">
+                                        {leadEnviando ? 'Registrando...' : 'Hacer pedido →'}
                                     </button>
                                 </form>
-                            ) : (
-                                /* ── BOTONES WA (aparecen tras guardar lead) ─ */
+                            )}
+
+                            {/* ── PASO 3: OPCIONES WA ──────────────────────── */}
+                            {paso === 'opciones' && whatsapp && (
                                 <>
-                                    <div className="bg-gray-900 border border-green-800/40 rounded-2xl px-4 py-2.5 flex items-center gap-2">
-                                        <span className="text-green-400 text-sm">✓</span>
-                                        <p className="text-gray-300 text-sm">
-                                            ¡Listo, <span className="text-white font-medium">{lead.nombre}</span>! Ahora elige cómo recibir tu pedido:
+                                    {/* Confirmación */}
+                                    <div className="bg-gray-900 border border-green-800/40 rounded-2xl px-4 py-3">
+                                        <p className="text-green-400 text-sm font-semibold mb-0.5">
+                                            ✓ ¡Pedido registrado, {lead.nombre}!
+                                        </p>
+                                        <p className="text-gray-400 text-xs">
+                                            Elige cómo quieres recibir tu producto y envíanos el pedido por WhatsApp:
                                         </p>
                                     </div>
 
-                                    {whatsapp && producto.permite_contraentrega ? (
-                                        /* ── CONTRAENTREGA ACTIVA: pago al recibir ─── */
-                                        <a
-                                            href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
+                                    {producto.permite_contraentrega ? (
+                                        /* Contraentrega: envío pago al recibir */
+                                        <a href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
                                             target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
-                                        >
+                                            className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30">
                                             <IconWA className="w-5 h-5" />
-                                            Enviar a domicilio
+                                            🚚 Enviar a domicilio (contraentrega)
                                         </a>
-                                    ) : whatsapp ? (
-                                        /* ── SIN CONTRAENTREGA: transferencia primero ─ */
+                                    ) : (
+                                        /* Sin contraentrega: 2 opciones */
                                         <>
-                                            <a
-                                                href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
+                                            <a href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
                                                 target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
-                                            >
+                                                className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30">
                                                 <IconWA className="w-5 h-5" />
-                                                Enviar a domicilio
+                                                🚚 Enviar a domicilio
                                             </a>
-                                            <a
-                                                href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
+                                            <a href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
                                                 target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all"
-                                            >
+                                                className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all">
                                                 <IconWA className="w-5 h-5" />
-                                                Reclamar en el almacén
+                                                🏪 Recoger en tienda GadGet Store
                                             </a>
+                                            {/* Código de reserva visible */}
+                                            <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-center">
+                                                <p className="text-gray-500 text-xs mb-0.5">Tu código de reserva para recoger en tienda:</p>
+                                                <p className="text-orange-400 font-mono font-bold text-lg tracking-widest">{codigoReserva}</p>
+                                                <p className="text-gray-600 text-xs mt-0.5">Se enviará en el mensaje de WhatsApp</p>
+                                            </div>
                                         </>
-                                    ) : null}
+                                    )}
                                 </>
                             )}
 
+                            {/* Compartir — siempre visible */}
                             <a
                                 href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}
                                 target="_blank" rel="noopener noreferrer"
