@@ -404,17 +404,32 @@ class PedidoController extends Controller
             'estado' => ['required', Rule::in(Pedido::todosLosEstados())],
         ]);
 
-        $nuevoEstado = $request->estado;
+        $estadoAnterior = $pedido->estado;
+        $nuevoEstado    = $request->estado;
 
         // Si se cancela, registramos la fecha de cancelación
-        $cancelado_en = $nuevoEstado === Pedido::ESTADO_CANCELADO
-            ? now()
-            : null;
+        $cancelado_en = $nuevoEstado === Pedido::ESTADO_CANCELADO ? now() : null;
 
         $pedido->update([
             'estado'       => $nuevoEstado,
             'cancelado_en' => $cancelado_en,
         ]);
+
+        // ── RESTAURAR STOCK al cancelar ────────────────────────────────────
+        // El stock se descuenta cuando el cliente hace el pedido.
+        // Si el admin cancela, se devuelven las unidades al inventario.
+        if ($nuevoEstado === Pedido::ESTADO_CANCELADO
+            && $estadoAnterior !== Pedido::ESTADO_CANCELADO) {
+
+            $pedido->load('items');
+            foreach ($pedido->items as $item) {
+                if ($item->producto_id) {
+                    Producto::where('id', $item->producto_id)
+                        ->whereNotNull('stock')
+                        ->increment('stock', $item->cantidad);
+                }
+            }
+        }
 
         return back()->with('exito', 'Estado actualizado a: ' . $nuevoEstado);
     }
