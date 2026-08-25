@@ -17,6 +17,25 @@ import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
+/*
+|--------------------------------------------------------------------------
+| METODOLOGÍA: ENTENDER → PENSAR → ESCRIBIR → VERIFICAR
+|--------------------------------------------------------------------------
+| ENTENDER — ¿Qué hace esta página?
+|   Lista pedidos con filtros, estadísticas y botón de avance rápido.
+|
+| PENSAR — ¿Qué cambia ahora?
+|   Cuando el admin hace clic en "→ Confirmado", antes de llamar
+|   router.patch() se muestra un MODAL que pregunta el método de pago
+|   (efectivo, transferencia, nequi, etc.).
+|   Esto permite que PedidoController cree la Transacción automáticamente
+|   con el método correcto, y el dashboard financiero muestre el ingreso.
+|
+| ESCRIBIR — Nuevos estados:
+|   modalConfirmar   → pedido que se está confirmando (null = cerrado)
+|   metodoPagoModal → método seleccionado en el modal
+*/
+
 export default function Index({ pedidos, estadisticas, estados, filtros }) {
 
     const { flash } = usePage().props;
@@ -25,6 +44,13 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
     const [buscar, setBuscar]   = useState(filtros.buscar || '');
     const [estado, setEstado]   = useState(filtros.estado || '');
     const [periodo, setPeriodo] = useState(filtros.periodo || '');
+
+    // ── MODAL DE CONFIRMACIÓN DE PAGO ─────────────────────────────────────
+    // PENSAR: Solo se activa cuando nuevoEstado === 'confirmado'.
+    // Para otros estados se sigue llamando router.patch() directamente.
+    const [modalConfirmar, setModalConfirmar] = useState(null); // pedido | null
+    const [metodoPagoModal, setMetodoPagoModal] = useState('efectivo');
+    const [confirmando, setConfirmando] = useState(false);
 
     // ── FILTROS ──────────────────────────────────────────────────────────
 
@@ -42,10 +68,43 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
     };
 
     // ── CAMBIAR ESTADO DESDE LA LISTA ────────────────────────────────────
+    /*
+    | PENSAR — Flujo de confirmación:
+    |   1. Admin hace clic en "→ Confirmado"
+    |   2. Se abre el modal → admin elige método de pago
+    |   3. Admin hace clic en "Confirmar pedido" en el modal
+    |   4. Se llama router.patch() con estado + metodo_pago_confirmacion
+    |   5. PedidoController crea la Transaccion aprobada automáticamente
+    |   6. El dashboard financiero ya muestra el ingreso
+    */
     const cambiarEstado = (pedido, nuevoEstado) => {
+        if (nuevoEstado === 'confirmado') {
+            // Abrir modal para capturar método de pago
+            setModalConfirmar(pedido);
+            setMetodoPagoModal('efectivo');
+            return;
+        }
+        // Para otros estados: avance directo sin modal
         router.patch(route('pedidos.estado', pedido.id), { estado: nuevoEstado }, {
             preserveScroll: true,
         });
+    };
+
+    // Confirmación desde el modal: envía estado + método de pago
+    const confirmarConPago = () => {
+        if (!modalConfirmar) return;
+        setConfirmando(true);
+        router.patch(
+            route('pedidos.estado', modalConfirmar.id),
+            { estado: 'confirmado', metodo_pago_confirmacion: metodoPagoModal },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setConfirmando(false);
+                    setModalConfirmar(null);
+                },
+            }
+        );
     };
 
     // ── ELIMINAR ─────────────────────────────────────────────────────────
@@ -296,6 +355,98 @@ export default function Index({ pedidos, estadisticas, estados, filtros }) {
                 )}
 
             </div>
+
+            {/* ── MODAL: CONFIRMAR PEDIDO CON MÉTODO DE PAGO ────────────────
+            |
+            | ENTENDER — ¿Para qué sirve este modal?
+            |   Cuando el admin confirma un pedido, necesitamos saber cómo
+            |   pagó el cliente para registrar la Transaccion en finanzas.
+            |
+            | PENSAR — ¿Por qué un modal y no un campo en la tabla?
+            |   Porque la confirmación es un acto deliberado. El admin debe
+            |   elegir activamente el método antes de confirmar.
+            |
+            ─────────────────────────────────────────────────────────────── */}
+            {modalConfirmar && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+
+                        {/* Encabezado */}
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                            Confirmar pedido
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-5">
+                            <span className="font-medium text-indigo-600">{modalConfirmar.numero_pedido}</span>
+                            {' '}— {modalConfirmar.cliente_nombre}
+                        </p>
+
+                        {/* Total del pedido */}
+                        <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5 flex justify-between items-center">
+                            <span className="text-sm text-gray-600">Total del pedido</span>
+                            <span className="text-base font-bold text-gray-900">
+                                {new Intl.NumberFormat('es-CO', {
+                                    style: 'currency', currency: 'COP', minimumFractionDigits: 0,
+                                }).format(modalConfirmar.total ?? 0)}
+                            </span>
+                        </div>
+
+                        {/* Método de pago */}
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                            ¿Cómo pagó el cliente?
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 mb-6">
+                            {[
+                                { valor: 'efectivo',          etiqueta: '💵 Efectivo' },
+                                { valor: 'transferencia',     etiqueta: '🏦 Transferencia' },
+                                { valor: 'nequi',             etiqueta: '📱 Nequi' },
+                                { valor: 'tarjeta_credito',   etiqueta: '💳 Tarjeta crédito' },
+                                { valor: 'tarjeta_debito',    etiqueta: '💳 Tarjeta débito' },
+                                { valor: 'otro',              etiqueta: '🔄 Otro' },
+                            ].map(({ valor, etiqueta }) => (
+                                <button
+                                    key={valor}
+                                    type="button"
+                                    onClick={() => setMetodoPagoModal(valor)}
+                                    className={`px-3 py-2 rounded-lg border text-sm font-medium transition text-left ${
+                                        metodoPagoModal === valor
+                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                                    }`}
+                                >
+                                    {etiqueta}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Aviso */}
+                        <p className="text-xs text-gray-400 mb-5">
+                            Al confirmar se registrará el ingreso en el dashboard financiero
+                            y se descontará el stock del inventario.
+                        </p>
+
+                        {/* Botones */}
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setModalConfirmar(null)}
+                                disabled={confirmando}
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmarConPago}
+                                disabled={confirmando}
+                                className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
+                            >
+                                {confirmando ? 'Confirmando...' : 'Confirmar pedido'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </AuthenticatedLayout>
     );
 }
