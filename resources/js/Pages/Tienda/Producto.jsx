@@ -20,23 +20,35 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
     const ciudades  = tarifas.filter(t => t.tipo === 'ciudad');
 
     // ── FLUJO DE COMPRA ─────────────────────────────────────────────────────
-    // Estado: 'inicio' → 'formulario' → 'opciones'
-    const [paso, setPaso]           = useState('inicio');
-    const [lead, setLead]           = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
+    // Estado: 'inicio' → 'formulario' → 'confirmado'
+    const [paso, setPaso]               = useState('inicio');
+    const [lead, setLead]               = useState({ nombre: '', celular: '', email: '', municipio: '', direccion: '' });
+    // método de entrega: 'contra_entrega' | 'transferencia' | 'recogida'
+    const [metodoPago, setMetodoPago]   = useState(
+        producto.permite_contraentrega ? 'contra_entrega' : 'transferencia'
+    );
     const [aceptaDatos, setAceptaDatos] = useState(false);
-    const [leadEnviando, setLeadEnviando] = useState(false);
-    const [leadError, setLeadError] = useState('');
+    const [enviando, setEnviando]       = useState(false);
+    const [formError, setFormError]     = useState('');
+    const [pedidoData, setPedidoData]   = useState(null); // { numero, total, costo_envio, metodo_pago }
 
-    // Código de reserva para recogida en tienda (se genera una vez al montar)
-    const [codigoReserva]           = useState(() =>
+    // Código de reserva para recogida en tienda
+    const [codigoReserva] = useState(() =>
         'GS-' + Math.random().toString(36).slice(2, 7).toUpperCase()
     );
 
-    const handleLeadSubmit = async (e) => {
+    const handlePedidoSubmit = async (e) => {
         e.preventDefault();
-        if (!aceptaDatos) { setLeadError('Debes aceptar el tratamiento de datos para continuar.'); return; }
-        setLeadError('');
-        setLeadEnviando(true);
+        if (!aceptaDatos) { setFormError('Debes aceptar el tratamiento de datos para continuar.'); return; }
+        setFormError('');
+        setEnviando(true);
+
+        // Para recogida en tienda usamos metodo_pago=transferencia + nota con código
+        const metodoPagoApi = metodoPago === 'recogida' ? 'transferencia' : metodoPago;
+        const notasApi = metodoPago === 'recogida'
+            ? `Recogida en tienda GadGet Store · Código de reserva: ${codigoReserva}`
+            : null;
+
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
             const res = await fetch(route('tienda.lead'), {
@@ -47,21 +59,29 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                     'X-CSRF-TOKEN': token,
                 },
                 body: JSON.stringify({
-                    nombre:    lead.nombre,
-                    celular:   lead.celular,
-                    email:     lead.email || null,
-                    municipio: lead.municipio,
-                    direccion: lead.direccion || null,
-                    producto:  producto.nombre,
-                    categoria: producto.categoria?.nombre ?? null,
+                    nombre:       lead.nombre,
+                    celular:      lead.celular,
+                    email:        lead.email || null,
+                    municipio:    lead.municipio,
+                    direccion:    lead.direccion,
+                    acepta_datos: aceptaDatos,
+                    metodo_pago:  metodoPagoApi,
+                    notas:        notasApi,
+                    producto_id:  producto.id,
+                    categoria:    producto.categoria?.nombre ?? null,
                 }),
             });
-            if (res.ok) { setPaso('opciones'); }
-            else        { setLeadError('Ocurrió un error. Inténtalo de nuevo.'); }
+            const json = await res.json();
+            if (json.ok) {
+                setPedidoData(json.pedido);
+                setPaso('confirmado');
+            } else {
+                setFormError(json.error ?? 'Ocurrió un error. Inténtalo de nuevo.');
+            }
         } catch {
-            setLeadError('Sin conexión. Inténtalo de nuevo.');
+            setFormError('Sin conexión. Inténtalo de nuevo.');
         } finally {
-            setLeadEnviando(false);
+            setEnviando(false);
         }
     };
 
@@ -99,59 +119,43 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
     const precioMostrar = tieneOferta ? producto.precio_oferta : producto.precio_venta;
 
-    // ── MENSAJES WHATSAPP AL ADMIN ──────────────────────────────────────────
+    // ── MENSAJES WHATSAPP AL ADMIN (se construyen con datos del pedido real) ─
     const CUENTA = 'Bancolombia · Ahorros · No. *01997866718* · GadGet Store';
+    const cop2   = (n) => Number(n).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
-    // Pedido con ENVÍO A DOMICILIO — pago por transferencia
-    const msgEnvioTransferencia = encodeURIComponent(
-        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
-        `👤 *Cliente:* ${lead.nombre}\n` +
-        `📞 *Celular:* ${lead.celular}\n` +
-        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
-        `📍 *Municipio:* ${lead.municipio}\n` +
-        `🏠 *Dirección:* ${lead.direccion}\n\n` +
-        `📦 *Producto:* ${producto.nombre}\n` +
-        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
-        `🔢 *Cantidad:* 1\n` +
-        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
-        `🚚 *Modalidad:* Envío a domicilio\n\n` +
-        `💳 *Datos de pago:*\n${CUENTA}\n\n` +
-        `_El cliente espera confirmación y número de cuenta para realizar la transferencia._\n` +
-        `${seo.url}`
+    const buildMsg = (modalidad, extras = '') => {
+        const p = pedidoData;
+        if (!p) return '';
+        return encodeURIComponent(
+            `🛒 *PEDIDO #${p.numero} — GADGET STORE*\n\n` +
+            `👤 *Cliente:* ${lead.nombre}\n` +
+            `📞 *Celular:* ${lead.celular}\n` +
+            (lead.email ? `📧 *Email:* ${lead.email}\n` : '') +
+            `📍 *Municipio:* ${lead.municipio}\n` +
+            `🏠 *Dirección:* ${lead.direccion}\n\n` +
+            `📦 *Producto:* ${producto.nombre}\n` +
+            (producto.sku ? `🔖 *SKU:* ${producto.sku}\n` : '') +
+            `🔢 *Cantidad:* 1\n` +
+            `💵 *Subtotal:* ${cop2(p.subtotal)}\n` +
+            (p.costo_envio > 0 ? `🚚 *Domicilio:* ${cop2(p.costo_envio)}\n` : '') +
+            `💰 *TOTAL: ${cop2(p.total)}*\n\n` +
+            `📋 *Modalidad:* ${modalidad}\n` +
+            extras +
+            `\n${seo.url}`
+        );
+    };
+
+    const msgTransferencia  = buildMsg(
+        'Envío a domicilio — pago por transferencia',
+        `\n💳 *Datos de pago:*\n${CUENTA}\n\n_Envíe el comprobante para confirmar el pedido._`
     );
-
-    // Pedido con RECOGIDA EN TIENDA — pago directo en local
-    const msgReclamarAlmacen = encodeURIComponent(
-        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
-        `👤 *Cliente:* ${lead.nombre}\n` +
-        `📞 *Celular:* ${lead.celular}\n` +
-        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
-        `📍 *Municipio:* ${lead.municipio}\n\n` +
-        `📦 *Producto:* ${producto.nombre}\n` +
-        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
-        `🔢 *Cantidad:* 1\n` +
-        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
-        `🏪 *Modalidad:* Recogida en tienda GadGet Store\n` +
-        `🔑 *Código de reserva:* ${codigoReserva}\n\n` +
-        `_El cliente necesita confirmar día y hora para el retiro. Pago directo en tienda al presentar el código._\n` +
-        `${seo.url}`
+    const msgRecogida = buildMsg(
+        'Recogida en tienda GadGet Store',
+        `🔑 *Código de reserva:* ${codigoReserva}\n\n_Confirmar día y hora de retiro. Pago directo en tienda._`
     );
-
-    // Pedido con CONTRAENTREGA — pago al recibir
-    const msgEnvioContraentrega = encodeURIComponent(
-        `🛒 *NUEVO PEDIDO — GADGET STORE*\n\n` +
-        `👤 *Cliente:* ${lead.nombre}\n` +
-        `📞 *Celular:* ${lead.celular}\n` +
-        (lead.email    ? `📧 *Email:* ${lead.email}\n` : '') +
-        `📍 *Municipio:* ${lead.municipio}\n` +
-        `🏠 *Dirección:* ${lead.direccion}\n\n` +
-        `📦 *Producto:* ${producto.nombre}\n` +
-        (producto.sku  ? `🔖 *SKU:* ${producto.sku}\n` : '') +
-        `🔢 *Cantidad:* 1\n` +
-        `💵 *Total del pedido:* ${cop(precioMostrar)}\n\n` +
-        `🚚 *Modalidad:* Contraentrega (pago al recibir)\n\n` +
-        `_El cliente solicita confirmación del tiempo de entrega estimado._\n` +
-        `${seo.url}`
+    const msgContraentrega  = buildMsg(
+        'Envío a domicilio — contraentrega (pago al recibir)',
+        `\n_Confirmar tiempo de entrega estimado._`
     );
 
     return (
@@ -356,7 +360,7 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                             {/* ── PASO 2: FORMULARIO ───────────────────────── */}
                             {paso === 'formulario' && (
-                                <form onSubmit={handleLeadSubmit}
+                                <form onSubmit={handlePedidoSubmit}
                                     className="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-3">
 
                                     <div className="flex items-center justify-between">
@@ -370,11 +374,8 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                                     {/* Nombre */}
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                            Nombre completo <span className="text-orange-400">*</span>
-                                        </label>
-                                        <input type="text" required
-                                            value={lead.nombre}
+                                        <label className="block text-xs text-gray-400 mb-1">Nombre completo <span className="text-orange-400">*</span></label>
+                                        <input type="text" required value={lead.nombre}
                                             onChange={e => setLead(l => ({ ...l, nombre: e.target.value }))}
                                             placeholder="Tu nombre completo"
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
@@ -382,11 +383,8 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                                     {/* Teléfono */}
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                            WhatsApp / Celular <span className="text-orange-400">*</span>
-                                        </label>
-                                        <input type="tel" required
-                                            value={lead.celular}
+                                        <label className="block text-xs text-gray-400 mb-1">WhatsApp / Celular <span className="text-orange-400">*</span></label>
+                                        <input type="tel" required value={lead.celular}
                                             onChange={e => setLead(l => ({ ...l, celular: e.target.value }))}
                                             placeholder="3001234567"
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
@@ -394,26 +392,19 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                                     {/* Municipio */}
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                            Municipio / Ciudad <span className="text-orange-400">*</span>
-                                        </label>
-                                        <select required
-                                            value={lead.municipio}
+                                        <label className="block text-xs text-gray-400 mb-1">Municipio / Ciudad <span className="text-orange-400">*</span></label>
+                                        <select required value={lead.municipio}
                                             onChange={e => setLead(l => ({ ...l, municipio: e.target.value }))}
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 transition-colors">
                                             <option value="">— Selecciona tu ciudad —</option>
                                             {areaMetro.length > 0 && (
                                                 <optgroup label="— Área Metropolitana de Medellín —">
-                                                    {areaMetro.map(t => (
-                                                        <option key={t.id} value={t.nombre}>{t.nombre}</option>
-                                                    ))}
+                                                    {areaMetro.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
                                                 </optgroup>
                                             )}
                                             {ciudades.length > 0 && (
                                                 <optgroup label="— Otras ciudades —">
-                                                    {ciudades.map(t => (
-                                                        <option key={t.id} value={t.nombre}>{t.nombre}</option>
-                                                    ))}
+                                                    {ciudades.map(t => <option key={t.id} value={t.nombre}>{t.nombre}</option>)}
                                                 </optgroup>
                                             )}
                                         </select>
@@ -421,11 +412,8 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                                     {/* Dirección */}
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                            Dirección de entrega <span className="text-orange-400">*</span>
-                                        </label>
-                                        <input type="text" required
-                                            value={lead.direccion}
+                                        <label className="block text-xs text-gray-400 mb-1">Dirección de entrega <span className="text-orange-400">*</span></label>
+                                        <input type="text" required value={lead.direccion}
                                             onChange={e => setLead(l => ({ ...l, direccion: e.target.value }))}
                                             placeholder="Calle 50 #30-20, Apto 401"
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
@@ -433,20 +421,58 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
                                     {/* Email opcional */}
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">
-                                            Correo electrónico <span className="text-gray-600">(opcional)</span>
-                                        </label>
-                                        <input type="email"
-                                            value={lead.email}
+                                        <label className="block text-xs text-gray-400 mb-1">Correo electrónico <span className="text-gray-600">(opcional)</span></label>
+                                        <input type="email" value={lead.email}
                                             onChange={e => setLead(l => ({ ...l, email: e.target.value }))}
                                             placeholder="tucorreo@email.com"
                                             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500 transition-colors" />
                                     </div>
 
+                                    {/* Método de entrega */}
+                                    <div>
+                                        <label className="block text-xs text-gray-400 mb-2">Cómo quieres recibir tu pedido <span className="text-orange-400">*</span></label>
+                                        <div className="space-y-2">
+                                            {producto.permite_contraentrega ? (
+                                                <label className="flex items-center gap-2.5 bg-gray-800 border border-orange-500 rounded-xl px-3 py-2.5 cursor-pointer">
+                                                    <input type="radio" name="metodo" value="contra_entrega"
+                                                        checked={metodoPago === 'contra_entrega'}
+                                                        onChange={() => setMetodoPago('contra_entrega')}
+                                                        className="accent-orange-500" />
+                                                    <div>
+                                                        <p className="text-white text-xs font-medium">🚚 Envío a domicilio — pago al recibir</p>
+                                                        <p className="text-gray-500 text-xs">Pagas cuando llega a tu puerta</p>
+                                                    </div>
+                                                </label>
+                                            ) : (
+                                                <>
+                                                    <label className={`flex items-center gap-2.5 bg-gray-800 border rounded-xl px-3 py-2.5 cursor-pointer transition-colors ${metodoPago === 'transferencia' ? 'border-orange-500' : 'border-gray-700 hover:border-gray-600'}`}>
+                                                        <input type="radio" name="metodo" value="transferencia"
+                                                            checked={metodoPago === 'transferencia'}
+                                                            onChange={() => setMetodoPago('transferencia')}
+                                                            className="accent-orange-500" />
+                                                        <div>
+                                                            <p className="text-white text-xs font-medium">🚚 Envío a domicilio — pago por transferencia</p>
+                                                            <p className="text-gray-500 text-xs">Transfiere a Bancolombia y te lo enviamos</p>
+                                                        </div>
+                                                    </label>
+                                                    <label className={`flex items-center gap-2.5 bg-gray-800 border rounded-xl px-3 py-2.5 cursor-pointer transition-colors ${metodoPago === 'recogida' ? 'border-orange-500' : 'border-gray-700 hover:border-gray-600'}`}>
+                                                        <input type="radio" name="metodo" value="recogida"
+                                                            checked={metodoPago === 'recogida'}
+                                                            onChange={() => setMetodoPago('recogida')}
+                                                            className="accent-orange-500" />
+                                                        <div>
+                                                            <p className="text-white text-xs font-medium">🏪 Recoger en tienda GadGet Store</p>
+                                                            <p className="text-gray-500 text-xs">Coordina día/hora y paga directamente en tienda</p>
+                                                        </div>
+                                                    </label>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* Acepta datos Ley 1581 */}
                                     <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                                        <input type="checkbox"
-                                            checked={aceptaDatos}
+                                        <input type="checkbox" checked={aceptaDatos}
                                             onChange={e => setAceptaDatos(e.target.checked)}
                                             className="mt-0.5 accent-orange-500 w-4 h-4 shrink-0" />
                                         <span className="text-xs text-gray-500 leading-snug">
@@ -456,56 +482,63 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                                         </span>
                                     </label>
 
-                                    {leadError && <p className="text-xs text-red-400">{leadError}</p>}
+                                    {formError && <p className="text-xs text-red-400">{formError}</p>}
 
-                                    <button type="submit" disabled={leadEnviando}
+                                    <button type="submit" disabled={enviando}
                                         className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-all">
-                                        {leadEnviando ? 'Registrando...' : 'Hacer pedido →'}
+                                        {enviando ? 'Registrando pedido...' : 'Confirmar pedido →'}
                                     </button>
                                 </form>
                             )}
 
-                            {/* ── PASO 3: OPCIONES WA ──────────────────────── */}
-                            {paso === 'opciones' && whatsapp && (
+                            {/* ── PASO 3: CONFIRMADO — Botón WA al admin ────── */}
+                            {paso === 'confirmado' && pedidoData && whatsapp && (
                                 <>
-                                    {/* Confirmación */}
-                                    <div className="bg-gray-900 border border-green-800/40 rounded-2xl px-4 py-3">
-                                        <p className="text-green-400 text-sm font-semibold mb-0.5">
-                                            ✓ ¡Pedido registrado, {lead.nombre}!
+                                    {/* Resumen del pedido */}
+                                    <div className="bg-gray-900 border border-green-800/40 rounded-2xl px-4 py-4 space-y-1">
+                                        <p className="text-green-400 text-sm font-bold">✓ Pedido #{pedidoData.numero} registrado</p>
+                                        <p className="text-gray-300 text-xs">
+                                            Hola <span className="text-white font-medium">{lead.nombre}</span>,
+                                            tu pedido quedó guardado. Ahora envíanos el mensaje por WhatsApp
+                                            para que lo confirmemos y te demos respuesta de inmediato.
                                         </p>
-                                        <p className="text-gray-400 text-xs">
-                                            Elige cómo quieres recibir tu producto y envíanos el pedido por WhatsApp:
-                                        </p>
+                                        <div className="pt-1 border-t border-gray-800 mt-2 flex justify-between text-xs text-gray-400">
+                                            <span>Total: <span className="text-white font-bold">{cop2(pedidoData.total)}</span></span>
+                                            {pedidoData.costo_envio > 0 && (
+                                                <span>Domicilio: {cop2(pedidoData.costo_envio)}</span>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {producto.permite_contraentrega ? (
-                                        /* Contraentrega: envío pago al recibir */
-                                        <a href={`https://wa.me/${whatsapp}?text=${msgEnvioContraentrega}`}
+                                    {/* Botón WA según método elegido */}
+                                    {metodoPago === 'contra_entrega' && (
+                                        <a href={`https://wa.me/${whatsapp}?text=${msgContraentrega}`}
                                             target="_blank" rel="noopener noreferrer"
                                             className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30">
                                             <IconWA className="w-5 h-5" />
-                                            🚚 Enviar a domicilio (contraentrega)
+                                            Enviar pedido por WhatsApp
                                         </a>
-                                    ) : (
-                                        /* Sin contraentrega: 2 opciones */
+                                    )}
+                                    {metodoPago === 'transferencia' && (
+                                        <a href={`https://wa.me/${whatsapp}?text=${msgTransferencia}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30">
+                                            <IconWA className="w-5 h-5" />
+                                            Enviar pedido por WhatsApp
+                                        </a>
+                                    )}
+                                    {metodoPago === 'recogida' && (
                                         <>
-                                            <a href={`https://wa.me/${whatsapp}?text=${msgEnvioTransferencia}`}
+                                            <a href={`https://wa.me/${whatsapp}?text=${msgRecogida}`}
                                                 target="_blank" rel="noopener noreferrer"
                                                 className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30">
                                                 <IconWA className="w-5 h-5" />
-                                                🚚 Enviar a domicilio
+                                                Coordinar recogida por WhatsApp
                                             </a>
-                                            <a href={`https://wa.me/${whatsapp}?text=${msgReclamarAlmacen}`}
-                                                target="_blank" rel="noopener noreferrer"
-                                                className="flex items-center justify-center gap-2.5 w-full border-2 border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-base px-6 py-3.5 rounded-2xl transition-all">
-                                                <IconWA className="w-5 h-5" />
-                                                🏪 Recoger en tienda GadGet Store
-                                            </a>
-                                            {/* Código de reserva visible */}
                                             <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-center">
-                                                <p className="text-gray-500 text-xs mb-0.5">Tu código de reserva para recoger en tienda:</p>
-                                                <p className="text-orange-400 font-mono font-bold text-lg tracking-widest">{codigoReserva}</p>
-                                                <p className="text-gray-600 text-xs mt-0.5">Se enviará en el mensaje de WhatsApp</p>
+                                                <p className="text-gray-500 text-xs mb-0.5">Tu código de reserva:</p>
+                                                <p className="text-orange-400 font-mono font-bold text-xl tracking-widest">{codigoReserva}</p>
+                                                <p className="text-gray-600 text-xs mt-0.5">Preséntalo al recoger en tienda</p>
                                             </div>
                                         </>
                                     )}
@@ -513,11 +546,9 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                             )}
 
                             {/* Compartir — siempre visible */}
-                            <a
-                                href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}
+                            <a href={`https://wa.me/?text=${encodeURIComponent(`${producto.nombre} — ${seo.url}`)}`}
                                 target="_blank" rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-300 text-sm px-6 py-2.5 rounded-2xl transition-colors w-full border border-gray-800 hover:bg-gray-800/50"
-                            >
+                                className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-300 text-sm px-6 py-2.5 rounded-2xl transition-colors w-full border border-gray-800 hover:bg-gray-800/50">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                 </svg>
