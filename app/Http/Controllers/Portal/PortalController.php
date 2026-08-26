@@ -279,11 +279,18 @@ class PortalController extends Controller
             'precio'                 => ['required', 'numeric', 'min:0'],
             'stock'                  => ['required', 'integer', 'min:0'],
             'permite_contraentrega'  => ['nullable', 'boolean'],
-            'imagen_0'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
-            'imagen_1'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
-            'imagen_2'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_0'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_1'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_2'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
             'eliminar_imagenes'      => ['nullable', 'array'],
             'eliminar_imagenes.*'    => ['integer'],
+        ], [
+            'imagen_0.max'   => 'La imagen principal no puede pesar más de 10MB.',
+            'imagen_1.max'   => 'La foto 2 no puede pesar más de 10MB.',
+            'imagen_2.max'   => 'La foto 3 no puede pesar más de 10MB.',
+            'imagen_0.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_1.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_2.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
         ]);
 
         // Actualizar campos en la tabla productos
@@ -528,10 +535,20 @@ class PortalController extends Controller
             'stock'               => ['required', 'integer', 'min:0'],
             'categoria_id'        => ['nullable', 'string', 'exists:categorias,id'],
             'peso_kg'             => ['nullable', 'numeric', 'min:0'],
-            'imagen_0'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
-            'imagen_1'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
-            'imagen_2'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_0'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_1'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_2'               => ['nullable', 'image', 'max:10240', 'mimes:jpeg,jpg,png,webp'],
             'permite_contraentrega'  => ['nullable', 'boolean'],
+        ], [
+            'imagen_0.max'   => 'La imagen principal no puede pesar más de 10MB.',
+            'imagen_1.max'   => 'La foto 2 no puede pesar más de 10MB.',
+            'imagen_2.max'   => 'La foto 3 no puede pesar más de 10MB.',
+            'imagen_0.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_1.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_2.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_0.mimes' => 'Solo se aceptan imágenes JPG, PNG o WEBP.',
+            'imagen_1.mimes' => 'Solo se aceptan imágenes JPG, PNG o WEBP.',
+            'imagen_2.mimes' => 'Solo se aceptan imágenes JPG, PNG o WEBP.',
         ]);
 
         $datos['permite_contraentrega'] = $request->boolean('permite_contraentrega', false);
