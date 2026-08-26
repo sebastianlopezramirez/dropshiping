@@ -37,6 +37,7 @@ use App\Http\Controllers\Web\ProductoController;
 use App\Http\Controllers\Web\AnalyticsController;
 use App\Http\Controllers\Web\ReporteFinancieroController;
 use App\Http\Controllers\Web\TransaccionController;
+use App\Http\Controllers\Web\PagoProveedorController;
 use App\Http\Controllers\Web\UsuarioController;
 use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Tienda\CarritoController;
@@ -313,6 +314,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Dashboard financiero
         Route::get('reportes/financiero', [ReporteFinancieroController::class, 'dashboard'])
              ->name('reportes.financiero');
+
+        // Pagos a proveedores — deuda acumulada + registrar pagos
+        Route::get('finanzas/proveedores', [PagoProveedorController::class, 'index'])
+             ->name('pagos-proveedor.index');
+        Route::post('finanzas/proveedores', [PagoProveedorController::class, 'store'])
+             ->name('pagos-proveedor.store');
 
         // Dashboard de Analytics — métricas ejecutivas del negocio
         Route::get('analytics', [AnalyticsController::class, 'dashboard'])

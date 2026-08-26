@@ -21,6 +21,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Proveedor extends Model
@@ -169,6 +170,15 @@ class Proveedor extends Model
             'costo_envio',
             'es_predeterminado',
         ])->withTimestamps('creado_en', 'actualizado_en');
+    }
+
+    /**
+     * Pagos que el admin ha hecho a este proveedor.
+     * HasMany: 'pagos_proveedor'.proveedor_id → 'proveedores'.id
+     */
+    public function pagosRecibidos(): HasMany
+    {
+        return $this->hasMany(PagoProveedor::class, 'proveedor_id');
     }
 
     /*

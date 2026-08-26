@@ -30,6 +30,7 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use App\Models\ItemPedido;
+use App\Models\PagoProveedor;
 use App\Models\Pedido;
 use App\Models\Producto;
 use Illuminate\Http\RedirectResponse;
@@ -91,50 +92,89 @@ class PortalController extends Controller
     */
     public function dashboard(): Response
     {
-        $proveedor = $this->obtenerProveedor();
-
-        // IDs de productos de este proveedor
+        $proveedor    = $this->obtenerProveedor();
         $idsProductos = $proveedor->productos()->pluck('productos.id');
 
-        // Estadísticas
-        $totalProductos = $idsProductos->count();
+        // Estados que generan deuda al proveedor
+        $estadosVenta = [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO];
 
-        $totalProductosActivos = $proveedor->productos()
-            ->where('productos.estado', 'activo')
-            ->count();
+        // ── Estadísticas de productos ──────────────────────────────────────
+        $totalProductos        = $idsProductos->count();
+        $totalProductosActivos = $proveedor->productos()->where('productos.estado', 'activo')->count();
 
-        // Pedidos pendientes/procesando que tienen sus productos
-        $pedidosPendientes = Pedido::whereIn('estado', ['pendiente', 'procesando', 'preparando'])
+        // ── Pedidos pendientes (aún no confirmados) ────────────────────────
+        $pedidosPendientes = Pedido::where('estado', Pedido::ESTADO_PENDIENTE)
             ->whereHas('items', fn($q) => $q->whereIn('producto_id', $idsProductos))
             ->count();
 
-        // Ventas del mes — lo que le debe el negocio al proveedor
-        // = SUM(precio_costo × cantidad) en pedidos entregados este mes
+        // ── Financiero: deuda acumulada vs pagado ──────────────────────────
+        // Deuda total = todo lo que el negocio le debe al proveedor
+        $deudaTotal = ItemPedido::whereIn('producto_id', $idsProductos)
+            ->whereHas('pedido', fn($q) => $q->whereIn('estado', $estadosVenta))
+            ->selectRaw('COALESCE(SUM(precio_costo * cantidad), 0) as total')
+            ->value('total') ?? 0;
+
+        // Total pagado por el admin al proveedor
+        $totalPagado = PagoProveedor::where('proveedor_id', $proveedor->id)->sum('monto');
+
+        // Ventas del mes (lo que generó este mes a precio costo)
         $ventasMes = ItemPedido::whereIn('producto_id', $idsProductos)
             ->whereHas('pedido', fn($q) => $q
-                ->where('estado', 'entregado')
+                ->whereIn('estado', $estadosVenta)
                 ->whereMonth('creado_en', now()->month)
                 ->whereYear('creado_en', now()->year)
             )
             ->selectRaw('COALESCE(SUM(precio_costo * cantidad), 0) as total')
             ->value('total') ?? 0;
 
-        // Últimos 5 pedidos con sus productos
-        $ultimosPedidos = Pedido::whereHas('items', fn($q) => $q->whereIn('producto_id', $idsProductos))
+        // ── Últimas ventas (pedidos confirmados/entregados) ────────────────
+        $ultimasVentas = Pedido::whereIn('estado', $estadosVenta)
+            ->whereHas('items', fn($q) => $q->whereIn('producto_id', $idsProductos))
             ->with(['items' => fn($q) => $q->whereIn('producto_id', $idsProductos)])
             ->orderByDesc('creado_en')
-            ->limit(5)
-            ->get();
+            ->limit(10)
+            ->get()
+            ->map(fn($p) => [
+                'id'              => $p->id,
+                'numero_pedido'   => $p->numero_pedido,
+                'fecha'           => $p->creado_en?->format('d/m/Y'),
+                'hora'            => $p->creado_en?->format('H:i'),
+                'estado'          => $p->estado,
+                'costo_proveedor' => $p->items->sum(fn($i) => $i->precio_costo * $i->cantidad),
+                'items'           => $p->items->map(fn($i) => [
+                    'nombre'       => $i->nombre_producto,
+                    'cantidad'     => $i->cantidad,
+                    'precio_costo' => (float) $i->precio_costo,
+                    'subtotal'     => (float) ($i->precio_costo * $i->cantidad),
+                ]),
+            ]);
+
+        // ── Historial de pagos recibidos (últimos 10) ──────────────────────
+        $pagosRecibidos = PagoProveedor::where('proveedor_id', $proveedor->id)
+            ->orderByDesc('fecha_pago')
+            ->limit(10)
+            ->get()
+            ->map(fn($p) => [
+                'id'         => $p->id,
+                'monto'      => (float) $p->monto,
+                'fecha_pago' => $p->fecha_pago?->format('d/m/Y'),
+                'metodo_pago'=> $p->metodo_pago,
+                'concepto'   => $p->concepto,
+            ]);
 
         return Inertia::render('Portal/Dashboard', [
-            'proveedor'             => $proveedor,
-            'estadisticas'          => [
-                'total_productos'        => $totalProductos,
-                'productos_activos'      => $totalProductosActivos,
-                'pedidos_pendientes'     => $pedidosPendientes,
-                'ventas_mes'             => (float) $ventasMes,
+            'proveedor'       => $proveedor,
+            'estadisticas'    => [
+                'total_productos'   => $totalProductos,
+                'productos_activos' => $totalProductosActivos,
+                'pedidos_pendientes'=> $pedidosPendientes,
+                'ventas_mes'        => (float) $ventasMes,
+                'deuda_total'       => (float) $deudaTotal,
+                'total_pagado'      => (float) $totalPagado,
+                'saldo_pendiente'   => (float) ($deudaTotal - $totalPagado),
             ],
-            'ultimosPedidos'        => $ultimosPedidos,
+            'ultimasVentas'   => $ultimasVentas,
+            'pagosRecibidos'  => $pagosRecibidos,
         ]);
     }
 
