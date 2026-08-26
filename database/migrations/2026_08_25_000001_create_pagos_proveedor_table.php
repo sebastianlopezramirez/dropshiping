@@ -66,11 +66,11 @@ return new class extends Migration
             // Ejemplo: "Liquidación agosto 2026", "Pago parcial semana 1"
 
             // ¿Quién registró el pago (admin)?
+            // PENSAR: No ponemos FK a users porque en este proyecto la tabla
+            // de usuarios puede llamarse 'usuarios' o 'users' según la migración
+            // original. UUID sin FK es suficiente — los registros financieros
+            // son inmutables de todas formas.
             $table->uuid('registrado_por');
-            $table->foreign('registrado_por')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('restrict');
 
             // Información adicional
             $table->text('notas')->nullable();
