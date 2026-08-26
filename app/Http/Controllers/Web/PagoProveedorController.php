@@ -151,6 +151,27 @@ class PagoProveedorController extends Controller
             'notas'        => 'nullable|string',
         ]);
 
+        // Verificar que haya saldo pendiente
+        $estadosVenta = [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO];
+        $proveedor    = Proveedor::findOrFail($datos['proveedor_id']);
+        $idsProductos = $proveedor->productos()->pluck('productos.id');
+
+        $deudaTotal  = ItemPedido::whereIn('producto_id', $idsProductos)
+            ->whereHas('pedido', fn($q) => $q->whereIn('estado', $estadosVenta))
+            ->selectRaw('COALESCE(SUM(precio_costo * cantidad), 0) as total')
+            ->value('total') ?? 0;
+
+        $totalPagado     = PagoProveedor::where('proveedor_id', $datos['proveedor_id'])->sum('monto');
+        $saldoPendiente  = (float) $deudaTotal - (float) $totalPagado;
+
+        if ($saldoPendiente <= 0) {
+            return back()->withErrors(['monto' => 'Este proveedor no tiene saldo pendiente de pago.']);
+        }
+
+        if ((float) $datos['monto'] > $saldoPendiente) {
+            return back()->withErrors(['monto' => "El monto excede el saldo pendiente (" . number_format($saldoPendiente, 0, ',', '.') . " COP)."]);
+        }
+
         PagoProveedor::create([
             ...$datos,
             'registrado_por' => auth()->id(),

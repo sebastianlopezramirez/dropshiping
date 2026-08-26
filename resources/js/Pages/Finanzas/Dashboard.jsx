@@ -318,10 +318,14 @@ export default function Dashboard({
                                                 {ultimoPago ? `${ultimoPago.fecha_pago} · ${fmt(ultimoPago.monto)}` : '—'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <button onClick={() => abrirPago(p)}
-                                                    className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition">
-                                                    💳 Registrar pago
-                                                </button>
+                                                {p.saldo_pendiente > 0 ? (
+                                                    <button onClick={() => abrirPago(p)}
+                                                        className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition">
+                                                        💳 Registrar pago
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-xs text-green-600 font-medium">✓ Al día</span>
+                                                )}
                                             </td>
                                         </tr>
                                     );
