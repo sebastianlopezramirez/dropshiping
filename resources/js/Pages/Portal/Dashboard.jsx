@@ -107,19 +107,46 @@ export default function Dashboard({ proveedor, estadisticas, ultimasVentas = [],
                 )}
 
                 {/* ── Accesos rápidos ───────────────────────────────────── */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                        { href: route('portal.productos'),    label: 'Mis productos', icono: '📦', color: 'border-emerald-200 hover:bg-emerald-50' },
-                        { href: route('portal.pedidos'),      label: 'Ver pedidos',   icono: '🛒', color: 'border-blue-200 hover:bg-blue-50' },
-                        { href: route('portal.pagos'),        label: 'Mis cobros',    icono: '💳', color: 'border-yellow-200 hover:bg-yellow-50' },
-                        { href: route('portal.productos.crear'), label: 'Nuevo producto', icono: '➕', color: 'border-indigo-200 hover:bg-indigo-50' },
-                    ].map((a, i) => (
-                        <Link key={i} href={a.href}
-                            className={`flex flex-col items-center justify-center p-4 bg-white rounded-xl border ${a.color} transition text-center`}>
-                            <span className="text-2xl mb-1">{a.icono}</span>
-                            <span className="text-xs font-medium text-gray-700">{a.label}</span>
-                        </Link>
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    {/* Tienda */}
+                    <Link href={route('tienda.index')}
+                        className="flex items-start gap-4 p-5 bg-white rounded-xl border border-orange-200 hover:bg-orange-50 transition group">
+                        <span className="text-3xl mt-0.5">🛍️</span>
+                        <div>
+                            <p className="font-semibold text-gray-800 group-hover:text-orange-700 transition">Tienda</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Visita la tienda pública y ve cómo aparecen tus productos a los clientes. Aquí puedes revisar precios, fotos y disponibilidad de tu catálogo.
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Portal Proveedor */}
+                    <div className="p-5 bg-white rounded-xl border border-emerald-200">
+                        <div className="flex items-start gap-4 mb-4">
+                            <span className="text-3xl mt-0.5">📦</span>
+                            <div>
+                                <p className="font-semibold text-gray-800">Mi portal de proveedor</p>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Gestiona tu inventario, revisa los pedidos que incluyen tus productos y consulta el historial de pagos recibidos.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { href: route('portal.productos'),        label: 'Mis productos', icono: '📋' },
+                                { href: route('portal.pedidos'),          label: 'Pedidos',       icono: '🛒' },
+                                { href: route('portal.pagos'),            label: 'Mis cobros',    icono: '💰' },
+                            ].map((a, i) => (
+                                <Link key={i} href={a.href}
+                                    className="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg border border-emerald-100 hover:bg-emerald-50 transition text-center">
+                                    <span className="text-lg mb-0.5">{a.icono}</span>
+                                    <span className="text-xs font-medium text-gray-600">{a.label}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+
                 </div>
 
                 {/* ── Mis ventas (pedidos confirmados/entregados) ───────── */}
