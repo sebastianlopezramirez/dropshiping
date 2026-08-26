@@ -468,7 +468,7 @@ export default function Dashboard({
                         <form onSubmit={registrarPago} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Monto <span className="text-red-500">*</span></label>
-                                <input type="number" min="1" step="100" value={data.monto} onChange={e => setData('monto', e.target.value)}
+                                <input type="number" min="1" step="1" value={data.monto} onChange={e => setData('monto', e.target.value)}
                                     className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.monto ? 'border-red-400' : 'border-gray-300'}`}
                                     placeholder="500000" />
                                 {errors.monto && <p className="text-red-500 text-xs mt-1">{errors.monto}</p>}
