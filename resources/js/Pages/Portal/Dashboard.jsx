@@ -112,7 +112,7 @@ export default function Dashboard({ proveedor, estadisticas, ultimasVentas = [],
                         { href: route('portal.productos'),    label: 'Mis productos', icono: '📦', color: 'border-emerald-200 hover:bg-emerald-50' },
                         { href: route('portal.pedidos'),      label: 'Ver pedidos',   icono: '🛒', color: 'border-blue-200 hover:bg-blue-50' },
                         { href: route('portal.pagos'),        label: 'Mis cobros',    icono: '💳', color: 'border-yellow-200 hover:bg-yellow-50' },
-                        { href: route('portal.crear-producto'), label: 'Nuevo producto', icono: '➕', color: 'border-indigo-200 hover:bg-indigo-50' },
+                        { href: route('portal.productos.crear'), label: 'Nuevo producto', icono: '➕', color: 'border-indigo-200 hover:bg-indigo-50' },
                     ].map((a, i) => (
                         <Link key={i} href={a.href}
                             className={`flex flex-col items-center justify-center p-4 bg-white rounded-xl border ${a.color} transition text-center`}>
