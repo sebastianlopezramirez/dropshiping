@@ -279,8 +279,9 @@ class PortalController extends Controller
             'precio'                 => ['required', 'numeric', 'min:0'],
             'stock'                  => ['required', 'integer', 'min:0'],
             'permite_contraentrega'  => ['nullable', 'boolean'],
-            'imagenes_nuevas'        => ['nullable', 'array', 'max:3'],
-            'imagenes_nuevas.*'      => ['image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_0'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_1'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_2'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
             'eliminar_imagenes'      => ['nullable', 'array'],
             'eliminar_imagenes.*'    => ['integer'],
         ]);
@@ -299,17 +300,12 @@ class PortalController extends Controller
             }
         }
 
-        // Subir imágenes nuevas (respetando el límite de 3 en total)
-        if ($request->hasFile('imagenes_nuevas')) {
-            $archivos = $request->file('imagenes_nuevas');
-            if (!is_array($archivos)) {
-                $archivos = [$archivos];
-            }
-            // Recargar media fresca (por si se eliminaron arriba)
-            $existentes  = $producto->fresh()->getMedia('imagenes')->count();
-            $disponibles = max(0, 3 - $existentes);
-            foreach (array_slice($archivos, 0, $disponibles) as $archivo) {
-                $producto->addMedia($archivo)->toMediaCollection('imagenes');
+        // Subir imágenes nuevas (slots individuales, respetando límite de 3)
+        $totalExistentes = $producto->fresh()->getMedia('imagenes')->count();
+        foreach (['imagen_0', 'imagen_1', 'imagen_2'] as $campo) {
+            if ($request->hasFile($campo) && $totalExistentes < 3) {
+                $producto->addMedia($request->file($campo))->toMediaCollection('imagenes');
+                $totalExistentes++;
             }
         }
 
@@ -532,8 +528,9 @@ class PortalController extends Controller
             'stock'               => ['required', 'integer', 'min:0'],
             'categoria_id'        => ['nullable', 'string', 'exists:categorias,id'],
             'peso_kg'             => ['nullable', 'numeric', 'min:0'],
-            'imagenes_nuevas'        => ['nullable', 'array', 'max:3'],
-            'imagenes_nuevas.*'      => ['image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_0'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_1'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
+            'imagen_2'               => ['nullable', 'image', 'max:2048', 'mimes:jpeg,jpg,png,webp'],
             'permite_contraentrega'  => ['nullable', 'boolean'],
         ]);
 
@@ -623,12 +620,16 @@ class PortalController extends Controller
         });
 
         // ─── PASO 2: Subir imágenes a Cloudflare R2 via Spatie ───────────────
-        // addMedia($archivo) → toma el archivo del request
-        // toMediaCollection('imagenes') → lo sube al disco 'r2' configurado
-        //   en Producto::registerMediaCollections() y genera conversiones WebP
-        if ($request->hasFile('imagenes_nuevas')) {
-            foreach ($request->file('imagenes_nuevas') as $archivo) {
-                $producto->addMedia($archivo)
+        //
+        // PENSAR — ¿Por qué imagen_0, imagen_1, imagen_2 en vez de array?
+        //
+        //   Los navegadores móviles NO son confiables con <input multiple>.
+        //   Al usar inputs individuales (sin multiple), cada slot funciona
+        //   en todos los móviles. El backend recibe 3 campos separados.
+        //
+        foreach (['imagen_0', 'imagen_1', 'imagen_2'] as $campo) {
+            if ($request->hasFile($campo)) {
+                $producto->addMedia($request->file($campo))
                          ->toMediaCollection('imagenes');
             }
         }

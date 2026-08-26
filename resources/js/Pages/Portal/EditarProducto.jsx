@@ -14,9 +14,46 @@
 |
 */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
+
+// FUERA del componente — evita remount en cada render
+// Mismo componente que CrearProducto: slot individual sin "multiple"
+function SlotImagen({ index, preview, onSelect, onClear }) {
+    const ref = useRef(null);
+    return (
+        <div className="relative" style={{ aspectRatio: '1' }}>
+            {preview ? (
+                <>
+                    <img src={preview} className="w-full h-full object-cover rounded-xl border-2 border-emerald-300" />
+                    <button type="button" onClick={onClear}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow hover:bg-red-600 transition">
+                        ×
+                    </button>
+                    <button type="button" onClick={() => ref.current?.click()}
+                        className="absolute bottom-1 right-1 w-6 h-6 bg-black/40 text-white rounded-full flex items-center justify-center text-xs shadow hover:bg-black/60 transition"
+                        title="Cambiar foto">
+                        ✎
+                    </button>
+                </>
+            ) : (
+                <button type="button" onClick={() => ref.current?.click()}
+                    className="w-full h-full border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-1 hover:border-emerald-400 hover:bg-emerald-50 active:bg-emerald-100 transition text-gray-400">
+                    <span className="text-3xl leading-none">📷</span>
+                    <span className="text-xs font-medium">Foto nueva</span>
+                </button>
+            )}
+            <input ref={ref} type="file" accept="image/*" className="hidden"
+                onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) onSelect(file);
+                    e.target.value = '';
+                }}
+            />
+        </div>
+    );
+}
 
 export default function EditarProducto({ proveedor, producto, pivot }) {
 
@@ -28,23 +65,51 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
         stock:                  pivot?.stock                ?? 0,
         descripcion:            producto.descripcion        ?? '',
         permite_contraentrega:  producto.permite_contraentrega ?? false,
-        imagenes_nuevas:        [],
+        imagen_0:               null,
+        imagen_1:               null,
+        imagen_2:               null,
         eliminar_imagenes:      [],
     });
 
-    // Previews de imágenes nuevas seleccionadas
-    const [previews, setPreviews]             = useState([]);
+    // Previews de slots nuevos [null, null, null]
+    const [previews, setPreviews]         = useState([null, null, null]);
     // IDs de imágenes existentes marcadas para eliminar
-    const [marcadasEliminar, setMarcadas]     = useState([]);
+    const [marcadasEliminar, setMarcadas] = useState([]);
 
-    const totalImagenes = imagenes.length - marcadasEliminar.length + previews.length;
+    const existentesActivas = imagenes.length - marcadasEliminar.length;
+    const disponibles       = Math.max(0, 3 - existentesActivas);
+    const totalImagenes     = existentesActivas + previews.filter(Boolean).length;
 
-    const handleImagenes = (e) => {
-        const archivos    = Array.from(e.target.files);
-        const disponibles = 3 - (imagenes.length - marcadasEliminar.length);
-        const seleccion   = archivos.slice(0, disponibles);
-        setData('imagenes_nuevas', seleccion);
-        setPreviews(seleccion.map(f => URL.createObjectURL(f)));
+    // Cuando disponibles baja, limpiar slots que ya no caben
+    useEffect(() => {
+        setPreviews(prev => {
+            const next = [...prev];
+            for (let i = disponibles; i < 3; i++) {
+                if (next[i]) {
+                    next[i] = null;
+                    setData(`imagen_${i}`, null);
+                }
+            }
+            return next;
+        });
+    }, [disponibles]);
+
+    const handleSlot = (index, file) => {
+        setData(`imagen_${index}`, file);
+        setPreviews(prev => {
+            const next = [...prev];
+            next[index] = URL.createObjectURL(file);
+            return next;
+        });
+    };
+
+    const clearSlot = (index) => {
+        setData(`imagen_${index}`, null);
+        setPreviews(prev => {
+            const next = [...prev];
+            next[index] = null;
+            return next;
+        });
     };
 
     const toggleEliminar = (id) => {
@@ -53,8 +118,6 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
             : [...marcadasEliminar, id];
         setMarcadas(nuevas);
         setData('eliminar_imagenes', nuevas);
-        // Limpiar nuevas si ahora hay espacio
-        if (nuevas.length > marcadasEliminar.length) setPreviews([]);
     };
 
     const submit = (e) => {
@@ -219,33 +282,32 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                             </div>
                         )}
 
-                        {/* Agregar nuevas (solo si hay espacio) */}
-                        {totalImagenes < 3 && (
+                        {/* Slots para imágenes nuevas */}
+                        {disponibles > 0 ? (
                             <div>
-                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
-                                    <div className="text-center">
-                                        <p className="text-xl mb-0.5">📸</p>
-                                        <p className="text-xs text-gray-600">Agregar imágenes</p>
-                                        <p className="text-xs text-gray-400">JPG, PNG, WEBP · máx. 2MB · quedan {3 - totalImagenes} espacios</p>
-                                    </div>
-                                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagenes} />
-                                </label>
-                                {previews.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {previews.map((url, i) => (
-                                            <img key={i} src={url} className="w-16 h-16 object-cover rounded-lg border border-emerald-200" />
-                                        ))}
-                                    </div>
-                                )}
+                                <p className="text-xs text-gray-500 mb-2">
+                                    Agregar fotos nuevas — {disponibles} espacio{disponibles !== 1 ? 's' : ''} disponible{disponibles !== 1 ? 's' : ''}:
+                                </p>
+                                <div className={`grid gap-3 ${disponibles === 1 ? 'grid-cols-1 max-w-[8rem]' : disponibles === 2 ? 'grid-cols-2 max-w-[17rem]' : 'grid-cols-3'}`}>
+                                    {Array.from({ length: disponibles }).map((_, i) => (
+                                        <SlotImagen
+                                            key={i}
+                                            index={i}
+                                            preview={previews[i]}
+                                            onSelect={file => handleSlot(i, file)}
+                                            onClear={() => clearSlot(i)}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        )}
-
-                        {totalImagenes >= 3 && (
+                        ) : (
                             <p className="text-xs text-amber-600">Límite de 3 imágenes alcanzado. Elimina una para agregar otra.</p>
                         )}
 
-                        {errors['imagenes_nuevas.0'] && (
-                            <p className="text-xs text-red-600">{errors['imagenes_nuevas.0']}</p>
+                        {(errors.imagen_0 || errors.imagen_1 || errors.imagen_2) && (
+                            <p className="text-xs text-red-600">
+                                {errors.imagen_0 || errors.imagen_1 || errors.imagen_2}
+                            </p>
                         )}
                     </div>
 

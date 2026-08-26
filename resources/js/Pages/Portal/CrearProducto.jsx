@@ -34,6 +34,54 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 import { capitalize } from '@/utils/texto';
 
+// ── Slot de imagen individual ─────────────────────────────────────────────
+// FUERA del componente principal — evita remount en cada render (bug de foco)
+//
+// PENSAR — ¿Por qué slots individuales y no <input multiple>?
+//   En móvil, el atributo "multiple" no es confiable: muchos navegadores
+//   Android e iOS solo abren el selector para 1 foto aunque múltiple esté activo.
+//   Con inputs individuales (sin multiple) funciona en todos los dispositivos.
+//
+function SlotImagen({ index, preview, onSelect, onClear }) {
+    const ref = useRef(null);
+    return (
+        <div className="relative" style={{ aspectRatio: '1' }}>
+            {preview ? (
+                <>
+                    <img src={preview} className="w-full h-full object-cover rounded-xl border-2 border-emerald-300" />
+                    {index === 0 && (
+                        <span className="absolute top-1 left-1 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">
+                            Principal
+                        </span>
+                    )}
+                    <button type="button" onClick={onClear}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow hover:bg-red-600 transition">
+                        ×
+                    </button>
+                    <button type="button" onClick={() => ref.current?.click()}
+                        className="absolute bottom-1 right-1 w-6 h-6 bg-black/40 text-white rounded-full flex items-center justify-center text-xs shadow hover:bg-black/60 transition"
+                        title="Cambiar foto">
+                        ✎
+                    </button>
+                </>
+            ) : (
+                <button type="button" onClick={() => ref.current?.click()}
+                    className="w-full h-full border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-1 hover:border-emerald-400 hover:bg-emerald-50 active:bg-emerald-100 transition text-gray-400">
+                    <span className="text-3xl leading-none">📷</span>
+                    <span className="text-xs font-medium">{index === 0 ? 'Principal' : `Foto ${index + 1}`}</span>
+                </button>
+            )}
+            <input ref={ref} type="file" accept="image/*" className="hidden"
+                onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) onSelect(file);
+                    e.target.value = '';
+                }}
+            />
+        </div>
+    );
+}
+
 export default function CrearProducto({ categorias }) {
 
     // ─── FORMULARIO ─────────────────────────────────────────────────────
@@ -46,7 +94,9 @@ export default function CrearProducto({ categorias }) {
         stock:             '',
         categoria_id:      '',
         peso_kg:           '',
-        imagenes_nuevas:        [],
+        imagen_0:               null,
+        imagen_1:               null,
+        imagen_2:               null,
         permite_contraentrega:  false,
         forzar_creacion:        0,
     });
@@ -114,13 +164,25 @@ export default function CrearProducto({ categorias }) {
         post(route('portal.productos.guardar'), { forceFormData: true });
     };
 
-    // Preview de imágenes seleccionadas (URLs temporales en el browser)
-    const [previews, setPreviews] = useState([]);
+    // Previews de los 3 slots (URLs temporales en el browser)
+    const [previews, setPreviews] = useState([null, null, null]);
 
-    const handleImagenes = (e) => {
-        const archivos   = Array.from(e.target.files).slice(0, 3);
-        setData('imagenes_nuevas', archivos);
-        setPreviews(archivos.map(f => URL.createObjectURL(f)));
+    const handleSlot = (index, file) => {
+        setData(`imagen_${index}`, file);
+        setPreviews(prev => {
+            const next = [...prev];
+            next[index] = URL.createObjectURL(file);
+            return next;
+        });
+    };
+
+    const clearSlot = (index) => {
+        setData(`imagen_${index}`, null);
+        setPreviews(prev => {
+            const next = [...prev];
+            next[index] = null;
+            return next;
+        });
     };
 
 
@@ -463,33 +525,24 @@ export default function CrearProducto({ categorias }) {
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                             <h3 className="font-semibold text-gray-800">Imágenes del producto</h3>
-                            <p className="text-xs text-gray-500 mt-0.5">Máximo 3 imágenes · 2MB por imagen · La primera será la principal.</p>
+                            <p className="text-xs text-gray-500 mt-0.5">Hasta 3 fotos · 2MB por imagen · La primera es la principal.</p>
                         </div>
                         <div className="px-6 py-5">
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 transition">
-                                <div className="text-center">
-                                    <p className="text-2xl mb-1">📸</p>
-                                    <p className="text-sm text-gray-600">Haz click para seleccionar imágenes</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WEBP · máximo 3 fotos</p>
-                                </div>
-                                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImagenes} />
-                            </label>
-                            {previews.length > 0 && (
-                                <div className="mt-4 flex flex-wrap gap-3">
-                                    {previews.map((url, i) => (
-                                        <div key={i} className="relative">
-                                            <img src={url} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
-                                            {i === 0 && (
-                                                <span className="absolute -top-1.5 -left-1.5 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                                                    Principal
-                                                </span>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            {errors['imagenes_nuevas.0'] && (
-                                <p className="mt-2 text-xs text-red-600">{errors['imagenes_nuevas.0']}</p>
+                            <div className="grid grid-cols-3 gap-3">
+                                {[0, 1, 2].map(i => (
+                                    <SlotImagen
+                                        key={i}
+                                        index={i}
+                                        preview={previews[i]}
+                                        onSelect={file => handleSlot(i, file)}
+                                        onClear={() => clearSlot(i)}
+                                    />
+                                ))}
+                            </div>
+                            {(errors.imagen_0 || errors.imagen_1 || errors.imagen_2) && (
+                                <p className="mt-2 text-xs text-red-600">
+                                    {errors.imagen_0 || errors.imagen_1 || errors.imagen_2}
+                                </p>
                             )}
                         </div>
                     </div>
