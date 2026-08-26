@@ -261,9 +261,14 @@ class PortalController extends Controller
 
         // Subir imágenes nuevas (respetando el límite de 3 en total)
         if ($request->hasFile('imagenes_nuevas')) {
-            $existentes = $producto->getMedia('imagenes')->count();
+            $archivos = $request->file('imagenes_nuevas');
+            if (!is_array($archivos)) {
+                $archivos = [$archivos];
+            }
+            // Recargar media fresca (por si se eliminaron arriba)
+            $existentes  = $producto->fresh()->getMedia('imagenes')->count();
             $disponibles = max(0, 3 - $existentes);
-            foreach (array_slice($request->file('imagenes_nuevas'), 0, $disponibles) as $archivo) {
+            foreach (array_slice($archivos, 0, $disponibles) as $archivo) {
                 $producto->addMedia($archivo)->toMediaCollection('imagenes');
             }
         }

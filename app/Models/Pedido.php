@@ -154,6 +154,16 @@ class Pedido extends Model
         return $this->hasMany(Transaccion::class, 'pedido_id', 'id');
     }
 
+    /**
+     * gastosAsociados() — Gastos operativos vinculados directamente a este pedido.
+     * Ejemplo: pago al domiciliario, empaque especial, costo de devolución.
+     * HasMany: 'gastos_operativos'.pedido_id → 'pedidos'.id
+     */
+    public function gastosAsociados(): HasMany
+    {
+        return $this->hasMany(GastoOperativo::class, 'pedido_id', 'id');
+    }
+
     /*
     | usuario() — El usuario del sistema que registró/gestionó el pedido
     */
