@@ -8,24 +8,26 @@
 | ENTENDER — ¿Qué hace este controller?
 |
 |   Gestiona el CRUD de cupones de descuento desde el panel admin.
-|   Además expone un endpoint AJAX para que el formulario de pedidos
+|   Además expone un endpoint AJAX para que el formulario del carrito
 |   pueda validar un código de cupón en tiempo real.
 |
 | MÉTODOS:
 |   index()    → lista de cupones con estadísticas de uso
-|   create()   → formulario de creación
-|   store()    → guardar cupón nuevo
-|   edit()     → formulario de edición
-|   update()   → guardar cambios
+|   create()   → formulario de creación (pasa categorías + productos)
+|   store()    → guardar cupón nuevo + sincronizar pivot categorías/productos
+|   edit()     → formulario de edición (pasa categorías + productos seleccionados)
+|   update()   → guardar cambios + re-sincronizar pivot
 |   destroy()  → desactivar (soft disable — no borrar para mantener historial)
-|   validar()  → AJAX: valida un código y retorna el descuento calculado
+|   validar()  → AJAX: valida código + ítems del carrito → devuelve descuento
 |
 */
 
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Categoria;
 use App\Models\Cupon;
+use App\Models\Producto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,10 +78,23 @@ class CuponController extends Controller
     |----------------------------------------------------------------------
     | create() — Formulario de creación
     |----------------------------------------------------------------------
+    |
+    | Pasamos categorías y productos para que el admin pueda
+    | seleccionar las restricciones del cupón.
+    |
     */
     public function create(): Response
     {
-        return Inertia::render('Marketing/Cupones/Crear');
+        return Inertia::render('Marketing/Cupones/Crear', [
+            'categorias' => Categoria::where('activo', true)
+                ->orderBy('nombre')
+                ->select('id', 'nombre')
+                ->get(),
+            'productos' => Producto::where('estado', 'activo')
+                ->orderBy('nombre')
+                ->select('id', 'nombre', 'precio_venta')
+                ->get(),
+        ]);
     }
 
     /*
@@ -100,14 +115,19 @@ class CuponController extends Controller
             'fecha_inicio'     => ['nullable', 'date'],
             'fecha_expiracion' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'activo'           => ['boolean'],
+            'aplica_a'         => ['required', 'in:todo,categorias,productos'],
+            'categoria_ids'    => ['nullable', 'array'],
+            'categoria_ids.*'  => ['uuid', 'exists:categorias,id'],
+            'producto_ids'     => ['nullable', 'array'],
+            'producto_ids.*'   => ['uuid', 'exists:productos,id'],
         ]);
 
-        // minimo_compra es NOT NULL en BD con default 0.
-        // Si el usuario lo deja vacío, normalize a 0 en lugar de null.
         $datos['minimo_compra'] = $datos['minimo_compra'] ?? 0;
 
-        // El modelo ya convierte el código a mayúsculas en boot()
-        Cupon::create($datos);
+        $cupon = Cupon::create($datos);
+
+        // Sincronizar pivot según restricción
+        $this->sincronizarPivot($cupon, $datos);
 
         return redirect()
             ->route('cupones.index')
@@ -122,7 +142,17 @@ class CuponController extends Controller
     public function edit(Cupon $cupon): Response
     {
         return Inertia::render('Marketing/Cupones/Editar', [
-            'cupon' => $cupon,
+            'cupon'          => $cupon,
+            'categoriaIds'   => $cupon->categorias()->pluck('categorias.id'),
+            'productoIds'    => $cupon->productos()->pluck('productos.id'),
+            'categorias'     => Categoria::where('activo', true)
+                ->orderBy('nombre')
+                ->select('id', 'nombre')
+                ->get(),
+            'productos'      => Producto::where('estado', 'activo')
+                ->orderBy('nombre')
+                ->select('id', 'nombre', 'precio_venta')
+                ->get(),
         ]);
     }
 
@@ -144,11 +174,20 @@ class CuponController extends Controller
             'fecha_inicio'     => ['nullable', 'date'],
             'fecha_expiracion' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'activo'           => ['boolean'],
+            'aplica_a'         => ['required', 'in:todo,categorias,productos'],
+            'categoria_ids'    => ['nullable', 'array'],
+            'categoria_ids.*'  => ['uuid', 'exists:categorias,id'],
+            'producto_ids'     => ['nullable', 'array'],
+            'producto_ids.*'   => ['uuid', 'exists:productos,id'],
         ]);
 
         $datos['codigo']        = strtoupper($datos['codigo']);
         $datos['minimo_compra'] = $datos['minimo_compra'] ?? 0;
+
         $cupon->update($datos);
+
+        // Re-sincronizar pivot
+        $this->sincronizarPivot($cupon, $datos);
 
         return redirect()
             ->route('cupones.index')
@@ -159,13 +198,6 @@ class CuponController extends Controller
     |----------------------------------------------------------------------
     | destroy() — Desactivar cupón (no borrar — se mantiene el historial)
     |----------------------------------------------------------------------
-    |
-    | PENSAR — ¿Por qué no borramos?
-    |
-    |   Si borramos un cupón, los pedidos que lo usaron quedan sin referencia.
-    |   En su lugar, lo desactivamos: activo = false.
-    |   Sigue apareciendo en el historial pero ya no puede usarse.
-    |
     */
     public function destroy(Cupon $cupon): RedirectResponse
     {
@@ -178,43 +210,57 @@ class CuponController extends Controller
 
     /*
     |----------------------------------------------------------------------
-    | validar() — AJAX: valida un código y retorna el descuento
+    | validar() — AJAX: valida código + ítems del carrito
     |----------------------------------------------------------------------
     |
-    | ENTENDER — ¿Para qué sirve este endpoint?
-    |
-    |   El formulario de creación de pedidos tiene un campo "Código de cupón".
-    |   Cuando el vendedor escribe el código, React llama a este endpoint
-    |   para mostrar en tiempo real cuánto descuento se va a aplicar.
+    | ENTENDER — ¿Qué recibe y qué devuelve?
     |
     |   POST /cupones/validar
-    |   Body: { codigo: "VERANO20", total: 200000 }
+    |   Body: {
+    |     codigo: "VERANO20",
+    |     items: [
+    |       { producto_id: "uuid", categoria_id: "uuid", subtotal: 150000 },
+    |       ...
+    |     ]
+    |   }
     |
     |   Respuesta exitosa:
-    |   { valido: true, descuento: 40000, mensaje: "20% de descuento aplicado" }
+    |   { valido: true, descuento: 30000, cupon_id: "uuid", mensaje: "20% aplicado" }
     |
     |   Respuesta fallida:
     |   { valido: false, mensaje: "Este cupón ya expiró." }
+    |
+    | PENSAR — ¿Por qué recibimos items en lugar de solo el total?
+    |
+    |   Porque el cupón puede estar restringido a categorías o productos
+    |   específicos. Necesitamos saber qué hay en el carrito para calcular
+    |   el subtotal elegible (la parte a la que aplica el descuento).
     |
     */
     public function validar(Request $request): JsonResponse
     {
         $request->validate([
-            'codigo' => ['required', 'string'],
-            'total'  => ['required', 'numeric', 'min:0'],
+            'codigo'                => ['required', 'string'],
+            'items'                 => ['required', 'array', 'min:1'],
+            'items.*.producto_id'   => ['required', 'string'],
+            'items.*.categoria_id'  => ['nullable', 'string'],
+            'items.*.subtotal'      => ['required', 'numeric', 'min:0'],
         ]);
 
         $cupon = Cupon::where('codigo', strtoupper($request->codigo))->first();
 
         if (!$cupon) {
             return response()->json([
-                'valido'   => false,
-                'mensaje'  => 'Código de cupón no encontrado.',
+                'valido'  => false,
+                'mensaje' => 'Código de cupón no encontrado.',
             ]);
         }
 
-        $resultado = $cupon->esValido((float) $request->total);
+        // Total del carrito completo (para verificar mínimo de compra)
+        $totalCarrito = collect($request->items)->sum('subtotal');
 
+        // Validar condiciones generales (activo, fechas, límite usos, mínimo compra)
+        $resultado = $cupon->esValido((float) $totalCarrito);
         if (!$resultado['valido']) {
             return response()->json([
                 'valido'  => false,
@@ -222,20 +268,66 @@ class CuponController extends Controller
             ]);
         }
 
-        $descuento = $cupon->calcularDescuento((float) $request->total);
+        // Calcular subtotal elegible según restricciones
+        $cupon->loadMissing(['categorias', 'productos']);
+        $subtotalElegible = $cupon->subtotalElegible($request->items);
+
+        if ($subtotalElegible <= 0) {
+            $msg = match($cupon->aplica_a) {
+                'categorias' => 'Este cupón no aplica a los productos de tu carrito (restricción por categoría).',
+                'productos'  => 'Este cupón no aplica a los productos de tu carrito.',
+                default      => 'Este cupón no aplica a tu carrito.',
+            };
+            return response()->json(['valido' => false, 'mensaje' => $msg]);
+        }
+
+        $descuento = $cupon->calcularDescuento($subtotalElegible);
 
         // Construir mensaje descriptivo
         if ($cupon->tipo === 'porcentaje') {
-            $mensaje = "{$cupon->valor}% de descuento aplicado";
+            $pct     = rtrim(rtrim(number_format($cupon->valor, 2), '0'), '.');
+            $mensaje = "{$pct}% de descuento aplicado";
         } else {
             $mensaje = '$' . number_format($descuento, 0, ',', '.') . ' de descuento aplicado';
         }
 
+        if ($cupon->aplica_a !== 'todo') {
+            $mensaje .= ' (sobre productos elegibles)';
+        }
+
         return response()->json([
-            'valido'    => true,
-            'descuento' => $descuento,
-            'cupon_id'  => $cupon->id,
-            'mensaje'   => $mensaje,
+            'valido'             => true,
+            'descuento'          => round($descuento, 2),
+            'subtotal_elegible'  => round($subtotalElegible, 2),
+            'cupon_id'           => $cupon->id,
+            'aplica_a'           => $cupon->aplica_a,
+            'mensaje'            => $mensaje,
         ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | sincronizarPivot() — Helper privado
+    |----------------------------------------------------------------------
+    |
+    | Sincroniza las tablas pivot cupon_categoria y cupon_producto
+    | según el valor de aplica_a. Si aplica_a es 'todo', limpia ambas tablas.
+    |
+    */
+    private function sincronizarPivot(Cupon $cupon, array $datos): void
+    {
+        $aplica = $datos['aplica_a'] ?? 'todo';
+
+        if ($aplica === 'categorias') {
+            $cupon->categorias()->sync($datos['categoria_ids'] ?? []);
+            $cupon->productos()->sync([]);
+        } elseif ($aplica === 'productos') {
+            $cupon->productos()->sync($datos['producto_ids'] ?? []);
+            $cupon->categorias()->sync([]);
+        } else {
+            // 'todo' → limpiar ambas
+            $cupon->categorias()->sync([]);
+            $cupon->productos()->sync([]);
+        }
     }
 }

@@ -268,3 +268,146 @@ descripcion: "Registro de todas las sesiones de desarrollo"
 ---
 
 *Relacionado: [[📊 Tablero de Fases]] · [[🐛 Bugs y Pendientes]]*
+
+---
+
+## Sesión 15 — 2026-08-24
+
+**Duración:** ~4 horas  
+**Fase:** FASE 5 — Módulo Financiero (correcciones) + FASE 8 — Tienda Pública (flujo pedido completo)
+
+**Objetivo de la sesión:** Restaurar formulario de datos del cliente en Producto.jsx, conectar el flujo de pedido completo con creación automática de Transaccion en BD, y corregir el módulo financiero que mostraba $0 en ingresos.
+
+---
+
+### Completado
+
+#### Tienda Pública — Flujo de compra 3 pasos (Producto.jsx)
+- [x] `LeadController.php` — endpoint `POST /tienda/lead` crea Pedido + ItemPedido + ConsentimientoMarketing en una transacción DB
+- [x] Flujo 3 pasos: `inicio` → `formulario` (datos cliente) → `confirmado` (botón WhatsApp)
+- [x] Formulario: nombre, celular, email, municipio (desde TarifaDomicilio BD), dirección, método de entrega, acepta Ley 1581
+- [x] Municipio dinámico: usa misma tabla `TarifaDomicilio` que Carrito.jsx (admin-controlado)
+- [x] Métodos de entrega: contra_entrega (si producto lo permite), transferencia (envío), recogida en tienda
+- [x] Recogida: genera código `GS-XXXXX` client-side, se incluye en mensaje WhatsApp
+- [x] WhatsApp al admin incluye: #pedido, cliente, producto, total, cuenta Bancolombia 01997866718 GadGet Store
+- [x] Stock se descuenta al crear el pedido (no al confirmar)
+- [x] `TiendaController.php` pasa `tarifas` al componente Producto
+
+#### Panel Admin — Modal de confirmación de pago (Pedidos/Index.jsx)
+- [x] Modal intercepta clic "→ Confirmado" (antes pasaba directo sin pedir método)
+- [x] Admin selecciona: Efectivo / Transferencia / Nequi / Tarjeta crédito / Tarjeta débito / Otro
+- [x] `router.patch()` envía `{ estado: 'confirmado', metodo_pago_confirmacion: 'efectivo' }` al backend
+- [x] `PedidoController@cambiarEstado()` crea `Transaccion` aprobada automáticamente al confirmar
+- [x] Al cancelar: restaura stock de cada ItemPedido automáticamente
+- [x] `pagado_en` se registra con fecha y hora exacta (timestamp)
+
+#### Estados simplificados (Pedido.php)
+- [x] De 7 estados a 4: `pendiente → confirmado → entregado → cancelado`
+- [x] Eliminados: `en_preparacion`, `enviado`, `devuelto` (no aportaban valor al negocio)
+- [x] Flujo claro: pedido crea (pendiente, stock reservado) → admin confirma pago (confirmado, finanzas se actualizan) → entregado → o cancelado (stock restaurado)
+
+#### Módulo Financiero — Mejoras
+- [x] `ReporteFinancieroController`: costos cuentan desde `confirmado` (antes solo `entregado`)
+- [x] Filtro por **día** añadido al dashboard (además de mes/año)
+- [x] Cuando se filtra por día: gráfico muestra ingresos por hora (no por día)
+- [x] `Dashboard.jsx`: campo "Día" opcional con botón ✕ para limpiar
+
+#### Ver Transacciones (Finanzas/Transacciones/Index.jsx)
+- [x] Nueva columna "Fecha y hora" con `pagado_en` — hora exacta de confirmación
+- [x] Muestra: número pedido, cliente, ciudad, método de pago con ícono (💵🏦📱💳)
+- [x] Columnas reorganizadas: fecha primero, luego pedido, monto, método, estado
+
+#### Gastos Operativos — Vínculo con pedidos
+- [x] Migración `2026_08_24_000001_add_pedido_id_to_gastos_operativos.php` — agrega `pedido_id` nullable
+- [x] `GastoOperativo.php` — campo `pedido_id` en fillable + relación `pedido()`
+- [x] `GastoController.php` — acepta `pedido_id` en store/update + pasa pedidos recientes al form
+- [x] `Gastos/Crear.jsx` — selector opcional de pedido (ej: pago domiciliario del pedido PED-2026-00042)
+
+---
+
+### ⚠️ PROBLEMA ACTIVO — Módulo financiero sigue en $0
+
+**Síntoma:** Dashboard muestra Ingresos $0, Costo $2.5M, Ganancia -$2.5M
+
+**Causa identificada:** El pedido de la Moto Kawasaky ($3.5M) fue confirmado ANTES de que el nuevo código estuviera desplegado en Railway. Por eso NO se creó la `Transaccion` correspondiente. El costo sí aparece (pedido está en `confirmado`) pero el ingreso no ($0 transacciones).
+
+**Estado del git push:** ⚠️ NO CONFIRMADO — el usuario no confirmó si hizo el push ni si Railway ya desplegó el nuevo código.
+
+**Lo que se intentó:** Se le explicó al usuario que debe:
+1. Verificar `git status` y hacer push si hay cambios pendientes
+2. Para el pedido de la Kawasaki: cancelar y re-confirmar usando el nuevo modal (que sí crea la Transaccion)
+3. O registrar manualmente la Transaccion desde "Ver transacciones → + Registrar Pago"
+
+**El usuario responde:** "no debería ser manual" — correcto, el flujo automático está implementado pero el pedido ya existía antes del nuevo código.
+
+---
+
+### Archivos generados o modificados
+
+| Archivo | Path | Estado |
+|---|---|---|
+| LeadController.php | `app/Http/Controllers/Web/LeadController.php` | ✅ Listo |
+| Producto.jsx | `resources/js/Pages/Tienda/Producto.jsx` | ✅ Listo |
+| TiendaController.php | `app/Http/Controllers/Web/TiendaController.php` | ✅ Listo |
+| PedidoController.php | `app/Http/Controllers/Web/PedidoController.php` | ✅ Listo |
+| Pedidos/Index.jsx | `resources/js/Pages/Pedidos/Index.jsx` | ✅ Listo |
+| Pedido.php (model) | `app/Models/Pedido.php` | ✅ Listo |
+| ReporteFinancieroController.php | `app/Http/Controllers/Web/ReporteFinancieroController.php` | ✅ Listo |
+| Finanzas/Dashboard.jsx | `resources/js/Pages/Finanzas/Dashboard.jsx` | ✅ Listo |
+| Transacciones/Index.jsx | `resources/js/Pages/Finanzas/Transacciones/Index.jsx` | ✅ Listo |
+| GastoController.php | `app/Http/Controllers/Web/GastoController.php` | ✅ Listo |
+| GastoOperativo.php | `app/Models/GastoOperativo.php` | ✅ Listo |
+| Gastos/Crear.jsx | `resources/js/Pages/Finanzas/Gastos/Crear.jsx` | ✅ Listo |
+| Migración gastos pedido_id | `database/migrations/2026_08_24_000001_add_pedido_id_to_gastos_operativos.php` | ⚠️ Pendiente `php artisan migrate` |
+| routes/web.php | Ruta `POST /tienda/lead` | ✅ Listo |
+
+---
+
+### Pendiente inmediato (próxima sesión)
+
+1. **Hacer git push** desde PowerShell:
+   ```powershell
+   Remove-Item .git\HEAD.lock -Force -ErrorAction SilentlyContinue
+   Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
+   git add -A
+   git commit -m "feat: flujo pedido completo + modulo financiero automatico + estados simplificados"
+   git push origin main
+   ```
+
+2. **Correr migración en Railway** (consola Railway o terminal del servidor):
+   ```bash
+   php artisan migrate
+   ```
+
+3. **Resolver pedido Kawasaki sin transacción:**
+   - Opción A: Ir a Pedidos → cancelar el pedido → luego hacer nuevo pedido y confirmar con el modal nuevo
+   - Opción B: "Ver transacciones → + Registrar Pago" → seleccionar pedido Kawasaki → monto $3.500.000 → estado Aprobada
+
+4. **Verificar que el nuevo flujo funciona** creando un pedido de prueba desde la tienda y confirmándolo desde el panel admin con el modal de método de pago
+
+5. **Verificar Dashboard financiero** después del paso anterior — debe mostrar Ingresos: $3.5M, Costo: $2.5M, Ganancia: $1M
+
+---
+
+### Contexto crítico
+
+**Stack:** Laravel 13 + Inertia.js + React + Tailwind + PostgreSQL en Railway  
+**URL producción:** `https://courageous-flexibility-production-1a54.up.railway.app`  
+**Cuenta bancaria GadGet Store:** Bancolombia Ahorros 01997866718
+
+**Regla de negocio — cuándo entra el dinero:**
+- Ingreso se registra cuando admin **confirma** el pedido (no cuando se entrega)
+- Al confirmar → `PedidoController` crea `Transaccion` con `estado=aprobada` y `pagado_en=now()`
+- Stock se descuenta al **crear** el pedido (reserva el producto)
+- Stock se restaura al **cancelar**
+
+**Tabla estados Pedido (simplificada):**
+```
+pendiente  → stock reservado, esperando confirmación de pago
+confirmado → pago confirmado, Transaccion creada, finanzas actualizadas
+entregado  → producto recibido por cliente
+cancelado  → stock restaurado, pedido anulado
+```
+
+**Métodos de pago válidos en Transaccion:** efectivo, transferencia, nequi, tarjeta_credito, tarjeta_debito, otro
+

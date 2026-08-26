@@ -12,15 +12,17 @@
 |
 | PENSAR — Métodos importantes de este modelo:
 |
-|   esValido()   → verifica si el cupón puede usarse ahora mismo
-|   calcularDescuento($total) → calcula cuánto descuenta sobre un monto
-|   incrementarUso() → suma 1 al contador de usos
+|   esValido($total)         → verifica si el cupón puede usarse ahora mismo
+|   aplicaAItems($ids, $cats)→ verifica si el cupón aplica a los ítems del carrito
+|   calcularDescuento($total, $subtotalElegible) → calcula el descuento real
+|   incrementarUso()         → suma 1 al contador de usos
 |
 */
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -41,7 +43,6 @@ class Cupon extends Model
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }
-            // El código siempre en mayúsculas
             if (!empty($model->codigo)) {
                 $model->codigo = strtoupper($model->codigo);
             }
@@ -60,6 +61,7 @@ class Cupon extends Model
         'fecha_inicio',
         'fecha_expiracion',
         'activo',
+        'aplica_a',
     ];
 
     protected function casts(): array
@@ -82,12 +84,22 @@ class Cupon extends Model
     |----------------------------------------------------------------------
     */
 
-    /**
-     * Pedidos que usaron este cupón.
-     */
+    /** Pedidos que usaron este cupón. */
     public function pedidos(): HasMany
     {
         return $this->hasMany(Pedido::class, 'cupon_id');
+    }
+
+    /** Categorías donde aplica (cuando aplica_a = 'categorias'). */
+    public function categorias(): BelongsToMany
+    {
+        return $this->belongsToMany(Categoria::class, 'cupon_categoria', 'cupon_id', 'categoria_id');
+    }
+
+    /** Productos donde aplica (cuando aplica_a = 'productos'). */
+    public function productos(): BelongsToMany
+    {
+        return $this->belongsToMany(Producto::class, 'cupon_producto', 'cupon_id', 'producto_id');
     }
 
     /*
@@ -96,69 +108,100 @@ class Cupon extends Model
     |----------------------------------------------------------------------
     |
     | Centralizamos la lógica del cupón aquí para no repetirla en
-    | el controller. El controller solo llama: $cupon->esValido($total)
+    | el controller.
     |
     */
 
     /**
      * ¿El cupón puede usarse ahora mismo?
      *
-     * Verifica 4 condiciones:
+     * Verifica 5 condiciones:
      *   1. activo = true
-     *   2. No ha expirado (fecha_expiracion)
-     *   3. Aún no llegó a su límite de usos
-     *   4. El monto del pedido supera el mínimo de compra
+     *   2. Ha comenzado (fecha_inicio)
+     *   3. No ha expirado (fecha_expiracion)
+     *   4. Aún no llegó a su límite de usos
+     *   5. El monto del pedido supera el mínimo de compra
      *
      * @param float $totalPedido — monto total del pedido ANTES del descuento
      * @return array ['valido' => bool, 'mensaje' => string]
      */
     public function esValido(float $totalPedido): array
     {
-        // 1. ¿Está activo?
         if (!$this->activo) {
             return ['valido' => false, 'mensaje' => 'Este cupón no está activo.'];
         }
 
-        // 2. ¿Ha comenzado? (fecha_inicio)
         if ($this->fecha_inicio && now()->startOfDay()->lt($this->fecha_inicio)) {
             return ['valido' => false, 'mensaje' => 'Este cupón aún no está vigente.'];
         }
 
-        // 3. ¿Ha expirado?
         if ($this->fecha_expiracion && now()->startOfDay()->gt($this->fecha_expiracion)) {
             return ['valido' => false, 'mensaje' => 'Este cupón ya expiró.'];
         }
 
-        // 4. ¿Tiene usos disponibles?
         if ($this->limite_usos !== null && $this->usos_actuales >= $this->limite_usos) {
             return ['valido' => false, 'mensaje' => 'Este cupón ya fue usado el máximo de veces.'];
         }
 
-        // 5. ¿Supera el mínimo de compra?
         if ($totalPedido < $this->minimo_compra) {
             $minimo = number_format($this->minimo_compra, 0, ',', '.');
-            return ['valido' => false, 'mensaje' => "Este cupón requiere una compra mínima de $\${$minimo}."];
+            return ['valido' => false, 'mensaje' => "Este cupón requiere una compra mínima de \${$minimo}."];
         }
 
         return ['valido' => true, 'mensaje' => 'Cupón válido.'];
     }
 
     /**
-     * Calcula el descuento en pesos sobre un monto dado.
+     * ¿Este cupón aplica a los ítems del carrito?
      *
-     * Ejemplos:
-     *   tipo=porcentaje, valor=20, total=200.000 → descuento = 40.000
-     *   tipo=porcentaje, valor=20, total=200.000, maximo_descuento=30.000 → descuento = 30.000 (tope)
-     *   tipo=valor_fijo, valor=50.000, total=200.000 → descuento = 50.000
-     *   tipo=valor_fijo, valor=50.000, total=30.000  → descuento = 30.000 (no puede superar el total)
+     * Retorna el subtotal elegible (la parte del carrito sobre la que aplica
+     * el descuento). Si no aplica a ningún ítem, devuelve 0.
      *
-     * @param float $total — monto del pedido ANTES del descuento
-     * @return float — descuento en pesos a restar
+     * @param array $items   Array de ['producto_id' => string, 'subtotal' => float, 'categoria_id' => string|null]
+     * @return float         Subtotal elegible para descuento (0 si no aplica)
      */
-    public function calcularDescuento(float $total): float
+    public function subtotalElegible(array $items): float
     {
+        // 'todo' → aplica a todos los ítems
+        if ($this->aplica_a === 'todo') {
+            return (float) collect($items)->sum('subtotal');
+        }
+
+        // 'categorias' → solo ítems cuya categoría esté en la lista
+        if ($this->aplica_a === 'categorias') {
+            $catIds = $this->categorias()->pluck('categorias.id')->toArray();
+            if (empty($catIds)) return 0;
+
+            return (float) collect($items)
+                ->filter(fn($i) => in_array($i['categoria_id'] ?? null, $catIds))
+                ->sum('subtotal');
+        }
+
+        // 'productos' → solo ítems cuyo producto_id esté en la lista
+        if ($this->aplica_a === 'productos') {
+            $prodIds = $this->productos()->pluck('productos.id')->toArray();
+            if (empty($prodIds)) return 0;
+
+            return (float) collect($items)
+                ->filter(fn($i) => in_array($i['producto_id'] ?? null, $prodIds))
+                ->sum('subtotal');
+        }
+
+        return 0;
+    }
+
+    /**
+     * Calcula el descuento en pesos sobre el subtotal elegible.
+     *
+     * @param float $subtotalElegible — monto elegible para descuento
+     * @return float                  — descuento en pesos a restar
+     */
+    public function calcularDescuento(float $subtotalElegible): float
+    {
+        if ($subtotalElegible <= 0) return 0;
+
         if ($this->tipo === 'porcentaje') {
-            $descuento = $total * ($this->valor / 100);
+            $descuento = $subtotalElegible * ($this->valor / 100);
 
             // Aplicar tope si existe
             if ($this->maximo_descuento !== null) {
@@ -169,8 +212,8 @@ class Cupon extends Model
             $descuento = $this->valor;
         }
 
-        // El descuento no puede superar el total del pedido
-        return min($descuento, $total);
+        // El descuento no puede superar el subtotal elegible
+        return min($descuento, $subtotalElegible);
     }
 
     /**

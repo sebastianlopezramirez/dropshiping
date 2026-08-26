@@ -26,6 +26,7 @@ namespace App\Http\Controllers\Tienda;
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use App\Models\ConsentimientoMarketing;
+use App\Models\Cupon;
 use App\Models\ItemPedido;
 use App\Models\Pedido;
 use App\Models\Producto;
@@ -91,6 +92,7 @@ class CarritoController extends Controller
             'metodo_pago'        => 'required|in:contra_entrega,transferencia',
             'acepta_datos'       => 'nullable|boolean',
             'cedula'             => 'nullable|string|max:20',
+            'cupon_codigo'       => 'nullable|string|max:50',
             'items'              => 'required|array|min:1',
             'items.*.producto_id' => 'required|uuid|exists:productos,id',
             'items.*.cantidad'    => 'required|integer|min:1|max:99',
@@ -153,11 +155,38 @@ class CarritoController extends Controller
             ];
         }
 
-        $total = $subtotal + $costoEnvio;
+        $subtotalBase = $subtotal; // subtotal antes de descuento
+        $descuento    = 0;
+        $cuponUsado   = null;
+
+        // ─── VALIDAR CUPÓN (si se proporcionó) ────────────────────────────
+        if (!empty($data['cupon_codigo'])) {
+            $cupon = Cupon::where('codigo', strtoupper($data['cupon_codigo']))->first();
+
+            if ($cupon) {
+                $validacion = $cupon->esValido($subtotal);
+
+                if ($validacion['valido']) {
+                    // Construir items con categoria_id para verificar restricciones
+                    $itemsConCategoria = collect($itemsData)->map(fn($i) => [
+                        'producto_id'  => $i['producto_id'],
+                        'categoria_id' => $productos->get($i['producto_id'])?->categoria_id ?? null,
+                        'subtotal'     => $i['subtotal'],
+                    ])->toArray();
+
+                    $cupon->loadMissing(['categorias', 'productos']);
+                    $subtotalElegible = $cupon->subtotalElegible($itemsConCategoria);
+                    $descuento        = $cupon->calcularDescuento($subtotalElegible);
+                    $cuponUsado       = $cupon;
+                }
+            }
+        }
+
+        $total = $subtotalBase + $costoEnvio - $descuento;
 
         // ─── GUARDAR EN BD ─────────────────────────────────────────────────
         try {
-            $pedido = DB::transaction(function () use ($data, $subtotal, $costoEnvio, $total, $itemsData) {
+            $pedido = DB::transaction(function () use ($data, $subtotalBase, $costoEnvio, $total, $itemsData, $descuento, $cuponUsado) {
 
                 $pedido = Pedido::create([
                     'cliente_nombre'   => $data['cliente_nombre'],
@@ -168,15 +197,21 @@ class CarritoController extends Controller
                     'departamento'     => 'Antioquia',
                     'estado'           => 'pendiente',
                     'metodo_pago'      => $data['metodo_pago'],
-                    'subtotal'         => $subtotal,
+                    'subtotal'         => $subtotalBase,
                     'costo_envio'      => $costoEnvio,
-                    'descuento'        => 0,
+                    'descuento'        => $descuento,
                     'total'            => $total,
                     'notas'            => $data['notas'] ?? null,
+                    'cupon_id'         => $cuponUsado?->id,
                 ]);
 
                 foreach ($itemsData as $item) {
                     ItemPedido::create(array_merge($item, ['pedido_id' => $pedido->id]));
+                }
+
+                // Registrar uso del cupón
+                if ($cuponUsado) {
+                    $cuponUsado->incrementarUso();
                 }
 
                 return $pedido;

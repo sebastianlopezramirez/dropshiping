@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, bugs, pendientes]
 created: 2026-08-04
-updated: 2026-08-22
+updated: 2026-08-24
 status: evergreen
 descripcion: "Bugs activos y acciones inmediatas del proyecto"
 ---
@@ -13,55 +13,84 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 
 ---
 
-## ⚠️ BUGS ACTIVOS
+## 🔴 BUG ACTIVO — Sesión 15 (2026-08-24)
 
-✅ **Ningún bug activo** al cierre de la sesión 13.
+### Dashboard financiero muestra Ingresos $0
 
----
+**Síntoma:** Ingresos = $0, Costo productos = $2.5M, Ganancia = -$2.5M
 
-## 📋 PENDIENTES — Próxima sesión (14)
+**Causa raíz:** El pedido de la Moto Kawasaky fue confirmado ANTES de que el nuevo código (modal de método de pago + auto-creación de Transaccion) fuera desplegado en Railway. No existe ninguna fila en la tabla `transacciones` para ese pedido.
 
-### Paso 1 — Git push
-- [ ] Ejecutar `Remove-Item D:\proyectos\dropshiping\.git\HEAD.lock` si existe
-- [ ] `git push origin main` (commit `a3a8101` — Excel importer con PhpSpreadsheet)
+**Código nuevo — ya implementado y en archivos locales:**
+```
+Admin → clic "→ Confirmado" en Pedidos/Index.jsx
+  → Modal pregunta método de pago (efectivo/transferencia/nequi...)
+  → router.patch({ estado: 'confirmado', metodo_pago_confirmacion: 'efectivo' })
+  → PedidoController@cambiarEstado() crea Transaccion aprobada con pagado_en = now()
+  → Dashboard financiero muestra el ingreso
+```
 
-### Paso 2 — Importación masiva
-- [ ] Verificar que Railway desplegó con PhpSpreadsheet activo
-- [ ] Abrir `productos_importar.xlsx`, completar `precio_costo` y `stock`
-- [ ] Verificar que slug `decoracion` existe en la DB (admin → Categorías)
-- [ ] Subir el Excel en admin → Productos → Importar
+**Estado del fix:** ⚠️ Código listo localmente — git push NO confirmado aún
 
-### Paso 3 — Deploy prep (FASE 10 Bloque B)
-- [ ] Dominio custom en Railway
-- [ ] Wompi producción (credenciales reales)
-- [ ] Sitemap XML automático
+**Pasos para resolver:**
 
----
+1. **PowerShell — hacer push:**
+   ```powershell
+   Remove-Item .git\HEAD.lock -Force -ErrorAction SilentlyContinue
+   Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
+   git add -A
+   git commit -m "feat: flujo pedido completo + modulo financiero automatico + estados simplificados"
+   git push origin main
+   ```
 
-## 📌 BACKLOG — Pendientes de baja prioridad
+2. **Railway — correr migración (nueva columna pedido_id en gastos):**
+   ```bash
+   php artisan migrate
+   ```
 
-| Item | Módulo | Prioridad |
-|---|---|---|
-| Capitalización en `Pedidos/Crear.jsx` (cliente_nombre, ciudad) | FASE 4 | Baja |
-| Capitalización en `Usuarios/Crear.jsx` (campo nombre) | FASE 2 | Baja |
-| Perfil proveedor: campos adicionales (condiciones_pago, metodos_pago) | FASE 6 | Baja |
-| Notificaciones por email al cambiar estado de pedido | FASE 4 | Media |
-| Exportar lista de pedidos a Excel/CSV | FASE 4 | Media |
-| Sitemap XML automático | FASE 8 | Media |
-| Importar imágenes al importar productos masivamente | FASE 3 | Media |
+3. **Resolver el pedido de la Kawasaki (sin transacción):**
+   - Opción A (recomendada): Pedidos → cancelar pedido Kawasaki → nuevo pedido → confirmar con modal → se crea Transaccion automáticamente
+   - Opción B (rápida): "Ver transacciones → + Registrar Pago" → seleccionar pedido → monto $3.500.000 → Aprobada
 
----
-
-## 📌 Reglas aprendidas — Convenciones fijas
-
-| Regla | Descripción |
-|---|---|
-| `--legacy-peer-deps` solo en `npm install` | Nunca en `npm run build` — CACError |
-| `HEAD.lock` en git | Borrar con `Remove-Item` antes de push si git falla |
-| Theme claro: `[data-tema="claro"]` | Todas las reglas CSS de modo luz usan este selector |
-| Importar Excel | `IOFactory::createReaderForFile()` + `setReadDataOnly(true)` |
-| `categoria_slug` en importación | El slug debe existir en DB o el producto queda sin categoría |
+4. **Verificar resultado esperado:**
+   - Ingresos: $3.500.000
+   - Costo productos: $2.500.000
+   - Ganancia bruta: $1.000.000 ✓
 
 ---
 
+## 📋 PENDIENTES — Próxima sesión (16)
+
+### Crítico
+- [ ] Git push con todos los cambios de sesión 15 (ver comando arriba)
+- [ ] `php artisan migrate` en Railway (migración pedido_id en gastos_operativos)
+- [ ] Resolver Transaccion faltante del pedido Kawasaki
+
+### Verificación post-deploy
+- [ ] Crear pedido de prueba desde tienda → confirmar con modal → verificar que Transaccion se crea
+- [ ] Verificar Dashboard financiero muestra Ingresos correctos
+- [ ] Verificar filtro por día en Dashboard funciona
+- [ ] Verificar "Ver Transacciones" muestra fecha/hora exacta
+
+### Mejoras pendientes identificadas
+- [ ] Gastos/Editar.jsx — agregar selector de pedido (solo se hizo en Crear.jsx)
+- [ ] Ver si hay pedidos confirmados anteriores sin transacción (query SQL de diagnóstico)
+
+---
+
+## 📊 DIAGNÓSTICO RÁPIDO — SQL
+
+Si en producción hay pedidos confirmados sin transacción, correr en Railway Console:
+```sql
+SELECT p.numero_pedido, p.cliente_nombre, p.total, p.estado
+FROM pedidos p
+LEFT JOIN transacciones t ON t.pedido_id = p.id
+WHERE p.estado IN ('confirmado', 'entregado')
+AND t.id IS NULL
+AND p.eliminado_en IS NULL;
+```
+
+---
+
+*Actualizado: Sesión 15 — 2026-08-24*
 *Relacionado: [[📝 Sesiones de Trabajo]] · [[📊 Tablero de Fases]]*

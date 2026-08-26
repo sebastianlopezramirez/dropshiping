@@ -16,7 +16,7 @@
 */
 
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
 import { useCart } from '@/Context/CartContext';
 
@@ -50,10 +50,53 @@ export default function Carrito({ tarifas, categorias }) {
 
     const setData = (key, value) => setDataState(prev => ({ ...prev, [key]: value }));
 
+    // ─── CUPÓN ────────────────────────────────────────────────────────────
+    const [codigoCupon, setCodigoCupon]   = useState('');
+    const [cuponInfo, setCuponInfo]       = useState(null);   // { valido, descuento, cupon_id, mensaje }
+    const [cuponCargando, setCuponCargando] = useState(false);
+    const cuponTimer = useRef(null);
+
+    const aplicarCupon = async () => {
+        if (!codigoCupon.trim()) return;
+        setCuponCargando(true);
+        setCuponInfo(null);
+
+        try {
+            const itemsPayload = items.map(i => ({
+                producto_id:  i.id,
+                categoria_id: i.categoria_id ?? null,
+                subtotal:     i.precio * i.cantidad,
+            }));
+
+            const res = await fetch(route('cupones.validar'), {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                },
+                body: JSON.stringify({ codigo: codigoCupon, items: itemsPayload }),
+            });
+
+            const json = await res.json();
+            setCuponInfo(json);
+        } catch {
+            setCuponInfo({ valido: false, mensaje: 'Error al validar el cupón. Intenta de nuevo.' });
+        } finally {
+            setCuponCargando(false);
+        }
+    };
+
+    const limpiarCupon = () => {
+        setCodigoCupon('');
+        setCuponInfo(null);
+    };
+
     // ─── TARIFA SELECCIONADA ───────────────────────────────────────────────
     const tarifaSeleccionada = tarifas.find(t => t.nombre === data.municipio);
     const costoEnvio  = tarifaSeleccionada ? tarifaSeleccionada.precio : 0;
-    const total       = subtotal + costoEnvio;
+    const descuento   = cuponInfo?.valido ? (cuponInfo.descuento ?? 0) : 0;
+    const total       = subtotal + costoEnvio - descuento;
     const esAreaMetro = tarifaSeleccionada?.tipo === 'area_metro';
 
     const areaMetro = tarifas.filter(t => t.tipo === 'area_metro');
@@ -74,7 +117,8 @@ export default function Carrito({ tarifas, categorias }) {
     const confirmarConMetodo = (metodo) => {
         const payload = {
             ...data,
-            metodo_pago: metodo,
+            metodo_pago:  metodo,
+            cupon_codigo: cuponInfo?.valido ? codigoCupon : null,
             items: items.map(i => ({
                 producto_id: i.id,
                 cantidad:    i.cantidad,
@@ -302,6 +346,40 @@ export default function Carrito({ tarifas, categorias }) {
 
                                 <h2 className="text-lg font-bold text-white mb-5">Resumen</h2>
 
+                                {/* ── Campo cupón ──────────────────────── */}
+                                <div className="mb-5">
+                                    <label className="block text-xs text-gray-400 mb-1.5">Código de descuento</label>
+                                    {cuponInfo?.valido ? (
+                                        <div className="flex items-center gap-2 bg-green-900/30 border border-green-700/50 rounded-xl px-3 py-2">
+                                            <span className="text-green-400 text-sm flex-1">
+                                                🏷️ <strong>{codigoCupon.toUpperCase()}</strong> — {cuponInfo.mensaje}
+                                            </span>
+                                            <button type="button" onClick={limpiarCupon}
+                                                className="text-gray-500 hover:text-red-400 transition text-xs shrink-0">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={codigoCupon}
+                                                onChange={e => { setCodigoCupon(e.target.value.toUpperCase()); setCuponInfo(null); }}
+                                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), aplicarCupon())}
+                                                placeholder="VERANO20"
+                                                className="flex-1 bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            />
+                                            <button type="button" onClick={aplicarCupon} disabled={cuponCargando || !codigoCupon.trim()}
+                                                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-white text-xs font-medium rounded-xl transition whitespace-nowrap">
+                                                {cuponCargando ? '...' : 'Aplicar'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {cuponInfo && !cuponInfo.valido && (
+                                        <p className="text-red-400 text-xs mt-1.5">{cuponInfo.mensaje}</p>
+                                    )}
+                                </div>
+
                                 <div className="space-y-3 text-sm mb-5">
                                     <div className="flex justify-between text-gray-400">
                                         <span>Subtotal</span>
@@ -313,6 +391,12 @@ export default function Carrito({ tarifas, categorias }) {
                                             {data.municipio ? cop(costoEnvio) : '—'}
                                         </span>
                                     </div>
+                                    {descuento > 0 && (
+                                        <div className="flex justify-between text-green-400">
+                                            <span>Descuento cupón</span>
+                                            <span>− {cop(descuento)}</span>
+                                        </div>
+                                    )}
                                     <div className="border-t border-gray-800 pt-3 flex justify-between font-bold text-base">
                                         <span className="text-white">Total</span>
                                         <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">

@@ -145,7 +145,7 @@ php artisan cache:clear
 | proveedor     | Proveedor@test.com     |              | proveedor             |
 | administrador | admin@test.com         |              | admin                 |
 | cliente       | cliente@test.com       |              | cliente               |
-|               |                        |              |                       |
+| proveedor-2   | Proveedor-2@test.com   | Admin2024!   | proveedor             |
 
 > 🔄 **Pendiente**: Crear usuarios para proveedores y administradores adicionales desde `/usuarios`
 

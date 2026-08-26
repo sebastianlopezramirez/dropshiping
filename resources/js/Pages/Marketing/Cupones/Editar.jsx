@@ -5,6 +5,7 @@
 */
 
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 // FUERA del componente para evitar re-creación en cada render (bug de foco)
@@ -31,7 +32,60 @@ function Campo({ label, name, type = 'text', placeholder = '', nota = '', data, 
     );
 }
 
-export default function Editar({ cupon }) {
+// ── Selector de ítems (categorías o productos) ─────────────────────────────
+function SelectorItems({ items, seleccionados, onChange, placeholder }) {
+    const [buscar, setBuscar] = useState('');
+    const filtrados = items.filter(i =>
+        i.nombre.toLowerCase().includes(buscar.toLowerCase())
+    );
+    const toggle = (id) => {
+        if (seleccionados.includes(id)) {
+            onChange(seleccionados.filter(s => s !== id));
+        } else {
+            onChange([...seleccionados, id]);
+        }
+    };
+    return (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="p-2 border-b border-gray-200 bg-gray-50">
+                <input
+                    type="text"
+                    value={buscar}
+                    onChange={e => setBuscar(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full text-sm border-0 bg-transparent focus:outline-none px-1"
+                />
+            </div>
+            <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
+                {filtrados.length === 0 ? (
+                    <p className="text-xs text-gray-400 px-3 py-2">Sin resultados</p>
+                ) : filtrados.map(item => (
+                    <label key={item.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={seleccionados.includes(item.id)}
+                            onChange={() => toggle(item.id)}
+                            className="w-4 h-4 text-emerald-600 rounded"
+                        />
+                        <span className="text-sm text-gray-700 flex-1">{item.nombre}</span>
+                        {item.precio_venta !== undefined && (
+                            <span className="text-xs text-gray-400">
+                                ${Number(item.precio_venta).toLocaleString('es-CO')}
+                            </span>
+                        )}
+                    </label>
+                ))}
+            </div>
+            {seleccionados.length > 0 && (
+                <div className="px-3 py-1.5 bg-emerald-50 border-t border-gray-200 text-xs text-emerald-700">
+                    {seleccionados.length} seleccionado{seleccionados.length !== 1 ? 's' : ''}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function Editar({ cupon, categorias = [], productos = [], categoriaIds = [], productoIds = [] }) {
 
     const { data, setData, put, processing, errors } = useForm({
         codigo:           cupon.codigo           || '',
@@ -44,16 +98,15 @@ export default function Editar({ cupon }) {
         fecha_inicio:     cupon.fecha_inicio     || '',
         fecha_expiracion: cupon.fecha_expiracion || '',
         activo:           cupon.activo           ?? true,
+        aplica_a:         cupon.aplica_a         || 'todo',
+        categoria_ids:    categoriaIds,
+        producto_ids:     productoIds,
     });
 
     const submit = (e) => {
         e.preventDefault();
         put(route('cupones.update', cupon.id));
     };
-
-    const fmt = (v) => new Intl.NumberFormat('es-CO', {
-        style: 'currency', currency: 'COP', minimumFractionDigits: 0,
-    }).format(v ?? 0);
 
     return (
         <AuthenticatedLayout header={
@@ -159,7 +212,7 @@ export default function Editar({ cupon }) {
                         )}
                     </div>
 
-                    {/* Restricciones */}
+                    {/* Restricciones de tiempo/uso */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
                         <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Restricciones</h3>
                         <Campo label="Compra mínima ($)" name="minimo_compra" type="number"
@@ -172,6 +225,56 @@ export default function Editar({ cupon }) {
                             <Campo label="Fecha de expiración" name="fecha_expiracion" type="date"
                                 data={data} onChange={setData} errors={errors} />
                         </div>
+                    </div>
+
+                    {/* Aplica a */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                        <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">¿A qué aplica?</h3>
+                        <p className="text-xs text-gray-500 -mt-2">Define si el descuento aplica a todos los productos o solo a categorías / productos específicos.</p>
+
+                        <div className="grid grid-cols-3 gap-3">
+                            {[
+                                { value: 'todo',        label: 'Todo el carrito',      desc: 'Aplica sin restricción' },
+                                { value: 'categorias',  label: 'Categorías',            desc: 'Solo ciertas categorías' },
+                                { value: 'productos',   label: 'Productos específicos', desc: 'Solo productos elegidos' },
+                            ].map(op => (
+                                <button key={op.value} type="button"
+                                    onClick={() => setData('aplica_a', op.value)}
+                                    className={`p-3 border-2 rounded-xl text-left transition
+                                        ${data.aplica_a === op.value
+                                            ? 'border-emerald-500 bg-emerald-50'
+                                            : 'border-gray-200 hover:border-gray-300'}`}>
+                                    <div className="font-semibold text-sm text-gray-800">{op.label}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{op.desc}</div>
+                                </button>
+                            ))}
+                        </div>
+
+                        {data.aplica_a === 'categorias' && (
+                            <div>
+                                <p className="text-sm text-gray-600 mb-2">Selecciona las categorías donde aplica el cupón:</p>
+                                <SelectorItems
+                                    items={categorias}
+                                    seleccionados={data.categoria_ids}
+                                    onChange={ids => setData('categoria_ids', ids)}
+                                    placeholder="Buscar categoría..."
+                                />
+                                {errors.categoria_ids && <p className="mt-1 text-xs text-red-600">{errors.categoria_ids}</p>}
+                            </div>
+                        )}
+
+                        {data.aplica_a === 'productos' && (
+                            <div>
+                                <p className="text-sm text-gray-600 mb-2">Selecciona los productos donde aplica el cupón:</p>
+                                <SelectorItems
+                                    items={productos}
+                                    seleccionados={data.producto_ids}
+                                    onChange={ids => setData('producto_ids', ids)}
+                                    placeholder="Buscar producto..."
+                                />
+                                {errors.producto_ids && <p className="mt-1 text-xs text-red-600">{errors.producto_ids}</p>}
+                            </div>
+                        )}
                     </div>
 
                     {/* Estado */}
