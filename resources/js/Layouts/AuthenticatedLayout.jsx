@@ -53,36 +53,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
                                 <NavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</NavLink>
                                 <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</NavLink>
-
-                                {/* Dropdown Finanzas */}
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <button type="button"
-                                            className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors
-                                                ${route().current('reportes.*') || route().current('transacciones.*') || route().current('gastos.*') || route().current('pagos-proveedor.*')
-                                                    ? 'text-white bg-gray-800'
-                                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
-                                            Finanzas
-                                            <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                            </svg>
-                                        </button>
-                                    </Dropdown.Trigger>
-                                    <Dropdown.Content contentClasses="py-1 bg-gray-900 border border-gray-700 w-52">
-                                        <Dropdown.Link href={route('reportes.financiero')} className="text-gray-300 hover:bg-gray-800 hover:text-white">
-                                            📊 Dashboard financiero
-                                        </Dropdown.Link>
-                                        <Dropdown.Link href={route('pagos-proveedor.index')} className="text-gray-300 hover:bg-gray-800 hover:text-white">
-                                            🏭 Pagos a proveedores
-                                        </Dropdown.Link>
-                                        <Dropdown.Link href={route('transacciones.index')} className="text-gray-300 hover:bg-gray-800 hover:text-white">
-                                            💳 Transacciones
-                                        </Dropdown.Link>
-                                        <Dropdown.Link href={route('gastos.index')} className="text-gray-300 hover:bg-gray-800 hover:text-white">
-                                            📋 Gastos operativos
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
+                                <NavLink href={route('reportes.financiero')} active={route().current('reportes.*') || route().current('transacciones.*') || route().current('gastos.*')}>Finanzas</NavLink>
                             </div>
                         </div>
 

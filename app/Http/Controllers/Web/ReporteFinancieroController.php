@@ -34,7 +34,9 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\GastoOperativo;
 use App\Models\ItemPedido;
+use App\Models\PagoProveedor;
 use App\Models\Pedido;
+use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -45,9 +47,10 @@ class ReporteFinancieroController extends Controller
     public function dashboard(Request $request): Response
     {
         // ── PERÍODO SELECCIONADO ──────────────────────────────────────────
-        $año = (int) ($request->año ?? now()->year);
-        $mes = (int) ($request->mes ?? now()->month);
-        $dia = $request->filled('dia') ? (int) $request->dia : null;
+        $año         = (int) ($request->año ?? now()->year);
+        $mes         = (int) ($request->mes ?? now()->month);
+        $dia         = $request->filled('dia') ? (int) $request->dia : null;
+        $proveedorId = $request->filled('proveedor_id') ? $request->proveedor_id : null;
 
         // ── ESTADOS QUE CUENTAN COMO VENTA ───────────────────────────────
         $estadosVenta = [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO];
@@ -87,9 +90,7 @@ class ReporteFinancieroController extends Controller
             ? round(($utilidad / (float) $ingresos) * 100, 1)
             : 0;
 
-        // ── 5. TABLA DE VENTAS ────────────────────────────────────────────
-        // PENSAR: Cargamos pedidos con sus ítems, producto y proveedor,
-        // y también los gastos vinculados directamente al pedido.
+        // ── 5. TABLA DE VENTAS (con filtro opcional por proveedor) ───────────
         $pedidosVenta = Pedido::with([
             'items.producto.proveedores',
             'gastosAsociados',
@@ -98,6 +99,9 @@ class ReporteFinancieroController extends Controller
         ->whereYear('creado_en', $año)
         ->whereMonth('creado_en', $mes)
         ->when($dia, fn($q) => $q->whereDay('creado_en', $dia))
+        ->when($proveedorId, fn($q) => $q->whereHas('items.producto.proveedores',
+            fn($q2) => $q2->where('proveedores.id', $proveedorId)
+        ))
         ->orderBy('creado_en', 'desc')
         ->get();
 
@@ -155,26 +159,38 @@ class ReporteFinancieroController extends Controller
         // ── 6. GASTOS POR CATEGORÍA ───────────────────────────────────────
         $gastosPorCategoria = GastoOperativo::resumenPorCategoria($año, $mes);
 
-        // ── 7. HISTORIAL MENSUAL (últimos 6 meses) ────────────────────────
-        $historial = collect(range(5, 0))->map(function ($mesesAtras) use ($estadosVenta) {
-            $fecha    = now()->subMonths($mesesAtras);
-            $a        = $fecha->year;
-            $m        = $fecha->month;
-            $ing      = Pedido::whereIn('estado', $estadosVenta)
-                ->whereYear('creado_en', $a)->whereMonth('creado_en', $m)
-                ->sum('total');
-            $gastos   = GastoOperativo::delPeriodo($a, $m)->sum('monto');
-            return [
-                'mes'      => $fecha->format('M Y'),
-                'ingresos' => (float) $ing,
-                'gastos'   => (float) $gastos,
-                'ganancia' => (float) ($ing - $gastos),
-            ];
-        });
+        // ── 7. LISTA DE PROVEEDORES para filtro + sección de pagos ────────
+        $proveedores = Proveedor::activos()
+            ->with(['pagosRecibidos'])
+            ->get()
+            ->map(function ($p) use ($estadosVenta) {
+                $idsProductos = $p->productos()->pluck('productos.id');
+
+                $deudaTotal = ItemPedido::whereIn('producto_id', $idsProductos)
+                    ->whereHas('pedido', fn($q) => $q->whereIn('estado', $estadosVenta))
+                    ->selectRaw('COALESCE(SUM(precio_costo * cantidad), 0) as total')
+                    ->value('total') ?? 0;
+
+                $totalPagado = $p->pagosRecibidos->sum('monto');
+
+                return [
+                    'id'             => $p->id,
+                    'nombre_empresa' => $p->nombre_empresa,
+                    'deuda_total'    => (float) $deudaTotal,
+                    'total_pagado'   => (float) $totalPagado,
+                    'saldo_pendiente'=> (float) ($deudaTotal - $totalPagado),
+                    'ultimos_pagos'  => $p->pagosRecibidos->sortByDesc('fecha_pago')->take(5)->values()->map(fn($pg) => [
+                        'monto'      => (float) $pg->monto,
+                        'fecha_pago' => optional($pg->fecha_pago)->format('d/m/Y'),
+                        'metodo_pago'=> $pg->metodo_pago,
+                        'concepto'   => $pg->concepto,
+                    ]),
+                ];
+            });
 
         return Inertia::render('Finanzas/Dashboard', [
-            'periodo' => compact('año', 'mes', 'dia'),
-            'kpis'    => [
+            'periodo'     => compact('año', 'mes', 'dia') + ['proveedor_id' => $proveedorId],
+            'kpis'        => [
                 'ingresos'        => (float) $ingresos,
                 'costo_productos' => (float) $costoProductos,
                 'gastos_op'       => (float) $gastosOp,
@@ -183,7 +199,9 @@ class ReporteFinancieroController extends Controller
             ],
             'ventas'              => $ventas,
             'gastos_por_categoria'=> $gastosPorCategoria,
-            'historial'           => $historial,
+            'proveedores'         => $proveedores,
+            'metodos_pago'        => PagoProveedor::METODOS,
+            'flash'               => ['exito' => session('exito'), 'error' => session('error')],
         ]);
     }
 }

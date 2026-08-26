@@ -156,6 +156,8 @@ class PagoProveedorController extends Controller
             'registrado_por' => auth()->id(),
         ]);
 
-        return back()->with('exito', 'Pago registrado correctamente. El proveedor ya puede verlo en su portal.');
+        return redirect()
+            ->route('reportes.financiero')
+            ->with('exito', 'Pago registrado. El proveedor ya puede verlo en su portal.');
     }
 }
