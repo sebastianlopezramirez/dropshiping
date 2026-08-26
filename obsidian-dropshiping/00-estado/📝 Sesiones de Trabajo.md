@@ -411,3 +411,95 @@ cancelado  → stock restaurado, pedido anulado
 
 **Métodos de pago válidos en Transaccion:** efectivo, transferencia, nequi, tarjeta_credito, tarjeta_debito, otro
 
+
+---
+
+## Sesión 16 — 2026-08-25
+
+**Duración:** ~3 horas  
+**Fase:** FASE 6 — Portal Proveedores (UI) + FASE 7 — Marketing (Cupones conectados)
+
+---
+
+### Completado
+
+#### Portal de Proveedores — Dashboard simplificado (Portal/Dashboard.jsx)
+- [x] Accesos rápidos reemplazados: de 4 botones pequeños a 2 tarjetas descriptivas
+- [x] Tarjeta **Tienda** → link directo a `tienda.index` con texto explicativo (hover naranja)
+- [x] Tarjeta **Mi portal de proveedor** → descripción del portal + 3 sub-botones internos (Mis productos, Pedidos, Mis cobros)
+- [x] Eliminado botón "Nuevo producto" del dashboard (ya está en el nav del PortalLayout)
+- [x] Diseño: grid 1col mobile / 2col desktop, bordes naranja/esmeralda según sección
+
+#### Diagnóstico — Sistema de Cupones
+- [x] Identificado que el modelo `Cupon` y el `CuponController` (CRUD + endpoint AJAX `/cupones/validar`) estaban completamente construidos
+- [x] Identificado que el carrito (`Carrito.jsx`) y `CarritoController::store()` **no estaban conectados** al sistema de cupones
+- [x] `descuento` hardcodeado a 0 en controller — campo cupón inexistente en frontend
+
+#### Sistema de Cupones — Conexión completa + Restricciones por categoría/producto
+- [x] **Migración** `2026_08_25_000001_add_aplica_a_to_cupones_and_pivot_tables.php`:
+  - Columna `aplica_a` ENUM(`todo`, `categorias`, `productos`) en tabla `cupones`
+  - Tabla pivot `cupon_categoria` (cupon_id + categoria_id, FK cascade)
+  - Tabla pivot `cupon_producto` (cupon_id + producto_id, FK cascade)
+- [x] **Modelo `Cupon.php`** actualizado:
+  - Relaciones `categorias()` y `productos()` (BelongsToMany via pivot)
+  - Método `subtotalElegible(array $items)` — calcula subtotal sobre ítems elegibles según restricción
+  - `calcularDescuento()` actualizado — opera sobre subtotal elegible, no total del carrito
+  - `aplica_a` en `$fillable`
+- [x] **`CuponController.php`** actualizado:
+  - `validar()`: recibe `items[]` (producto_id, categoria_id, subtotal), verifica restricciones, devuelve descuento sobre ítems elegibles
+  - `create()` y `edit()`: pasan `categorias` y `productos` al frontend
+  - `store()` y `update()`: sincronizan tablas pivot según `aplica_a`
+  - Helper privado `sincronizarPivot()`: limpia tabla no usada, sincroniza la activa
+- [x] **`CarritoController::store()`** actualizado:
+  - Acepta `cupon_codigo` nullable en validación
+  - Valida cupón: `esValido()` + `subtotalElegible()` + `calcularDescuento()`
+  - Guarda `cupon_id`, `descuento` reales en el pedido (no hardcodeado)
+  - Llama `$cupon->incrementarUso()` dentro de la transacción DB
+  - Añadido `use App\Models\Cupon` en imports
+- [x] **`Carrito.jsx`** actualizado:
+  - Estado `codigoCupon`, `cuponInfo`, `cuponCargando`
+  - Función `aplicarCupon()` — fetch AJAX a `POST /cupones/validar` con items del carrito
+  - Campo código cupón en columna de resumen con botón "Aplicar"
+  - Si válido: muestra banner verde con código y mensaje, botón ✕ para limpiar
+  - Si inválido: muestra mensaje de error en rojo
+  - Fila "Descuento cupón" visible solo cuando `descuento > 0`
+  - `cupon_codigo` incluido en payload al confirmar pedido
+- [x] **`Crear.jsx`** (Marketing/Cupones) actualizado:
+  - Recibe props `categorias` y `productos` desde el controller
+  - Nueva sección "¿A qué aplica?" con 3 tarjetas: Todo el carrito / Categorías / Productos específicos
+  - Cuando selecciona "Categorías" → `SelectorItems` con búsqueda + checkboxes
+  - Cuando selecciona "Productos" → `SelectorItems` con búsqueda + precio + checkboxes
+  - `categoria_ids` y `producto_ids` en `useForm`
+  - Componente `SelectorItems` definido FUERA del componente principal (estabilidad de referencia)
+- [x] **`Editar.jsx`** (Marketing/Cupones) actualizado:
+  - Igual que Crear pero pre-carga `categoriaIds` y `productoIds` del cupón existente
+  - Props: `cupon`, `categorias`, `productos`, `categoriaIds`, `productoIds`
+
+---
+
+### Archivos modificados o creados
+
+| Archivo | Cambio |
+|---|---|
+| `Portal/Dashboard.jsx` | Accesos rápidos → 2 tarjetas descriptivas |
+| `migrations/2026_08_25_000001_...php` | Nueva: aplica_a + cupon_categoria + cupon_producto |
+| `Models/Cupon.php` | Relaciones pivot + subtotalElegible() |
+| `Controllers/Web/CuponController.php` | validar() con items, pivot sync, props frontend |
+| `Controllers/Tienda/CarritoController.php` | Cupón aplicado en store() |
+| `Pages/Tienda/Carrito.jsx` | Campo cupón + AJAX + descuento en resumen |
+| `Pages/Marketing/Cupones/Crear.jsx` | Sección Aplica a + SelectorItems |
+| `Pages/Marketing/Cupones/Editar.jsx` | Igual que Crear + pre-carga seleccionados |
+
+---
+
+### Pendiente — Push desde PowerShell
+
+```powershell
+cd D:\proyectos\dropshiping
+git add .
+git commit -m "feat: portal dashboard simplificado + cupones conectados al carrito con restricciones por categoria/producto"
+git push origin main
+```
+
+Railway corre `php artisan migrate` automáticamente — la nueva migración de cupones se aplicará al desplegar.
+

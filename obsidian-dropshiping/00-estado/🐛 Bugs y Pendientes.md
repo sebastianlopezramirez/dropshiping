@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, bugs, pendientes]
 created: 2026-08-04
-updated: 2026-08-24
+updated: 2026-08-25
 status: evergreen
 descripcion: "Bugs activos y acciones inmediatas del proyecto"
 ---
@@ -13,74 +13,44 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 
 ---
 
-## 🔴 BUG ACTIVO — Sesión 15 (2026-08-24)
+## ✅ RESUELTO — Sesión 16 (2026-08-25)
 
-### Dashboard financiero muestra Ingresos $0
-
-**Síntoma:** Ingresos = $0, Costo productos = $2.5M, Ganancia = -$2.5M
-
-**Causa raíz:** El pedido de la Moto Kawasaky fue confirmado ANTES de que el nuevo código (modal de método de pago + auto-creación de Transaccion) fuera desplegado en Railway. No existe ninguna fila en la tabla `transacciones` para ese pedido.
-
-**Código nuevo — ya implementado y en archivos locales:**
-```
-Admin → clic "→ Confirmado" en Pedidos/Index.jsx
-  → Modal pregunta método de pago (efectivo/transferencia/nequi...)
-  → router.patch({ estado: 'confirmado', metodo_pago_confirmacion: 'efectivo' })
-  → PedidoController@cambiarEstado() crea Transaccion aprobada con pagado_en = now()
-  → Dashboard financiero muestra el ingreso
-```
-
-**Estado del fix:** ⚠️ Código listo localmente — git push NO confirmado aún
-
-**Pasos para resolver:**
-
-1. **PowerShell — hacer push:**
-   ```powershell
-   Remove-Item .git\HEAD.lock -Force -ErrorAction SilentlyContinue
-   Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
-   git add -A
-   git commit -m "feat: flujo pedido completo + modulo financiero automatico + estados simplificados"
-   git push origin main
-   ```
-
-2. **Railway — correr migración (nueva columna pedido_id en gastos):**
-   ```bash
-   php artisan migrate
-   ```
-
-3. **Resolver el pedido de la Kawasaki (sin transacción):**
-   - Opción A (recomendada): Pedidos → cancelar pedido Kawasaki → nuevo pedido → confirmar con modal → se crea Transaccion automáticamente
-   - Opción B (rápida): "Ver transacciones → + Registrar Pago" → seleccionar pedido → monto $3.500.000 → Aprobada
-
-4. **Verificar resultado esperado:**
-   - Ingresos: $3.500.000
-   - Costo productos: $2.500.000
-   - Ganancia bruta: $1.000.000 ✓
+### Cupones no conectados al carrito
+- **Era:** `descuento` hardcodeado en 0, campo cupón inexistente en `Carrito.jsx`
+- **Fix:** `CarritoController::store()` acepta `cupon_codigo`, valida, descuenta y llama `incrementarUso()`
+- **Fix:** `Carrito.jsx` tiene campo AJAX, muestra descuento en resumen y envía `cupon_codigo` al servidor
 
 ---
 
-## 📋 PENDIENTES — Próxima sesión (16)
+## 📋 PENDIENTES — Próxima sesión (17)
 
-### Crítico
-- [ ] Git push con todos los cambios de sesión 15 (ver comando arriba)
-- [ ] `php artisan migrate` en Railway (migración pedido_id en gastos_operativos)
-- [ ] Resolver Transaccion faltante del pedido Kawasaki
+### 🔴 Crítico — Hacer push
+```powershell
+cd D:\proyectos\dropshiping
+git add .
+git commit -m "feat: portal dashboard simplificado + cupones conectados al carrito con restricciones por categoria/producto"
+git push origin main
+```
+Railway corre `php artisan migrate` automáticamente (migración nuevas tablas pivot de cupones).
 
-### Verificación post-deploy
-- [ ] Crear pedido de prueba desde tienda → confirmar con modal → verificar que Transaccion se crea
-- [ ] Verificar Dashboard financiero muestra Ingresos correctos
-- [ ] Verificar filtro por día en Dashboard funciona
-- [ ] Verificar "Ver Transacciones" muestra fecha/hora exacta
+### 🟡 Verificación post-deploy
+- [ ] Crear cupón "TODO" en admin → aplicar en carrito → confirmar que descuento aparece y pedido guarda `cupon_id`
+- [ ] Crear cupón con restricción "Categorías" → aplicar con productos de esa categoría → verificar que solo descuenta lo elegible
+- [ ] Crear cupón con restricción "Productos específicos" → verificar igual
+- [ ] Verificar que `usos_actuales` sube al completar un pedido con cupón
+- [ ] Verificar que cupón con `limite_usos = 1` bloquea el segundo uso
 
-### Mejoras pendientes identificadas
-- [ ] Gastos/Editar.jsx — agregar selector de pedido (solo se hizo en Crear.jsx)
-- [ ] Ver si hay pedidos confirmados anteriores sin transacción (query SQL de diagnóstico)
+### 🟢 Mejoras identificadas (futuro)
+- [ ] `Gastos/Editar.jsx` — agregar selector de pedido (solo se hizo en Crear.jsx — sesión 15)
+- [ ] Ver si hay pedidos confirmados anteriores sin transacción (query SQL diagnóstico en sesión 15)
+- [ ] Mostrar en `Pedidos/Ver.jsx` o admin si el pedido usó cupón y cuál
+- [ ] En el email/WhatsApp de confirmación: incluir el código de cupón aplicado y el descuento
 
 ---
 
-## 📊 DIAGNÓSTICO RÁPIDO — SQL
+## 📊 DIAGNÓSTICO RÁPIDO — SQL útiles
 
-Si en producción hay pedidos confirmados sin transacción, correr en Railway Console:
+### Pedidos confirmados sin transacción (sesión 15)
 ```sql
 SELECT p.numero_pedido, p.cliente_nombre, p.total, p.estado
 FROM pedidos p
@@ -90,7 +60,16 @@ AND t.id IS NULL
 AND p.eliminado_en IS NULL;
 ```
 
+### Cupones usados con descuento (verificación sesión 16)
+```sql
+SELECT p.numero_pedido, p.descuento, c.codigo, c.usos_actuales
+FROM pedidos p
+JOIN cupones c ON c.id = p.cupon_id
+ORDER BY p.creado_en DESC
+LIMIT 10;
+```
+
 ---
 
-*Actualizado: Sesión 15 — 2026-08-24*
+*Actualizado: Sesión 16 — 2026-08-25*
 *Relacionado: [[📝 Sesiones de Trabajo]] · [[📊 Tablero de Fases]]*
