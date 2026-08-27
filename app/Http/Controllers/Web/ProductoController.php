@@ -36,6 +36,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
+use App\Models\Cupon;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -166,8 +167,18 @@ class ProductoController extends Controller
                                ->ordenadas()
                                ->get(['id', 'nombre', 'padre_id']);
 
+        // Cupones activos y vigentes para seleccionar en el formulario
+        $cupones = Cupon::where('estado', 'activo')
+                        ->where(function ($q) {
+                            $q->whereNull('fecha_fin')
+                              ->orWhere('fecha_fin', '>=', now());
+                        })
+                        ->orderBy('codigo')
+                        ->get(['id', 'codigo', 'descripcion', 'tipo', 'valor']);
+
         return Inertia::render('Productos/Crear', [
             'categorias' => $categorias,
+            'cupones'    => $cupones,
         ]);
     }
 
@@ -213,6 +224,8 @@ class ProductoController extends Controller
             // Spatie acepta múltiples imágenes. mimes: jpg, png y webp
             'imagenes_nuevas'   => 'nullable|array',
             'imagenes_nuevas.*' => 'image|max:5120|mimes:jpeg,jpg,png,webp',
+            'cupon_ids'         => 'nullable|array',
+            'cupon_ids.*'       => 'string|exists:cupones,id',
         ]);
 
         // permite_despacho viene como checkbox → puede estar ausente (false) o presente (true)
@@ -260,6 +273,10 @@ class ProductoController extends Controller
             }
         }
 
+        // ─── PASO 3: Sincronizar cupones en el pivot ──────────────────────
+        // sync([]) con array vacío desvincula todos; con IDs los vincula.
+        $producto->cupones()->sync($request->input('cupon_ids', []));
+
         return redirect()
             ->route('productos.index')
             ->with('exito', 'Producto creado exitosamente.');
@@ -294,16 +311,28 @@ class ProductoController extends Controller
     */
     public function edit(Producto $producto): Response
     {
-        // Cargamos 'media' para mostrar las imágenes actuales con botón de borrar
-        $producto->load('media');
+        // Cargamos 'media' y 'cupones' del producto
+        $producto->load('media', 'cupones');
 
         $categorias = Categoria::activas()
                                ->ordenadas()
                                ->get(['id', 'nombre', 'padre_id']);
 
+        // Todos los cupones activos disponibles
+        $cupones = Cupon::where('estado', 'activo')
+                        ->where(function ($q) {
+                            $q->whereNull('fecha_fin')
+                              ->orWhere('fecha_fin', '>=', now());
+                        })
+                        ->orderBy('codigo')
+                        ->get(['id', 'codigo', 'descripcion', 'tipo', 'valor']);
+
         return Inertia::render('Productos/Editar', [
-            'producto'   => $producto,
-            'categorias' => $categorias,
+            'producto'          => $producto,
+            'categorias'        => $categorias,
+            'cupones'           => $cupones,
+            // IDs de cupones ya asignados (para pre-marcar los checkboxes)
+            'cuponesAsignados'  => $producto->cupones->pluck('id'),
         ]);
     }
 
@@ -341,6 +370,8 @@ class ProductoController extends Controller
             'sku'               => 'nullable|string|max:50|unique:productos,sku,' . $producto->id,
             'imagenes_nuevas'   => 'nullable|array',
             'imagenes_nuevas.*' => 'image|max:2048',
+            'cupon_ids'         => 'nullable|array',
+            'cupon_ids.*'       => 'string|exists:cupones,id',
         ]);
 
         $datos['permite_contraentrega'] = $request->boolean('permite_contraentrega', false);
@@ -368,6 +399,9 @@ class ProductoController extends Controller
                          ->toMediaCollection('imagenes');
             }
         }
+
+        // ─── PASO 3: Sincronizar cupones en el pivot ──────────────────────
+        $producto->cupones()->sync($request->input('cupon_ids', []));
 
         return redirect()
             ->route('productos.index')

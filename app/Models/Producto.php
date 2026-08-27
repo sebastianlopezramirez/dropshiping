@@ -220,6 +220,23 @@ class Producto extends Model implements HasMedia
         return $this->proveedores()->wherePivot('es_principal', true);
     }
 
+    /**
+     * Cupones de descuento aplicables a este producto.
+     *
+     * TIPO: BelongsToMany (pivot: cupon_producto)
+     * Uso: $producto->cupones → colección de cupones
+     *      $producto->cupones()->sync([...ids...]) → sincronizar
+     */
+    public function cupones(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\Cupon::class,
+            'cupon_producto',
+            'producto_id',
+            'cupon_id'
+        );
+    }
+
     /*
     |----------------------------------------------------------------------
     | SCOPES — Filtros reutilizables

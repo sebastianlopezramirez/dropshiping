@@ -72,7 +72,7 @@ import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { capitalize } from '@/utils/texto';
 
-export default function Editar({ producto, categorias }) {
+export default function Editar({ producto, categorias, cupones = [], cuponesAsignados = [] }) {
 
     /*
     |----------------------------------------------------------------------
@@ -152,6 +152,7 @@ export default function Editar({ producto, categorias }) {
         meta_titulo:       producto.meta_titulo       ?? '',
         meta_descripcion:  producto.meta_descripcion  ?? '',
         imagenes_nuevas:   [],
+        cupon_ids:         cuponesAsignados,
     });
 
     /*
@@ -552,6 +553,58 @@ export default function Editar({ producto, categorias }) {
                     <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-400">
                         ID: {producto.id} · Creado: {producto.creado_en}
                     </div>
+
+                    {/* ── MARKETING: Cupones aplicables ───────────────── */}
+                    {cupones.length > 0 && (
+                        <div className="border border-violet-200 rounded-lg p-4 bg-violet-50 space-y-3">
+                            <p className="text-sm font-semibold text-violet-800">🏷️ Cupones de descuento</p>
+                            <p className="text-xs text-violet-600">
+                                Seleccioná los cupones del módulo Marketing que aplican a este producto.
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {cupones.map(cupon => {
+                                    const seleccionado = data.cupon_ids.includes(cupon.id);
+                                    const etiqueta = cupon.tipo === 'porcentaje'
+                                        ? `${cupon.valor}% OFF`
+                                        : `$${Number(cupon.valor).toLocaleString('es-CO')} OFF`;
+                                    return (
+                                        <label
+                                            key={cupon.id}
+                                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                                                seleccionado
+                                                    ? 'bg-violet-100 border-violet-400'
+                                                    : 'bg-white border-gray-200 hover:border-violet-300'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={seleccionado}
+                                                onChange={() => {
+                                                    const ids = seleccionado
+                                                        ? data.cupon_ids.filter(id => id !== cupon.id)
+                                                        : [...data.cupon_ids, cupon.id];
+                                                    setData('cupon_ids', ids);
+                                                }}
+                                                className="mt-0.5 accent-violet-600"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-mono font-bold text-violet-700">{cupon.codigo}</p>
+                                                <p className="text-xs text-gray-500">{cupon.descripcion}</p>
+                                                <span className="inline-block mt-1 text-xs bg-violet-200 text-violet-800 px-2 py-0.5 rounded-full font-medium">
+                                                    {etiqueta}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            {data.cupon_ids.length > 0 && (
+                                <p className="text-xs text-violet-700 font-medium">
+                                    ✅ {data.cupon_ids.length} cupón(es) seleccionado(s)
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* ── BOTONES ──────────────────────────────────────── */}
                     <div className="flex items-center justify-end gap-3">
