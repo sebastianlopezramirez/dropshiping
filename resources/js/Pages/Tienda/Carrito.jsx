@@ -16,7 +16,7 @@
 */
 
 import { Head, Link, router } from '@inertiajs/react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
 import { useCart } from '@/Context/CartContext';
 
@@ -36,6 +36,9 @@ export default function Carrito({ tarifas, categorias }) {
     const [processing, setProcessing] = useState(false);
     const [errors, setErrors] = useState({});
 
+    // Cliente identificado (si tiene sesión)
+    const [clienteIdentificado, setClienteIdentificado] = useState(false);
+
     // ─── FORMULARIO (estado local, no useForm) ─────────────────────────────
     const [data, setDataState] = useState({
         cliente_nombre:   '',
@@ -49,6 +52,34 @@ export default function Carrito({ tarifas, categorias }) {
     });
 
     const setData = (key, value) => setDataState(prev => ({ ...prev, [key]: value }));
+
+    // ─── PRE-LLENAR FORMULARIO SI EL CLIENTE TIENE SESIÓN ─────────────────
+    //
+    // PENSAR — ¿Por qué hacemos fetch en lugar de pasar los datos por props?
+    //
+    //   La sesión del cliente es independiente de la sesión Laravel/Inertia.
+    //   El controller de carrito no sabe si hay un cliente logueado; quien
+    //   sabe es ClienteController::datosActuales(). Llamamos a esa ruta AJAX
+    //   al montar el componente para pre-llenar si aplica.
+    //
+    useEffect(() => {
+        fetch(route('tienda.cuenta.datos'), { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(json => {
+                if (json.identificado && json.datos) {
+                    setClienteIdentificado(true);
+                    setDataState(prev => ({
+                        ...prev,
+                        cliente_nombre:   json.datos.nombre   || prev.cliente_nombre,
+                        cliente_telefono: json.datos.celular  || prev.cliente_telefono,
+                        municipio:        json.datos.municipio || prev.municipio,
+                        direccion:        json.datos.direccion || prev.direccion,
+                        ciudad:           json.datos.ciudad    || prev.ciudad,
+                    }));
+                }
+            })
+            .catch(() => {}); // silencioso si falla — el cliente llena manualmente
+    }, []);
 
     // ─── CUPÓN ────────────────────────────────────────────────────────────
     const [codigoCupon, setCodigoCupon]   = useState('');

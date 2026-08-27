@@ -41,6 +41,7 @@ use App\Http\Controllers\Web\PagoProveedorController;
 use App\Http\Controllers\Web\UsuarioController;
 use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Tienda\CarritoController;
+use App\Http\Controllers\Tienda\ClienteController;
 use App\Http\Controllers\Web\TarifaController;
 use App\Http\Controllers\Web\MarketingExportController;
 use App\Http\Controllers\Web\LeadController;
@@ -109,6 +110,30 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
     // La ruta homónima dentro del grupo auth es solo para el admin.
     Route::post('cupones/validar', [CuponController::class, 'validar'])
          ->name('cupones.validar');
+
+    // ── CUENTA DEL CLIENTE ────────────────────────────────────────────────
+    // Rutas públicas de cuenta — identificación por cédula + PIN (no password)
+    // Van ANTES de {slug} para que 'cuenta' no se resuelva como slug de producto
+
+    // GET  /tienda/cuenta         → formulario de identificación (o dashboard si ya logueado)
+    Route::get('cuenta', [ClienteController::class, 'login'])
+         ->name('cuenta.login');
+
+    // POST /tienda/cuenta/login   → verificar cédula + últimos 4 del celular
+    Route::post('cuenta/login', [ClienteController::class, 'autenticar'])
+         ->name('cuenta.autenticar');
+
+    // GET  /tienda/cuenta/mis-pedidos → dashboard del cliente identificado
+    Route::get('cuenta/mis-pedidos', [ClienteController::class, 'cuenta'])
+         ->name('cuenta');
+
+    // POST /tienda/cuenta/logout  → cerrar sesión del cliente
+    Route::post('cuenta/logout', [ClienteController::class, 'logout'])
+         ->name('cuenta.logout');
+
+    // GET  /tienda/cuenta/datos   → AJAX — retorna datos del cliente para pre-llenar carrito
+    Route::get('cuenta/datos', [ClienteController::class, 'datosActuales'])
+         ->name('cuenta.datos');
 
     // GET /tienda/{slug} — Detalle de un producto (va AL FINAL)
     Route::get('{slug}', [TiendaController::class, 'show'])
@@ -281,6 +306,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Exportar base de datos de clientes con consentimiento de marketing
         Route::get('marketing/exportar', [MarketingExportController::class, 'exportar'])
              ->name('marketing.exportar');
+
+        // Exportar lista de clientes registrados (cédula + historial de pedidos)
+        Route::get('clientes/exportar', [ClienteController::class, 'exportarExcel'])
+             ->name('clientes.exportar');
 
         /*
         |----------------------------------------------------------------------

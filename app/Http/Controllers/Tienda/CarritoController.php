@@ -30,6 +30,7 @@ use App\Models\Cupon;
 use App\Models\ItemPedido;
 use App\Models\Pedido;
 use App\Models\Producto;
+use App\Models\Cliente;
 use App\Models\TarifaDomicilio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -184,11 +185,60 @@ class CarritoController extends Controller
 
         $total = $subtotalBase + $costoEnvio - $descuento;
 
+        // ─── CREAR / ACTUALIZAR CLIENTE ───────────────────────────────────
+        //
+        // PENSAR — ¿Cuándo se crea un cliente?
+        //
+        //   Si el cliente proporciona su cédula en el formulario, creamos
+        //   o actualizamos su registro. La próxima vez podrá identificarse
+        //   con cédula + últimos 4 del celular para ver sus pedidos.
+        //
+        //   Si ya está identificado (tiene sesión), usamos ese cliente_id.
+        //
+        $clienteId = null;
+
+        // Caso 1: cliente ya identificado en sesión
+        if (session()->has('cliente_id')) {
+            $clienteId = session('cliente_id');
+
+            // Actualizar sus datos con los del formulario (pueden haber cambiado)
+            Cliente::where('id', $clienteId)->update([
+                'nombre'    => $data['cliente_nombre'],
+                'celular'   => $data['cliente_telefono'],
+                'email'     => $data['cliente_email'] ?? null,
+                'ciudad'    => $data['municipio'],
+                'municipio' => $data['municipio'],
+                'direccion' => $data['direccion'],
+            ]);
+        }
+        // Caso 2: el cliente proporciona cédula en el formulario
+        elseif (!empty($data['cedula'])) {
+            $cliente = Cliente::updateOrCreate(
+                ['cedula' => $data['cedula']],  // buscar por cédula
+                [                                // crear/actualizar con:
+                    'nombre'    => $data['cliente_nombre'],
+                    'celular'   => $data['cliente_telefono'],
+                    'email'     => $data['cliente_email'] ?? null,
+                    'ciudad'    => $data['municipio'],
+                    'municipio' => $data['municipio'],
+                    'direccion' => $data['direccion'],
+                ]
+            );
+            $clienteId = $cliente->id;
+
+            // Crear sesión automáticamente para que el cliente vea sus pedidos
+            session([
+                'cliente_id'     => $cliente->id,
+                'cliente_nombre' => $cliente->nombre,
+            ]);
+        }
+
         // ─── GUARDAR EN BD ─────────────────────────────────────────────────
         try {
-            $pedido = DB::transaction(function () use ($data, $subtotalBase, $costoEnvio, $total, $itemsData, $descuento, $cuponUsado) {
+            $pedido = DB::transaction(function () use ($data, $subtotalBase, $costoEnvio, $total, $itemsData, $descuento, $cuponUsado, $clienteId) {
 
                 $pedido = Pedido::create([
+                    'cliente_id'       => $clienteId,           // ← vincula al cliente
                     'cliente_nombre'   => $data['cliente_nombre'],
                     'cliente_email'    => $data['cliente_email']    ?? '',
                     'cliente_telefono' => $data['cliente_telefono'],
