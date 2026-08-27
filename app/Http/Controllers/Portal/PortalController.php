@@ -267,12 +267,14 @@ class PortalController extends Controller
         $proveedor = $this->obtenerProveedor();
 
         // Seguridad: verifica que el producto pertenece a este proveedor
-        $tienePivot = DB::table('producto_proveedor')
+        // PENSAR — Usamos first() en vez de exists() para obtener los valores actuales
+        //   del pivot (precio, stock) y poder comparar con los nuevos en notas_revision.
+        $pivot = DB::table('producto_proveedor')
             ->where('producto_id', $producto->id)
             ->where('proveedor_id', $proveedor->id)
-            ->exists();
+            ->first();
 
-        abort_if(!$tienePivot, 403, 'No tienes acceso a este producto.');
+        abort_if(!$pivot, 403, 'No tienes acceso a este producto.');
 
         $datos = $request->validate([
             'nombre'                 => ['required', 'string', 'max:200'],
@@ -300,42 +302,64 @@ class PortalController extends Controller
         //   El admin verá este texto en el panel antes de aprobar el producto.
         //   Le dice exactamente qué cambió, sin tener que comparar manualmente.
         //   Se limpia cuando el admin guarda el producto (ProductoController@update).
+        // ─── Construir resumen COMPLETO de cambios ────────────────────────────
+        // Comparamos cada campo editable contra su valor actual en BD.
+        // El resultado se guarda en notas_revision para que el admin vea
+        // exactamente qué cambió antes de re-activar el producto.
         $cambios = [];
+        $fmt     = fn($v) => '$' . number_format((int) round((float) $v), 0, ',', '.');
 
+        // 1. Nombre
         $nombreNuevo = \Illuminate\Support\Str::title(trim($datos['nombre']));
-        // Comparar en minúsculas para evitar falsos positivos por capitalización
         if (mb_strtolower($nombreNuevo) !== mb_strtolower((string) $producto->nombre)) {
             $cambios[] = "Nombre: \"{$producto->nombre}\" → \"{$nombreNuevo}\"";
         }
 
-        // Redondear a entero para evitar diferencias de punto flotante (pesos colombianos no tienen centavos)
+        // 2. Precio de costo (comparar como entero — pesos sin centavos)
         $precioNuevo = (int) round((float) $datos['precio']);
-        $precioViejo = (int) round((float) $producto->precio_costo);
+        $precioViejo = (int) round((float) $pivot->precio); // del pivot, no del producto
         if ($precioNuevo !== $precioViejo) {
-            $fmt = fn($v) => '$' . number_format($v, 0, ',', '.');
             $cambios[] = "Precio de costo: {$fmt($precioViejo)} → {$fmt($precioNuevo)}";
         }
 
-        // Normalizar null y string vacío como equivalentes para evitar falso "descripción actualizada"
-        $descripcionNueva = $datos['descripcion'] ?? null;
-        $descripcionVieja = $producto->descripcion;
-        if (trim((string) $descripcionNueva) !== trim((string) $descripcionVieja)) {
-            $cambios[] = 'Descripción actualizada.';
+        // 3. Stock (del pivot — es el stock que gestiona el proveedor)
+        $stockNuevo = (int) $datos['stock'];
+        $stockViejo = (int) $pivot->stock;
+        if ($stockNuevo !== $stockViejo) {
+            $cambios[] = "Stock: {$stockViejo} → {$stockNuevo} unidades";
         }
 
+        // 4. Descripción (normalizar null/"" para evitar falso positivo)
+        $descripcionNueva = trim((string) ($datos['descripcion'] ?? ''));
+        $descripcionVieja = trim((string) ($producto->descripcion ?? ''));
+        if ($descripcionNueva !== $descripcionVieja) {
+            $cambios[] = 'Descripción: actualizada.';
+        }
+
+        // 5. Permite contraentrega
+        $contraentregaNueva = $request->boolean('permite_contraentrega', false);
+        $contraentregaVieja = (bool) $producto->permite_contraentrega;
+        if ($contraentregaNueva !== $contraentregaVieja) {
+            $cambios[] = 'Contraentrega: ' . ($contraentregaVieja ? 'Sí' : 'No') . ' → ' . ($contraentregaNueva ? 'Sí' : 'No');
+        }
+
+        // 6. Imágenes eliminadas
         if (!empty($datos['eliminar_imagenes'])) {
             $cambios[] = 'Eliminó ' . count($datos['eliminar_imagenes']) . ' imagen(es).';
         }
+
+        // 7. Imágenes nuevas
+        $imagenesAgregadas = 0;
         foreach (['imagen_0', 'imagen_1', 'imagen_2'] as $campo) {
-            if ($request->hasFile($campo)) {
-                $cambios[] = 'Agregó imagen(es) nuevas.';
-                break;
-            }
+            if ($request->hasFile($campo)) $imagenesAgregadas++;
+        }
+        if ($imagenesAgregadas > 0) {
+            $cambios[] = "Agregó {$imagenesAgregadas} imagen(es) nueva(s).";
         }
 
         $notasRevision = empty($cambios)
-            ? 'El proveedor editó el producto (sin cambios detectados).'
-            : 'Cambios realizados por el proveedor: ' . implode(' | ', $cambios);
+            ? 'El proveedor guardó el producto sin cambios detectados.'
+            : implode("\n", array_map(fn($c) => "• {$c}", $cambios));
 
         // Actualizar campos en la tabla productos
         // PENSAR — ¿Por qué volvemos a 'inactivo'?
@@ -370,8 +394,7 @@ class PortalController extends Controller
 
         // Actualizar precio y stock en la pivot producto_proveedor
         DB::table('producto_proveedor')
-            ->where('producto_id', $producto->id)
-            ->where('proveedor_id', $proveedor->id)
+            ->where('id', $pivot->id)
             ->update([
                 'precio'           => $datos['precio'],
                 'stock'            => $datos['stock'],

@@ -215,8 +215,12 @@ export default function Editar({ producto, categorias }) {
                 {/* Banner: cambios del proveedor pendientes de revisión */}
                 {producto.notas_revision && (
                     <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl">
-                        <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ El proveedor editó este producto — revisá antes de activar</p>
-                        <p className="text-sm text-amber-700">{producto.notas_revision}</p>
+                        <p className="text-sm font-semibold text-amber-800 mb-2">⚠️ El proveedor editó este producto — revisá antes de activar</p>
+                        <ul className="space-y-1">
+                            {producto.notas_revision.split('\n').map((linea, i) => (
+                                <li key={i} className="text-sm text-amber-700">{linea}</li>
+                            ))}
+                        </ul>
                         <p className="text-xs text-amber-500 mt-2">Al guardar el producto, este aviso desaparecerá automáticamente.</p>
                     </div>
                 )}

@@ -467,4 +467,5 @@ class PedidoController extends Controller
 
         return back()->with('exito', 'Estado actualizado a: ' . $nuevoEstado);
     }
+
 }

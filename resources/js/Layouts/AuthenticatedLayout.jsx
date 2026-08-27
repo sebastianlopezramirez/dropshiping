@@ -15,7 +15,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth, productosPendientes = 0 } = usePage().props;
+    const { auth, productosPendientes = 0, pedidosPendientes = 0 } = usePage().props;
     const user = auth.user;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
@@ -41,6 +41,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             {/* Nav desktop */}
                             <div className="hidden sm:flex items-center gap-1">
                                 <NavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</NavLink>
+
                                 <NavLink href={route('productos.index')} active={route().current('productos.*')}>
                                     <span className="flex items-center gap-1.5">
                                         Productos
@@ -51,7 +52,18 @@ export default function AuthenticatedLayout({ header, children }) {
                                         )}
                                     </span>
                                 </NavLink>
-                                <NavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</NavLink>
+
+                                <NavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>
+                                    <span className="flex items-center gap-1.5">
+                                        Pedidos
+                                        {pedidosPendientes > 0 && (
+                                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold leading-none">
+                                                {pedidosPendientes > 9 ? '9+' : pedidosPendientes}
+                                            </span>
+                                        )}
+                                    </span>
+                                </NavLink>
+
                                 <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</NavLink>
                                 <NavLink href={route('reportes.financiero')} active={route().current('reportes.*') || route().current('transacciones.*') || route().current('gastos.*')}>Finanzas</NavLink>
                             </div>
@@ -127,9 +139,28 @@ export default function AuthenticatedLayout({ header, children }) {
                 <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' sm:hidden border-t border-gray-800'}>
                     <div className="space-y-1 px-4 py-3">
                         <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('productos.index')} active={route().current('productos.*')}>Productos</ResponsiveNavLink>
-                        <ResponsiveNavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>Pedidos</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('productos.index')} active={route().current('productos.*')}>
+                            <span className="flex items-center gap-2">
+                                Productos
+                                {productosPendientes > 0 && (
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-white text-xs font-bold">
+                                        {productosPendientes > 9 ? '9+' : productosPendientes}
+                                    </span>
+                                )}
+                            </span>
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('pedidos.index')} active={route().current('pedidos.*')}>
+                            <span className="flex items-center gap-2">
+                                Pedidos
+                                {pedidosPendientes > 0 && (
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                                        {pedidosPendientes > 9 ? '9+' : pedidosPendientes}
+                                    </span>
+                                )}
+                            </span>
+                        </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('reportes.financiero')} active={route().current('reportes.*')}>Finanzas</ResponsiveNavLink>
                     </div>
 
                     <div className="border-t border-gray-800 px-4 py-3">

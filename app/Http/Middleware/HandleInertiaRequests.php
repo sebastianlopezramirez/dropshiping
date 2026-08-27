@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Pedido;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,6 +46,12 @@ class HandleInertiaRequests extends Middleware
             'productosPendientes' => fn () => $request->user()
                 && $request->user()->hasAnyRole(['super_administrador', 'administrador'])
                 ? Producto::where('estado', 'inactivo')->count()
+                : 0,
+
+            // Pedidos pendientes de gestión — badge rojo en el nav
+            'pedidosPendientes' => fn () => $request->user()
+                && $request->user()->hasAnyRole(['super_administrador', 'administrador'])
+                ? Pedido::where('estado', 'pendiente')->count()
                 : 0,
 
             // Flash messages compartidos con todas las páginas React
