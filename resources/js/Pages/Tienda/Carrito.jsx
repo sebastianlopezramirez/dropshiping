@@ -38,6 +38,9 @@ export default function Carrito({ tarifas, categorias }) {
 
     // Cliente identificado (si tiene sesión)
     const [clienteIdentificado, setClienteIdentificado] = useState(false);
+    // Si está identificado, por defecto NO muestra el formulario completo
+    // (solo muestra la tarjeta "¿Misma dirección?")
+    const [cambiarDireccion, setCambiarDireccion] = useState(false);
 
     // ─── FORMULARIO (estado local, no useForm) ─────────────────────────────
     const [data, setDataState] = useState({
@@ -257,6 +260,61 @@ export default function Carrito({ tarifas, categorias }) {
                             <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 space-y-5">
                                 <h2 className="text-lg font-bold text-white">Datos del pedido</h2>
 
+                                {/* ── TARJETA "¿MISMA DIRECCIÓN?" ─────────────
+                                    Solo aparece cuando el cliente está identificado
+                                    y aún no pidió cambiar dirección.
+                                ──────────────────────────────────────────────── */}
+                                {clienteIdentificado && !cambiarDireccion && (
+                                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-green-400 text-lg">✅</span>
+                                            <div>
+                                                <p className="text-white font-semibold text-sm">{data.cliente_nombre}</p>
+                                                <p className="text-gray-400 text-xs">{data.cliente_telefono}</p>
+                                            </div>
+                                        </div>
+
+                                        {data.direccion && (
+                                            <div className="bg-gray-800/60 rounded-lg px-3 py-2 text-sm">
+                                                <p className="text-gray-500 text-xs mb-0.5">Entregar en</p>
+                                                <p className="text-gray-200">{data.direccion}</p>
+                                                {data.municipio && (
+                                                    <p className="text-gray-400 text-xs mt-0.5">{data.municipio}</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="flex gap-2 pt-1">
+                                            <span className="flex-1 text-center bg-green-500/20 text-green-400 text-sm font-medium py-2 rounded-lg border border-green-500/30">
+                                                ✓ Usar esta dirección
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCambiarDireccion(true)}
+                                                className="flex-1 text-center bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium py-2 rounded-lg transition-colors border border-gray-600"
+                                            >
+                                                Cambiar dirección
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ── FORMULARIO COMPLETO ──────────────────────
+                                    Siempre visible si NO está identificado.
+                                    Visible si está identificado pero pidió cambiar.
+                                ──────────────────────────────────────────────── */}
+                                {(!clienteIdentificado || cambiarDireccion) && (<>
+
+                                {cambiarDireccion && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setCambiarDireccion(false)}
+                                        className="text-xs text-gray-500 hover:text-orange-400 transition-colors"
+                                    >
+                                        ← Volver a usar dirección guardada
+                                    </button>
+                                )}
+
                                 <div>
                                     <label className="block text-sm text-gray-400 mb-1.5">Nombre completo *</label>
                                     <input type="text" value={data.cliente_nombre}
@@ -277,13 +335,15 @@ export default function Carrito({ tarifas, categorias }) {
 
                                 <div>
                                     <label className="block text-sm text-gray-400 mb-1.5">
-                                        Número de cédula <span className="text-gray-600">(opcional)</span>
+                                        Número de cédula <span className="text-gray-600">(opcional — te crea cuenta para ver tus pedidos)</span>
                                     </label>
                                     <input type="text" value={data.cedula}
                                         onChange={e => setData('cedula', e.target.value)}
                                         placeholder="Ej: 1234567890"
                                         className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
                                 </div>
+
+                                </>)} {/* ← fin bloque condicional nombre/tel/cedula */}
 
                                 <div>
                                     <label className="block text-sm text-gray-400 mb-1.5">

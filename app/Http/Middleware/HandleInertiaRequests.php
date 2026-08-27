@@ -73,6 +73,15 @@ class HandleInertiaRequests extends Middleware
                 'error'                => $request->session()->get('error'),
                 'errores_importacion'  => $request->session()->get('errores_importacion', []),
             ],
+
+            // Cliente de la tienda identificado por cédula + PIN
+            // Compartido en TODAS las páginas para que el navbar muestre su nombre
+            'clienteTienda' => fn () => $request->session()->has('cliente_id')
+                ? [
+                    'id'     => $request->session()->get('cliente_id'),
+                    'nombre' => $request->session()->get('cliente_nombre'),
+                ]
+                : null,
         ];
     }
 }

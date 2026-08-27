@@ -8,7 +8,7 @@
 */
 
 import { useState } from 'react';
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useCart } from '@/Context/CartContext';
 
 /* ── ESTILOS MODO CLARO ─────────────────────────────────────────────────── */
@@ -187,6 +187,9 @@ export default function TiendaLayout({ children }) {
     const [menuMovil, setMenuMovil] = useState(false);
     const { totalItems } = useCart();
 
+    // Cliente identificado — viene del shared prop de HandleInertiaRequests
+    const { clienteTienda } = usePage().props;
+
     // ── TEMA ──────────────────────────────────────────────────────────────
     const [temaClaro, setTemaClaro] = useState(() => {
         try { return localStorage.getItem('gs-tema') === 'claro'; } catch { return false; }
@@ -290,10 +293,37 @@ export default function TiendaLayout({ children }) {
                                 )}
                             </Link>
 
-                            <Link href={route('login')}
-                                className="text-sm text-gray-400 hover:text-orange-400 transition-colors font-medium px-2 py-1">
-                                Entrar
-                            </Link>
+                            {/* ── CUENTA DEL CLIENTE ────────────────────── */}
+                            {clienteTienda ? (
+                                /* Cliente identificado → muestra su nombre */
+                                <Link
+                                    href={route('tienda.cuenta')}
+                                    className="flex items-center gap-1.5 text-sm font-medium text-orange-400 hover:text-orange-300 transition-colors px-2 py-1"
+                                    title="Ver mis pedidos"
+                                >
+                                    {/* Ícono persona */}
+                                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span className="hidden sm:inline max-w-[100px] truncate">
+                                        {clienteTienda.nombre?.split(' ')[0]}
+                                    </span>
+                                </Link>
+                            ) : (
+                                /* No identificado → botón Mi cuenta */
+                                <Link
+                                    href={route('tienda.cuenta.login')}
+                                    className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-orange-400 transition-colors font-medium px-2 py-1"
+                                    title="Identificarme para ver mis pedidos"
+                                >
+                                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span className="hidden sm:inline">Mi cuenta</span>
+                                </Link>
+                            )}
                         </div>
                     </div>
 
