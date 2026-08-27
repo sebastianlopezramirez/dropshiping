@@ -86,73 +86,119 @@ export default function Productos({ proveedor, productos, filtros }) {
                     </div>
                 </form>
 
-                {/* Tabla */}
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                {['Producto', 'Categoría', 'Mi Precio', 'Stock', 'Estado', 'Acciones'].map(h => (
-                                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {productos.data.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
-                                        No tienes productos asignados todavía.
-                                    </td>
-                                </tr>
-                            ) : (
-                                productos.data.map(producto => (
-                                    <tr key={producto.id} className="hover:bg-gray-50 transition">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                {producto.imagen_principal_url ? (
-                                                    <img src={producto.imagen_principal_url}
-                                                        className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                                                        📦
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-900">{producto.nombre}</p>
-                                                    <p className="text-xs text-gray-400">{producto.sku}</p>
-                                                </div>
+                {/* Lista de productos — tarjetas en móvil, tabla en escritorio */}
+                {productos.data.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
+                        No tienes productos asignados todavía.
+                    </div>
+                ) : (
+                    <>
+                        {/* ── MÓVIL: tarjetas ─────────────────────────── */}
+                        <div className="flex flex-col gap-3 sm:hidden">
+                            {productos.data.map(producto => (
+                                <div key={producto.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                                    <div className="flex items-start gap-3">
+                                        {/* Imagen */}
+                                        {producto.imagen_principal_url ? (
+                                            <img src={producto.imagen_principal_url}
+                                                className="w-16 h-16 rounded-lg object-cover border border-gray-200 shrink-0" />
+                                        ) : (
+                                            <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl shrink-0">
+                                                📦
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
-                                            {producto.categoria?.nombre ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-sm font-semibold text-emerald-700">
-                                                {fmt(producto.pivot?.precio)}
+                                        )}
+                                        {/* Info principal */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="text-sm font-semibold text-gray-900 leading-tight">
+                                                    {producto.nombre}
+                                                </p>
+                                                <span className={`shrink-0 inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${colorEstado[producto.estado] ?? 'bg-gray-100 text-gray-600'}`}>
+                                                    {producto.estado}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-0.5">{producto.sku}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {producto.categoria?.nombre ?? '—'}
                                             </p>
-                                            <p className="text-xs text-gray-400">SKU prov: {producto.pivot?.sku_proveedor ?? '—'}</p>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className={`text-sm font-medium ${(producto.pivot?.stock ?? 0) > 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                                        </div>
+                                    </div>
+
+                                    {/* Precio y stock */}
+                                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                                        <div>
+                                            <p className="text-xs text-gray-400">Mi precio</p>
+                                            <p className="text-sm font-bold text-emerald-700">{fmt(producto.pivot?.precio)}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-xs text-gray-400">Stock</p>
+                                            <p className={`text-sm font-semibold ${(producto.pivot?.stock ?? 0) > 0 ? 'text-gray-900' : 'text-red-600'}`}>
                                                 {producto.pivot?.stock ?? 0} uds.
                                             </p>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${colorEstado[producto.estado] ?? 'bg-gray-100 text-gray-600'}`}>
-                                                {producto.estado}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <Link href={route('portal.productos.editar', producto.id)}
-                                                className="text-xs text-emerald-600 hover:underline font-medium">
-                                                Editar
-                                            </Link>
-                                        </td>
+                                        </div>
+                                        <Link href={route('portal.productos.editar', producto.id)}
+                                            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition">
+                                            Editar
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* ── ESCRITORIO: tabla ───────────────────────── */}
+                        <div className="hidden sm:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        {['Producto', 'Categoría', 'Mi Precio', 'Stock', 'Estado', 'Acciones'].map(h => (
+                                            <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
+                                        ))}
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {productos.data.map(producto => (
+                                        <tr key={producto.id} className="hover:bg-gray-50 transition">
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    {producto.imagen_principal_url ? (
+                                                        <img src={producto.imagen_principal_url}
+                                                            className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">📦</div>
+                                                    )}
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">{producto.nombre}</p>
+                                                        <p className="text-xs text-gray-400">{producto.sku}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-600">{producto.categoria?.nombre ?? '—'}</td>
+                                            <td className="px-4 py-3">
+                                                <p className="text-sm font-semibold text-emerald-700">{fmt(producto.pivot?.precio)}</p>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <p className={`text-sm font-medium ${(producto.pivot?.stock ?? 0) > 0 ? 'text-gray-900' : 'text-red-600'}`}>
+                                                    {producto.pivot?.stock ?? 0} uds.
+                                                </p>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${colorEstado[producto.estado] ?? 'bg-gray-100 text-gray-600'}`}>
+                                                    {producto.estado}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <Link href={route('portal.productos.editar', producto.id)}
+                                                    className="text-xs text-emerald-600 hover:underline font-medium">
+                                                    Editar
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
 
                 {/* Paginación */}
                 {productos.last_page > 1 && (
