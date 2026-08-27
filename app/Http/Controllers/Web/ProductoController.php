@@ -319,7 +319,7 @@ class ProductoController extends Controller
                                ->get(['id', 'nombre', 'padre_id']);
 
         // Todos los cupones activos disponibles
-        $cupones = Cupon::where('estado', 'activo')
+        $cupones = Cupon::where('activo', true)
                         ->where(function ($q) {
                             $q->whereNull('fecha_fin')
                               ->orWhere('fecha_fin', '>=', now());
