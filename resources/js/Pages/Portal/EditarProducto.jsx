@@ -15,7 +15,7 @@
 */
 
 import { useState, useRef, useEffect } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 
 // FUERA del componente — evita remount en cada render
@@ -59,8 +59,15 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
 
     const imagenes = producto.media ?? [];
 
+    const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+
+    const eliminar = () => {
+        router.delete(route('portal.productos.eliminar', producto.id));
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         _method:                'put',
+        nombre:                 producto.nombre             ?? '',
         precio:                 pivot?.precio               ?? '',
         stock:                  pivot?.stock                ?? 0,
         descripcion:            producto.descripcion        ?? '',
@@ -159,12 +166,41 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                     </div>
                 </div>
 
+                {/* ── Aviso: cualquier cambio baja el producto ───────── */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+                    <span className="text-xl shrink-0">⚠️</span>
+                    <div>
+                        <p className="font-medium text-amber-800 text-sm">Al guardar, el producto baja de la tienda</p>
+                        <p className="text-sm text-amber-700 mt-0.5">
+                            Cualquier cambio que hagas quedará como <strong>pendiente de aprobación</strong>.
+                            El administrador lo revisará y lo volverá a activar.
+                        </p>
+                    </div>
+                </div>
+
                 <form onSubmit={submit} className="space-y-6">
+
+                    {/* ─── NOMBRE ──────────────────────────────────────── */}
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
+                        <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">
+                            Nombre del producto
+                        </h3>
+                        <div>
+                            <input
+                                type="text"
+                                value={data.nombre}
+                                onChange={e => setData('nombre', e.target.value)}
+                                placeholder="Nombre del producto"
+                                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${errors.nombre ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+                            />
+                            {errors.nombre && <p className="text-red-500 text-xs mt-1">{errors.nombre}</p>}
+                        </div>
+                    </div>
 
                     {/* ─── MIS CONDICIONES ─────────────────────────────── */}
                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
                         <h3 className="font-semibold text-gray-800 border-b border-gray-100 pb-2">
-                            Mis condiciones
+                            Precio y stock
                         </h3>
                         <p className="text-xs text-gray-400">
                             Estos datos son tu relación con el producto. Solo tú los ves.
@@ -311,14 +347,12 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                         )}
                     </div>
 
-                    {/* ─── SOLO LECTURA ────────────────────────────────── */}
+                    {/* ─── INFO READ-ONLY ──────────────────────────────── */}
                     <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-                        <p className="font-medium text-gray-700 mb-2">Campos del administrador (solo lectura)</p>
+                        <p className="font-medium text-gray-700 mb-2">Datos internos (solo lectura)</p>
                         <div className="grid grid-cols-2 gap-2">
-                            <p>Nombre: <span className="text-gray-900">{producto.nombre}</span></p>
-                            <p>SKU: <span className="text-gray-900">{producto.sku}</span></p>
-                            <p>Estado: <span className="text-gray-900">{producto.estado}</span></p>
-                            <p>SKU tuyo: <span className="text-gray-900">{pivot?.sku_proveedor ?? '—'}</span></p>
+                            <p>SKU: <span className="text-gray-900 font-mono">{producto.sku}</span></p>
+                            <p>Estado actual: <span className={`font-medium ${producto.estado === 'activo' ? 'text-emerald-700' : 'text-amber-700'}`}>{producto.estado}</span></p>
                         </div>
                     </div>
 
@@ -329,8 +363,39 @@ export default function EditarProducto({ proveedor, producto, pivot }) {
                         </Link>
                         <button type="submit" disabled={processing}
                             className="px-6 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition">
-                            {processing ? 'Guardando...' : 'Guardar Cambios'}
+                            {processing ? 'Guardando...' : 'Guardar y enviar a revisión'}
                         </button>
+                    </div>
+
+                    {/* ─── ZONA DE PELIGRO ─────────────────────────────── */}
+                    <div className="border border-red-200 rounded-xl p-5">
+                        <h4 className="font-semibold text-red-700 text-sm mb-1">Retirar producto</h4>
+                        <p className="text-xs text-gray-500 mb-3">
+                            El producto se baja de la tienda inmediatamente y desaparece de tu lista.
+                            Los pedidos existentes no se verán afectados.
+                        </p>
+                        {!confirmandoEliminar ? (
+                            <button type="button" onClick={() => setConfirmandoEliminar(true)}
+                                className="px-4 py-2 border border-red-400 text-red-600 text-sm rounded-lg hover:bg-red-50 transition">
+                                Retirar este producto
+                            </button>
+                        ) : (
+                            <div className="bg-red-50 border border-red-300 rounded-lg p-3 space-y-2">
+                                <p className="text-sm font-medium text-red-800">
+                                    ¿Confirmas que quieres retirar "{producto.nombre}"?
+                                </p>
+                                <div className="flex gap-2">
+                                    <button type="button" onClick={eliminar}
+                                        className="px-4 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium">
+                                        Sí, retirar
+                                    </button>
+                                    <button type="button" onClick={() => setConfirmandoEliminar(false)}
+                                        className="px-4 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </form>
             </div>

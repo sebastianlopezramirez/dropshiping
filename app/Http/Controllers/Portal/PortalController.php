@@ -275,6 +275,7 @@ class PortalController extends Controller
         abort_if(!$tienePivot, 403, 'No tienes acceso a este producto.');
 
         $datos = $request->validate([
+            'nombre'                 => ['required', 'string', 'max:200'],
             'descripcion'            => ['nullable', 'string', 'max:2000'],
             'precio'                 => ['required', 'numeric', 'min:0'],
             'stock'                  => ['required', 'integer', 'min:0'],
@@ -285,18 +286,25 @@ class PortalController extends Controller
             'eliminar_imagenes'      => ['nullable', 'array'],
             'eliminar_imagenes.*'    => ['integer'],
         ], [
-            'imagen_0.max'   => 'La imagen principal no puede pesar más de 10MB.',
-            'imagen_1.max'   => 'La foto 2 no puede pesar más de 10MB.',
-            'imagen_2.max'   => 'La foto 3 no puede pesar más de 10MB.',
-            'imagen_0.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
-            'imagen_1.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
-            'imagen_2.image' => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'nombre.required' => 'El nombre del producto es obligatorio.',
+            'imagen_0.max'    => 'La imagen principal no puede pesar más de 10MB.',
+            'imagen_1.max'    => 'La foto 2 no puede pesar más de 10MB.',
+            'imagen_2.max'    => 'La foto 3 no puede pesar más de 10MB.',
+            'imagen_0.image'  => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_1.image'  => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
+            'imagen_2.image'  => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
         ]);
 
         // Actualizar campos en la tabla productos
+        // PENSAR — ¿Por qué volvemos a 'inactivo'?
+        //   El proveedor cambió algo (nombre, precio, fotos).
+        //   El admin debe revisar y re-aprobar antes de que vuelva a la tienda.
+        //   Esto evita que lleguen productos modificados sin control de calidad.
         $producto->update([
+            'nombre'                => \Illuminate\Support\Str::title(trim($datos['nombre'])),
             'descripcion'           => $datos['descripcion'] ?? $producto->descripcion,
             'permite_contraentrega' => $request->boolean('permite_contraentrega', false),
+            'estado'                => 'inactivo', // Baja automática — requiere re-aprobación del admin
         ]);
 
         // Eliminar imágenes marcadas por el proveedor
@@ -327,7 +335,53 @@ class PortalController extends Controller
             ]);
 
         return redirect()->route('portal.productos')
-            ->with('exito', 'Producto actualizado correctamente.');
+            ->with('exito', 'Producto actualizado. Quedó pendiente de activación — el administrador lo revisará y lo volverá a activar en la tienda.');
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | eliminarProducto() — El proveedor retira su producto del catálogo
+    |----------------------------------------------------------------------
+    |
+    | ENTENDER — ¿Qué pasa cuando el proveedor "elimina" un producto?
+    |
+    |   1. El producto pasa a 'inactivo' → deja de aparecer en la tienda
+    |   2. Se desvincula de este proveedor (se borra el registro en producto_proveedor)
+    |   3. El producto NO se borra de la BD — los pedidos históricos quedan intactos
+    |   4. El admin puede reasignarlo o eliminarlo definitivamente si lo decide
+    |
+    | PENSAR — ¿Por qué no borramos el producto?
+    |
+    |   Puede tener pedidos confirmados o entregados en el historial.
+    |   Borrar el producto rompería esos registros.
+    |   Lo seguro es desvincularlo y dejarlo inactivo.
+    |
+    */
+    public function eliminarProducto(Producto $producto): RedirectResponse
+    {
+        $proveedor = $this->obtenerProveedor();
+
+        // Seguridad: verifica que el producto pertenece a este proveedor
+        $tienePivot = DB::table('producto_proveedor')
+            ->where('producto_id', $producto->id)
+            ->where('proveedor_id', $proveedor->id)
+            ->exists();
+
+        abort_if(!$tienePivot, 403, 'No tienes acceso a este producto.');
+
+        DB::transaction(function () use ($producto, $proveedor) {
+            // 1. Bajar el producto de la tienda
+            $producto->update(['estado' => 'inactivo']);
+
+            // 2. Desvincular al proveedor del producto
+            DB::table('producto_proveedor')
+                ->where('producto_id', $producto->id)
+                ->where('proveedor_id', $proveedor->id)
+                ->delete();
+        });
+
+        return redirect()->route('portal.productos')
+            ->with('exito', "Producto \"{$producto->nombre}\" retirado. Ya no aparece en la tienda ni en tu lista.");
     }
 
     /*

@@ -442,6 +442,10 @@ Route::middleware(['auth', 'verified', 'role:proveedor|super_administrador'])
     Route::put('productos/{producto}', [PortalController::class, 'actualizarProducto'])
          ->name('productos.actualizar');
 
+    // Eliminar un producto propio (lo baja de la tienda y lo desvincula del proveedor)
+    Route::delete('productos/{producto}', [PortalController::class, 'eliminarProducto'])
+         ->name('productos.eliminar');
+
     // Pedidos que incluyen sus productos
     Route::get('pedidos', [PortalController::class, 'pedidos'])
          ->name('pedidos');
