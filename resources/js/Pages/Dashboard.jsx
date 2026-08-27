@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth, productosPendientes } = usePage().props;
+    const { auth, productosPendientes, pedidosPendientes = 0 } = usePage().props;
     const usuario = auth.user;
 
     return (
@@ -84,18 +84,41 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                            <div className="flex items-center">
-                                <div className="text-3xl mr-4">🛒</div>
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-800">Pedidos</h4>
-                                    <p className="text-sm text-gray-500">Órdenes y seguimiento</p>
+                        <div className={`overflow-hidden shadow-sm sm:rounded-lg p-6 ${pedidosPendientes > 0 ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <div className="text-3xl mr-4">🛒</div>
+                                    <div>
+                                        <h4 className="text-base font-semibold text-gray-800">Pedidos</h4>
+                                        <p className="text-sm text-gray-500">Órdenes y seguimiento</p>
+                                    </div>
                                 </div>
+                                {pedidosPendientes > 0 && (
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white text-sm font-bold shadow">
+                                        {pedidosPendientes}
+                                    </span>
+                                )}
                             </div>
+                            {pedidosPendientes > 0 && (
+                                <div className="mt-3 bg-red-100 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                                    <span className="text-red-600 text-sm">🔴</span>
+                                    <p className="text-sm font-medium text-red-800">
+                                        {pedidosPendientes} pedido{pedidosPendientes > 1 ? 's' : ''} pendiente{pedidosPendientes > 1 ? 's' : ''} — ¡gestionar por WhatsApp!
+                                    </p>
+                                </div>
+                            )}
                             <div className="mt-4 flex flex-wrap gap-3">
                                 <Link href={route('pedidos.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Ver pedidos →
                                 </Link>
+                                {pedidosPendientes > 0 && (
+                                    <Link
+                                        href={route('pedidos.index') + '?estado=pendiente'}
+                                        className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg transition-colors"
+                                    >
+                                        Ver pendientes →
+                                    </Link>
+                                )}
                                 <Link href={route('tarifas.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     🚚 Tarifas domicilio →
                                 </Link>
