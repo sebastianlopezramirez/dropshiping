@@ -182,7 +182,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                             Filtros {hayFiltros && <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>}
                         </button>
                     </div>
-                    <div className="gs-categorias grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-2">
+                    <div className="gs-categorias grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                         {categoriasRaiz.map(cat => {
                             const emojis = {
                                 tecnologia: '📱', hogar: '🏠', electrodomesticos: '⚡',
@@ -195,10 +195,11 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                             return (
                                 <button key={cat.id}
                                     onClick={() => aplicarFiltros({ categoria: cat.slug })}
-                                    className="group flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3
-                                        hover:border-orange-500/50 hover:bg-gray-800 transition-all duration-200 text-left">
-                                    <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-200 shrink-0">{emoji}</span>
-                                    <span className="text-sm text-gray-400 group-hover:text-orange-400 font-medium leading-tight transition-colors">
+                                    className="group flex flex-col items-center justify-center gap-1.5
+                                        bg-gray-900 border border-gray-800 rounded-xl px-2 py-3 h-20
+                                        hover:border-orange-500/50 hover:bg-gray-800 transition-all duration-200">
+                                    <span className="text-xl group-hover:scale-110 transition-transform duration-200 leading-none">{emoji}</span>
+                                    <span className="text-xs text-white font-bold text-center leading-tight line-clamp-2 group-hover:text-orange-400 transition-colors w-full px-1">
                                         {cat.nombre}
                                     </span>
                                 </button>
