@@ -348,13 +348,25 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
                         {/* CTAs — 3 pasos */}
                         <div className="space-y-3">
 
-                            {/* ── PASO 1: INICIO — Botón Comprar ───────────── */}
-                            {paso === 'inicio' && (
+                            {/* ── BOTÓN AGREGAR AL CARRITO ─────────────────── */}
+                            <button
+                                onClick={handleAgregarCarrito}
+                                className={`flex items-center justify-center gap-2.5 w-full font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg ${
+                                    agregado
+                                        ? 'bg-green-600 shadow-green-900/30 text-white'
+                                        : 'bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow-orange-900/30'
+                                }`}
+                            >
+                                {agregado ? '✅ Agregado al carrito' : '🛒 Agregar al carrito'}
+                            </button>
+
+                            {/* ── IR AL CARRITO (aparece tras agregar) ──────── */}
+                            {agregado && (
                                 <button
-                                    onClick={() => setPaso('formulario')}
-                                    className="flex items-center justify-center gap-2.5 w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-bold text-base px-6 py-4 rounded-2xl transition-all shadow-lg shadow-orange-900/30"
+                                    onClick={() => router.visit(route('tienda.carrito'))}
+                                    className="flex items-center justify-center gap-2 w-full border border-orange-500 text-orange-400 hover:bg-orange-500/10 font-semibold text-sm px-6 py-3 rounded-2xl transition-all"
                                 >
-                                    🛒 Comprar ahora
+                                    Ver carrito y finalizar →
                                 </button>
                             )}
 

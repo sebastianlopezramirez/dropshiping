@@ -104,6 +104,12 @@ Route::prefix('tienda')->name('tienda.')->group(function () {
     Route::post('lead', [LeadController::class, 'guardar'])
          ->name('lead');
 
+    // POST /tienda/cupones/validar → AJAX público — valida cupón desde el carrito
+    // Va aquí (rutas públicas) porque los clientes NO están logueados.
+    // La ruta homónima dentro del grupo auth es solo para el admin.
+    Route::post('cupones/validar', [CuponController::class, 'validar'])
+         ->name('cupones.validar');
+
     // GET /tienda/{slug} — Detalle de un producto (va AL FINAL)
     Route::get('{slug}', [TiendaController::class, 'show'])
          ->name('show');

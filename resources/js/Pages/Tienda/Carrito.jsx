@@ -426,7 +426,7 @@ export default function Carrito({ tarifas, categorias }) {
                                 </p>
 
                                 <Link href={route('tienda.index')}
-                                    className="block text-center text-sm text-gray-500 hover:text-orange-400 transition-colors mt-4">
+                                    className="flex items-center justify-center gap-2 w-full border border-gray-700 text-gray-300 hover:border-orange-500 hover:text-orange-400 font-medium text-sm px-4 py-3 rounded-xl transition-all mt-2">
                                     ← Seguir comprando
                                 </Link>
                             </div>
