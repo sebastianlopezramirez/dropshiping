@@ -51,50 +51,61 @@ class PedidoController extends Controller
     */
     public function index(Request $request): Response
     {
-        $query = Pedido::with(['items', 'envio', 'usuario'])
-                       ->orderBy('creado_en', 'desc');
+        // ── SECCIÓN 1: Pendientes (siempre visibles, sin paginación) ──────────
+        // PENSAR — Los pendientes son pocos y requieren acción inmediata.
+        //   Los mostramos todos sin paginar para que el admin vea el backlog completo.
+        $pendientes = Pedido::with(['items'])
+            ->where('estado', Pedido::ESTADO_PENDIENTE)
+            ->orderBy('creado_en', 'asc') // más antiguos primero — más urgentes
+            ->get();
 
-        // ─── FILTROS ──────────────────────────────────────────────────────
+        // ── SECCIÓN 2: Historial (paginado, con filtros) ──────────────────────
+        // Solo muestra pedidos confirmados, entregados y cancelados
+        $queryHistorial = Pedido::with(['items'])
+            ->whereIn('estado', [
+                Pedido::ESTADO_CONFIRMADO,
+                Pedido::ESTADO_ENTREGADO,
+                Pedido::ESTADO_CANCELADO,
+            ])
+            ->orderBy('creado_en', 'desc');
 
-        // Buscar por número de pedido o nombre del cliente
         if ($request->filled('buscar')) {
             $termino = $request->buscar;
-            $query->where(function ($q) use ($termino) {
+            $queryHistorial->where(function ($q) use ($termino) {
                 $q->where('numero_pedido', 'ilike', '%' . $termino . '%')
                   ->orWhere('cliente_nombre', 'ilike', '%' . $termino . '%')
                   ->orWhere('cliente_email', 'ilike', '%' . $termino . '%');
             });
         }
 
-        // Filtro por estado
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $queryHistorial->where('estado', $request->estado);
         }
 
-        // Filtro por fecha (pedidos del día, semana, mes)
         if ($request->filled('periodo')) {
             match ($request->periodo) {
-                'hoy'    => $query->whereDate('creado_en', today()),
-                'semana' => $query->whereBetween('creado_en', [now()->startOfWeek(), now()->endOfWeek()]),
-                'mes'    => $query->whereMonth('creado_en', now()->month)->whereYear('creado_en', now()->year),
+                'hoy'    => $queryHistorial->whereDate('creado_en', today()),
+                'semana' => $queryHistorial->whereBetween('creado_en', [now()->startOfWeek(), now()->endOfWeek()]),
+                'mes'    => $queryHistorial->whereMonth('creado_en', now()->month)->whereYear('creado_en', now()->year),
                 default  => null,
             };
         }
 
-        $pedidos = $query->paginate(20)->withQueryString();
+        $historial = $queryHistorial->paginate(20)->withQueryString();
 
         // Estadísticas rápidas para el encabezado
         $estadisticas = [
             'total_hoy'      => Pedido::whereDate('creado_en', today())->count(),
-            'pendientes'     => Pedido::where('estado', Pedido::ESTADO_PENDIENTE)->count(),
-            'enviados'       => Pedido::where('estado', Pedido::ESTADO_CONFIRMADO)->count(),
+            'pendientes'     => $pendientes->count(),
+            'confirmados'    => Pedido::where('estado', Pedido::ESTADO_CONFIRMADO)->count(),
             'total_mes'      => Pedido::delMes()->sum('total'),
         ];
 
         return Inertia::render('Pedidos/Index', [
-            'pedidos'       => $pedidos,
+            'pendientes'    => $pendientes,
+            'historial'     => $historial,
             'estadisticas'  => $estadisticas,
-            'estados'       => Pedido::todosLosEstados(),
+            'estados'       => [Pedido::ESTADO_CONFIRMADO, Pedido::ESTADO_ENTREGADO, Pedido::ESTADO_CANCELADO],
             'filtros'       => $request->only(['buscar', 'estado', 'periodo']),
             'flash'         => [
                 'exito' => session('exito'),

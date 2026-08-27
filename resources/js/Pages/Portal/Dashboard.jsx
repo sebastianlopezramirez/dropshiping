@@ -62,11 +62,11 @@ export default function Dashboard({ proveedor, estadisticas, ultimasVentas = [],
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
                         {
-                            label: 'Saldo pendiente',
-                            valor: fmt(estadisticas.saldo_pendiente),
-                            color: estadisticas.saldo_pendiente > 0 ? 'text-orange-600' : 'text-green-700',
-                            bg:    estadisticas.saldo_pendiente > 0 ? 'bg-orange-50' : 'bg-green-50',
-                            desc:  'Lo que te deben',
+                            label: 'Mis ventas (mes)',
+                            valor: fmt(estadisticas.ventas_mes),
+                            color: 'text-indigo-600',
+                            bg:    'bg-indigo-50',
+                            desc:  'A precio de costo',
                         },
                         {
                             label: 'Total cobrado',
@@ -76,11 +76,11 @@ export default function Dashboard({ proveedor, estadisticas, ultimasVentas = [],
                             desc:  'Pagos recibidos',
                         },
                         {
-                            label: 'Ventas del mes',
-                            valor: fmt(estadisticas.ventas_mes),
-                            color: 'text-indigo-600',
-                            bg:    'bg-indigo-50',
-                            desc:  'A precio costo',
+                            label: 'Saldo pendiente',
+                            valor: fmt(estadisticas.saldo_pendiente),
+                            color: estadisticas.saldo_pendiente > 0 ? 'text-orange-600' : 'text-green-700',
+                            bg:    estadisticas.saldo_pendiente > 0 ? 'bg-orange-50' : 'bg-green-50',
+                            desc:  'Lo que te deben',
                         },
                         {
                             label: 'Pedidos pendientes',

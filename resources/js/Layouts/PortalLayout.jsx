@@ -13,7 +13,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 
 export default function PortalLayout({ header, children }) {
 
-    const { auth } = usePage().props;
+    const { auth, proveedorPortal } = usePage().props;
     const [menuAbierto, setMenuAbierto] = useState(false);
 
     const navItems = [
@@ -74,14 +74,21 @@ export default function PortalLayout({ header, children }) {
 
                         {/* Usuario + acciones */}
                         <div className="flex items-center gap-2">
-                            {/* Nombre usuario */}
+                            {/* Nombre + NIT del proveedor */}
                             <div className="hidden md:flex items-center gap-2">
                                 <span className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                    {(auth?.user?.nombre || 'P').charAt(0).toUpperCase()}
+                                    {(proveedorPortal?.nombre_empresa || auth?.user?.nombre || 'P').charAt(0).toUpperCase()}
                                 </span>
-                                <span className="text-sm text-gray-400 max-w-32 truncate">
-                                    {auth?.user?.nombre ?? 'Proveedor'}
-                                </span>
+                                <div className="flex flex-col leading-none">
+                                    <span className="text-sm text-gray-200 font-medium max-w-36 truncate">
+                                        {proveedorPortal?.nombre_empresa ?? auth?.user?.nombre ?? 'Proveedor'}
+                                    </span>
+                                    {proveedorPortal?.numero_identificacion && (
+                                        <span className="text-xs text-gray-500">
+                                            NIT: {proveedorPortal.numero_identificacion}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Link al admin si es super_admin */}

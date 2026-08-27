@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "90-credenciales/🔐 Credenciales — Master.md",
+                "file": "10-notas/Pruebas — Rol Proveedor.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "🔐 Credenciales — Master"
+              "title": "Pruebas — Rol Proveedor"
             }
           }
         ]
@@ -190,6 +190,9 @@
   },
   "active": "647d40d44db7ed6a",
   "lastOpenFiles": [
+    "Sin título.base",
+    "10-notas/Pruebas — Rol Proveedor.md",
+    "90-credenciales/🔐 Credenciales — Master.md",
     "90-credenciales/👥 Roles y Accesos — GadGet Store.md",
     "00-estado/🐛 Bugs y Pendientes.md",
     "00-estado/📝 Sesiones de Trabajo.md.tmp.18520.a38e6d3fd205",
@@ -198,7 +201,6 @@
     "90-credenciales/🔐 Credenciales — Master.md.tmp.5248.abe38a44680a",
     "30-modulos/🗂️ Categorías — GadGet Store.md",
     "30-modulos/🗂️ Categorías — GadGet Store.md.tmp.5248.970dcc2cd85e",
-    "90-credenciales/🔐 Credenciales — Master.md",
     "90-credenciales/🔐 Credenciales — Master.md.tmp.15872.4fc9fd06b129",
     "90-credenciales/👥 Roles y Accesos — GadGet Store.md.tmp.15872.b38839431c0b",
     "00-estado/📊 Tablero de Fases.md",
@@ -209,7 +211,6 @@
     "10-fases/FASE 10 — Infraestructura.md",
     "10-fases/FASE 6 — Portal de Proveedores.md",
     "10-fases/FASE 3 — Productos y Catálogo.md",
-    "00-estado/📝 Sesiones de Trabajo.md.tmp.6360.afca6f6f6983",
     "60-decisiones/Sistema de Imágenes — Spatie + R2.md",
     "10-fases/FASE 9 — Analytics.md",
     "10-fases/FASE 8 — Tienda Pública.md",

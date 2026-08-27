@@ -33,12 +33,18 @@ export default function Crear({ roles }) {
         nombre:                 '',
         email:                  '',
         contrasena:             '',
-        contrasena_confirmation: '', // Laravel usa este campo para validar 'confirmed'
+        contrasena_confirmation: '',
         telefono:               '',
         rol:                    'cliente',
         estado:                 'activo',
         limite_credito:         0,
         plazos_credito:         0,
+        // Datos del proveedor (solo si rol = proveedor)
+        proveedor_nombre_empresa:   '',
+        proveedor_nit:              '',
+        proveedor_ciudad:           '',
+        proveedor_direccion:        '',
+        proveedor_celular:          '',
     });
 
     /**
@@ -198,6 +204,53 @@ export default function Crear({ roles }) {
                                     </select>
                                 </div>
                             </div>
+
+                            {/* ─── Datos del proveedor (condicional) ── */}
+                            {data.rol === 'proveedor' && (
+                                <div className="border border-emerald-200 rounded-lg p-4 bg-emerald-50 space-y-4">
+                                    <p className="text-sm font-semibold text-emerald-800">📦 Datos del proveedor</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre empresa *</label>
+                                            <input type="text" value={data.proveedor_nombre_empresa}
+                                                onChange={e => setData('proveedor_nombre_empresa', capitalize(e.target.value))}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                                placeholder="Ej: Distribuciones ABC" />
+                                            {errors.proveedor_nombre_empresa && <p className="text-red-600 text-xs mt-1">{errors.proveedor_nombre_empresa}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">NIT</label>
+                                            <input type="text" value={data.proveedor_nit}
+                                                onChange={e => setData('proveedor_nit', e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                                placeholder="Ej: 900123456-7" />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad / Ubicación</label>
+                                            <input type="text" value={data.proveedor_ciudad}
+                                                onChange={e => setData('proveedor_ciudad', capitalize(e.target.value))}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                                placeholder="Ej: Bogotá" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Celular de contacto</label>
+                                            <input type="text" value={data.proveedor_celular}
+                                                onChange={e => setData('proveedor_celular', e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                                placeholder="Ej: 300 000 0000" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                                        <input type="text" value={data.proveedor_direccion}
+                                            onChange={e => setData('proveedor_direccion', e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                            placeholder="Ej: Cra 15 # 45-20, Bodega 3" />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* ─── Crédito (solo para mayoristas) ─── */}
                             <div className="grid grid-cols-2 gap-4">

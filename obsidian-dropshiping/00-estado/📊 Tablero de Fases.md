@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, fases, progreso]
 created: 2026-08-04
-updated: 2026-08-09
+updated: 2026-08-26
 status: evergreen
 descripcion: "Tablero central de progreso — 10 fases del proyecto"
 ---
@@ -19,7 +19,7 @@ descripcion: "Tablero central de progreso — 10 fases del proyecto"
 ```
 Fases completadas:  █████████░  9 / 10  (90%)
 Tiempo estimado:    ~3-4 horas restantes
-Última sesión:      2026-08-09 (sesión 11)
+Última sesión:      2026-08-26 (sesión 17)
 ```
 
 | Indicador     | Valor                               |

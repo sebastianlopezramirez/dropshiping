@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, bugs, pendientes]
 created: 2026-08-04
-updated: 2026-08-25
+updated: 2026-08-26
 status: evergreen
 descripcion: "Bugs activos y acciones inmediatas del proyecto"
 ---
@@ -10,6 +10,22 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 # 🐛 Bugs y Pendientes
 
 > Este archivo se actualiza al inicio y cierre de cada sesión.
+
+---
+
+## ✅ RESUELTO — Sesión 17 (2026-08-26)
+
+### notas_revision mostraba "sin cambios" cuando sí había cambios
+- **Era:** Usaba `exists()` (sin datos del pivot), comparación float directa, faltaban stock y contraentrega
+- **Fix:** Cambiado a `first()` para leer `$pivot->precio` y `$pivot->stock`; `(int) round((float))` para precios; `trim((string)($val ?? ''))` para nullables; comparación de 7 campos completos
+
+### precio_costo no actualizaba al editar desde el portal
+- **Era:** Solo se actualizaba el pivot, no el campo `productos.precio_costo`
+- **Fix:** `$producto->update([..., 'precio_costo' => $datos['precio'], ...])` en actualizarProducto()
+
+### Badge pedidos pendientes no aparecía
+- **Era:** No había shared prop, solo el de Productos existía
+- **Fix:** `pedidosPendientes` lazy closure en `HandleInertiaRequests.php`, badge en navbar y card en Dashboard
 
 ---
 
@@ -22,35 +38,40 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 
 ---
 
-## 📋 PENDIENTES — Próxima sesión (17)
+## 📋 PENDIENTES — Próxima sesión (18)
 
-### 🔴 Crítico — Hacer push
-```powershell
-cd D:\proyectos\dropshiping
-git add .
-git commit -m "feat: portal dashboard simplificado + cupones conectados al carrito con restricciones por categoria/producto"
-git push origin main
-```
-Railway corre `php artisan migrate` automáticamente (migración nuevas tablas pivot de cupones).
+### 🔴 Alta prioridad — Verificar deploy sesión 17
+- [ ] Abrir Railway y confirmar que el deploy de sesión 17 completó sin errores
+- [ ] Probar: editar producto como proveedor → cambiar nombre/precio/stock → ver banner ámbar en admin
+- [ ] Probar: crear pedido desde tienda → ver badge en navbar + tarjeta amarilla en Pedidos
+- [ ] Confirmar que "Historial" solo muestra confirmados/entregados/cancelados
 
-### 🟡 Verificación post-deploy
-- [ ] Crear cupón "TODO" en admin → aplicar en carrito → confirmar que descuento aparece y pedido guarda `cupon_id`
-- [ ] Crear cupón con restricción "Categorías" → aplicar con productos de esa categoría → verificar que solo descuenta lo elegible
-- [ ] Crear cupón con restricción "Productos específicos" → verificar igual
-- [ ] Verificar que `usos_actuales` sube al completar un pedido con cupón
-- [ ] Verificar que cupón con `limite_usos = 1` bloquea el segundo uso
+### 🔴 Alta prioridad — Módulo financiero (bug sin reproducir)
+**Reporte del usuario:** "no actualiza lo que se debe pagar, actualiza la cadena completa hasta el final"
 
-### 🟢 Mejoras identificadas (futuro)
-- [ ] `Gastos/Editar.jsx` — agregar selector de pedido (solo se hizo en Crear.jsx — sesión 15)
-- [ ] Ver si hay pedidos confirmados anteriores sin transacción (query SQL diagnóstico en sesión 15)
-- [ ] Mostrar en `Pedidos/Ver.jsx` o admin si el pedido usó cupón y cuál
-- [ ] En el email/WhatsApp de confirmación: incluir el código de cupón aplicado y el descuento
+**PENDIENTE CLARIFICACIÓN:** ¿Se refiere a...?
+- A) **Sección Proveedores** → lo que se le debe pagar al proveedor (`pagos_proveedor`)
+- B) **Dashboard financiero general** → ingresos/ganancias no se actualizan
+
+👉 Preguntar al inicio de la sesión 18 antes de tocar código
+
+### 🟡 Media prioridad — Verificación post-deploy cupones (sesión 16)
+- [ ] Crear cupón "TODO" en admin → aplicar en carrito → confirmar descuento y `cupon_id` en pedido
+- [ ] Cupón con restricción "Categorías" → verificar que solo descuenta ítems elegibles
+- [ ] Verificar que `usos_actuales` sube al completar pedido con cupón
+- [ ] Cupón con `limite_usos = 1` → segundo uso debe bloquearse
+
+### 🟢 Baja prioridad — Mejoras futuras
+- [ ] `Gastos/Editar.jsx` — agregar selector de pedido (Crear.jsx ya lo tiene)
+- [ ] `Pedidos/Ver.jsx` — mostrar si el pedido usó cupón y cuál
+- [ ] Notificación push real en celular para pedidos nuevos (requiere PWA o Firebase)
+- [ ] WhatsApp de confirmación incluir código de cupón y descuento
 
 ---
 
-## 📊 DIAGNÓSTICO RÁPIDO — SQL útiles
+## 📊 SQL útiles — Diagnóstico rápido
 
-### Pedidos confirmados sin transacción (sesión 15)
+### Pedidos confirmados sin transacción
 ```sql
 SELECT p.numero_pedido, p.cliente_nombre, p.total, p.estado
 FROM pedidos p
@@ -60,7 +81,7 @@ AND t.id IS NULL
 AND p.eliminado_en IS NULL;
 ```
 
-### Cupones usados con descuento (verificación sesión 16)
+### Cupones usados con descuento
 ```sql
 SELECT p.numero_pedido, p.descuento, c.codigo, c.usos_actuales
 FROM pedidos p
@@ -69,7 +90,25 @@ ORDER BY p.creado_en DESC
 LIMIT 10;
 ```
 
+### notas_revision pendientes de revisión admin
+```sql
+SELECT id, nombre, notas_revision, precio_costo
+FROM productos
+WHERE notas_revision IS NOT NULL
+AND eliminado_en IS NULL;
+```
+
 ---
 
-*Actualizado: Sesión 16 — 2026-08-25*
+## ⚠️ Recordatorio Git — index.lock
+
+Si `git add` falla con "index.lock" o "HEAD.lock":
+```powershell
+Remove-Item "D:\proyectos\dropshiping\.git\index.lock" -Force -ErrorAction SilentlyContinue
+Remove-Item "D:\proyectos\dropshiping\.git\HEAD.lock" -Force -ErrorAction SilentlyContinue
+```
+
+---
+
+*Actualizado: Sesión 17 — 2026-08-26*
 *Relacionado: [[📝 Sesiones de Trabajo]] · [[📊 Tablero de Fases]]*

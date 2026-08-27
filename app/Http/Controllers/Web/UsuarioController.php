@@ -177,6 +177,12 @@ class UsuarioController extends Controller
 
             'limite_credito'  => 'nullable|numeric|min:0',
             'plazos_credito'  => 'nullable|integer|min:0',
+            // Datos del proveedor (opcionales, solo aplican si rol=proveedor)
+            'proveedor_nombre_empresa' => 'nullable|string|max:200',
+            'proveedor_nit'            => 'nullable|string|max:50',
+            'proveedor_ciudad'         => 'nullable|string|max:100',
+            'proveedor_direccion'      => 'nullable|string|max:200',
+            'proveedor_celular'        => 'nullable|string|max:20',
         ]);
 
         // Usar transacción: si algo falla, no quedará nada a medias
@@ -208,11 +214,13 @@ class UsuarioController extends Controller
             if ($datos['rol'] === 'proveedor') {
                 Proveedor::create([
                     'usuario_id'            => $usuario->id,
-                    'nombre_empresa'        => $datos['nombre'], // editable después desde el admin
-                    'numero_identificacion' => '000000000',      // placeholder, editar después
+                    'nombre_empresa'        => $datos['proveedor_nombre_empresa'] ?? $datos['nombre'],
+                    'numero_identificacion' => $datos['proveedor_nit'] ?? '000000000',
                     'persona_contacto'      => $datos['nombre'],
-                    'telefono'              => $datos['telefono'] ?? null,
+                    'telefono'              => $datos['proveedor_celular'] ?? $datos['telefono'] ?? null,
                     'email'                 => $datos['email'],
+                    'ciudad'                => $datos['proveedor_ciudad'] ?? null,
+                    'direccion'             => $datos['proveedor_direccion'] ?? null,
                     'estado'                => 'activo',
                 ]);
             }

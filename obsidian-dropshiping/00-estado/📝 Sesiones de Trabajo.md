@@ -503,3 +503,81 @@ git push origin main
 
 Railway corre `php artisan migrate` automáticamente — la nueva migración de cupones se aplicará al desplegar.
 
+
+---
+
+## Sesión 17 — 2026-08-26
+
+**Duración:** ~3 horas  
+**Fase:** FASE 4 — Pedidos (split UI) + FASE 3 — Portal Proveedores (notas_revision) + FASE cross — Badges admin
+
+---
+
+### Completado
+
+#### notas_revision — Comparación completa de cambios del proveedor
+- [x] `PortalController@actualizarProducto()` reescrito con comparación de TODOS los campos editables:
+  - **nombre**: `mb_strtolower()` case-insensitive
+  - **precio**: `(int) round((float) $val)` en ambos lados — leído desde `$pivot->precio`
+  - **stock**: `(int)` — leído desde `$pivot->stock` (pivot, no producto)
+  - **descripcion**: `trim((string)($val ?? ''))` null-safe
+  - **permite_contraentrega**: boolean comparison
+  - **imágenes eliminadas / agregadas**: count de cada uno
+- [x] Cambió `exists()` a `first()` para obtener valores actuales del pivot
+- [x] `notas_revision` usa formato `"• cambio\n• cambio"` — cada línea como bullet
+- [x] `precio_costo` se actualiza automáticamente en `productos` cuando proveedor edita precio
+- [x] `ProductoController@update()` limpia `notas_revision = null` cuando admin guarda
+- [x] `Productos/Editar.jsx` — banner ámbar con split por `\n` en `<li>` items
+
+#### Badge pedidos pendientes en navbar
+- [x] `HandleInertiaRequests.php` — shared prop `pedidosPendientes` (lazy closure, count pendiente)
+- [x] `AuthenticatedLayout.jsx` — badge rojo en link "Pedidos" desktop + mobile (sin polling)
+- [x] `Dashboard.jsx` — card Pedidos con fondo `bg-red-50`, badge rojo, alerta WhatsApp, botón "Ver pendientes"
+
+#### Pedidos/Index.jsx — Vista dividida en dos secciones
+- [x] **Sección 1 — Pendientes de gestión:** tarjetas amarillas, pulse dot, botón WhatsApp, confirmar/cancelar
+- [x] **Sección 2 — Historial:** tabla filtrada (buscar, estado, período) — solo confirmado/entregado/cancelado — paginada
+- [x] Modal confirmación con método de pago preservado exactamente
+- [x] Estadísticas en encabezado: total hoy, pendientes, confirmados, ventas del mes
+
+#### PedidoController@index() — Estructura de datos nueva
+- [x] `pendientes` — colección sin paginar, ordenada oldest first (más urgentes al tope)
+- [x] `historial` — paginado 20/página, solo no-pendientes, con filtros
+- [x] `estadisticas` — `confirmados` reemplaza `enviados`
+- [x] `estados` — solo `[confirmado, entregado, cancelado]` (sin pendiente)
+
+---
+
+### Archivos modificados
+
+| Archivo | Estado |
+|---|---|
+| `app/Http/Controllers/Portal/PortalController.php` | ✅ actualizarProducto() completo |
+| `app/Http/Controllers/Web/ProductoController.php` | ✅ update() limpia notas_revision |
+| `app/Http/Controllers/Web/PedidoController.php` | ✅ index() con pendientes + historial |
+| `app/Http/Middleware/HandleInertiaRequests.php` | ✅ pedidosPendientes shared prop |
+| `app/Models/Producto.php` | ✅ notas_revision en $fillable |
+| `resources/js/Layouts/AuthenticatedLayout.jsx` | ✅ badge pedidosPendientes |
+| `resources/js/Pages/Dashboard.jsx` | ✅ card Pedidos con alerta roja |
+| `resources/js/Pages/Pedidos/Index.jsx` | ✅ dos secciones pendientes + historial |
+| `resources/js/Pages/Productos/Editar.jsx` | ✅ banner ámbar notas_revision |
+
+---
+
+### Decisiones técnicas
+
+- **Sin polling** — Badge usa Inertia shared prop (actualiza por navegación). El flujo ya tiene WhatsApp, no se necesita real-time.
+- **`first()` en pivot** — Necesario para leer `precio` y `stock` actuales y comparar con nuevos valores
+- **Tipos seguros** — `(int) round((float) $val)` para decimales, `trim((string)($val ?? ''))` para nullables
+
+### Git
+
+- [x] `git push origin main` — pusheado ✅ — Railway auto-deploy corriendo
+
+---
+
+### Pendiente — Próxima sesión
+
+1. **Verificar deploy** — probar badge pedidos + pedidos split + banner notas_revision en producción
+2. **Módulo financiero** — bug reportado: "no actualiza lo que se debe pagar, actualiza la cadena completa hasta el final" — **pendiente clarificación**: ¿sección proveedores o dashboard general?
+

@@ -84,6 +84,8 @@ class Proveedor extends Model
         'persona_contacto',
         'telefono',
         'email',
+        'ciudad',
+        'direccion',
         'sitio_web',
         'condiciones_pago',
         'metodos_pago',

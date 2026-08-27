@@ -830,38 +830,71 @@ class PortalController extends Controller
         $proveedor    = $this->obtenerProveedor();
         $idsProductos = $proveedor->productos()->pluck('productos.id');
 
-        // Total pendiente de pago (pedidos entregados sin transacción de pago al proveedor)
+        // ── KPIs globales ──────────────────────────────────────────────────
+        // Deuda total: lo que el negocio le debe al proveedor (pedidos confirmados/entregados)
         $totalDeuda = ItemPedido::whereIn('producto_id', $idsProductos)
-            ->whereHas('pedido', fn($q) => $q->where('estado', 'entregado'))
+            ->whereHas('pedido', fn($q) => $q->whereIn('estado', ['confirmado', 'entregado']))
             ->selectRaw('COALESCE(SUM(precio_costo * cantidad), 0) as total')
             ->value('total') ?? 0;
 
-        // Ventas totales (precio al que el cliente compró sus productos)
+        // Total ya pagado por el admin al proveedor
+        $totalPagado = PagoProveedor::where('proveedor_id', $proveedor->id)->sum('monto');
+
+        // Saldo pendiente real
+        $saldoPendiente = max(0, (float) $totalDeuda - (float) $totalPagado);
+
+        // Ventas totales (precio_unitario que pagó el cliente — para contexto del margen)
         $totalVentas = ItemPedido::whereIn('producto_id', $idsProductos)
-            ->whereHas('pedido', fn($q) => $q->where('estado', 'entregado'))
+            ->whereHas('pedido', fn($q) => $q->whereIn('estado', ['confirmado', 'entregado']))
             ->selectRaw('COALESCE(SUM(precio_unitario * cantidad), 0) as total')
             ->value('total') ?? 0;
 
-        // Historial mensual (últimos 6 meses)
-        $historialMensual = ItemPedido::whereIn('producto_id', $idsProductos)
-            ->whereHas('pedido', fn($q) => $q
-                ->where('estado', 'entregado')
-                ->where('creado_en', '>=', now()->subMonths(6))
-            )
-            ->join('pedidos', 'pedidos.id', '=', 'items_pedido.pedido_id')
-            ->selectRaw("
-                TO_CHAR(pedidos.creado_en, 'YYYY-MM') as mes,
-                TO_CHAR(pedidos.creado_en, 'Mon YYYY') as mes_label,
-                COALESCE(SUM(items_pedido.precio_costo * items_pedido.cantidad), 0) as deuda,
-                COUNT(DISTINCT items_pedido.pedido_id) as pedidos
-            ")
-            ->groupByRaw("TO_CHAR(pedidos.creado_en, 'YYYY-MM'), TO_CHAR(pedidos.creado_en, 'Mon YYYY')")
-            ->orderByRaw("TO_CHAR(pedidos.creado_en, 'YYYY-MM') DESC")
+        // ── Lista de pedidos por fila con estado de pago (FIFO) ────────────
+        // Obtenemos todos los pedidos con mis productos, ordenados del más antiguo al más nuevo.
+        // Marcamos como "pagado" (al_dia) los pedidos más antiguos hasta agotar el total_pagado.
+        $pedidosConItems = Pedido::whereHas('items', fn($q) => $q->whereIn('producto_id', $idsProductos))
+            ->whereIn('estado', ['confirmado', 'entregado'])
+            ->with(['items' => fn($q) => $q->whereIn('producto_id', $idsProductos)])
+            ->orderBy('creado_en', 'asc')
             ->get();
+
+        $acumulado = 0.0;
+        $pagadoRestante = (float) $totalPagado;
+
+        $pedidosList = $pedidosConItems->map(function ($pedido) use (&$acumulado, &$pagadoRestante) {
+            $costoPedido = $pedido->items->sum(fn($i) => $i->precio_costo * $i->cantidad);
+            $acumulado  += $costoPedido;
+
+            // FIFO: si aún queda saldo pagado, este pedido está "al día"
+            $alDia = false;
+            if ($pagadoRestante >= $costoPedido) {
+                $alDia = true;
+                $pagadoRestante -= $costoPedido;
+            }
+
+            $diasMora = $alDia ? 0 : now()->diffInDays($pedido->creado_en);
+
+            return [
+                'id'             => $pedido->id,
+                'numero_pedido'  => $pedido->numero_pedido,
+                'cliente_nombre' => $pedido->cliente_nombre,
+                'ciudad'         => $pedido->ciudad,
+                'estado'         => $pedido->estado,
+                'fecha'          => $pedido->creado_en->format('d/m/Y'),
+                'costo_proveedor'=> (float) $costoPedido,
+                'al_dia'         => $alDia,
+                'dias_mora'      => (int) $diasMora,
+                'items'          => $pedido->items->map(fn($i) => [
+                    'nombre'   => $i->nombre_producto,
+                    'cantidad' => $i->cantidad,
+                    'subtotal' => (float) ($i->precio_costo * $i->cantidad),
+                ]),
+            ];
+        });
 
         // Top 5 productos más vendidos del proveedor
         $topProductos = ItemPedido::whereIn('producto_id', $idsProductos)
-            ->whereHas('pedido', fn($q) => $q->where('estado', 'entregado'))
+            ->whereHas('pedido', fn($q) => $q->whereIn('estado', ['confirmado', 'entregado']))
             ->selectRaw('nombre_producto, SUM(cantidad) as unidades, SUM(precio_costo * cantidad) as total_costo')
             ->groupBy('nombre_producto')
             ->orderByDesc('unidades')
@@ -872,7 +905,9 @@ class PortalController extends Controller
             'proveedor'       => $proveedor,
             'totalDeuda'      => (float) $totalDeuda,
             'totalVentas'     => (float) $totalVentas,
-            'historialMensual' => $historialMensual,
+            'totalPagado'     => (float) $totalPagado,
+            'saldoPendiente'  => $saldoPendiente,
+            'pedidosList'     => $pedidosList,
             'topProductos'    => $topProductos,
         ]);
     }
