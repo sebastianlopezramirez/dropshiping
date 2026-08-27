@@ -2,11 +2,106 @@
 type: dashboard
 tags: [estado, sesiones, historial]
 created: 2026-08-04
-updated: 2026-08-22
+updated: 2026-08-27
 descripcion: "Registro de todas las sesiones de desarrollo"
 ---
 
 # 📝 Sesiones de Trabajo
+
+---
+
+## Sesión 18 — 2026-08-27
+
+**Duración:** ~3 horas
+**Fase:** FASE 8 — Tienda Pública (cuenta cliente + UX carrito)
+
+**Completado:**
+
+### Sistema de cuenta cliente — Login por cédula + PIN
+
+#### Migraciones (ya creadas en sesión 17, confirmadas)
+- [x] `2026_08_27_000002_create_clientes_table.php` — tabla `clientes` (uuid PK, cedula unique, nombre, celular, email nullable, ciudad, municipio, direccion)
+- [x] `2026_08_27_000003_add_cliente_id_to_pedidos.php` — FK `cliente_id` nullable con `nullOnDelete()`
+
+#### Backend
+- [x] `app/Models/Cliente.php` — UUID PK, timestamps custom, `verificarCelular(últimos4)`, `datosCarrito()`
+- [x] `app/Http/Controllers/Tienda/ClienteController.php` — controller completo:
+  - `login()` → muestra formulario / redirige si ya identificado
+  - `autenticar()` → verifica cédula + 4 dígitos celular + **rate limiting** (5 intentos / 15 min / IP)
+  - `cuenta()` → dashboard con pedidos del cliente
+  - `logout()` → borra solo claves cliente de la sesión
+  - `datosActuales()` → AJAX para pre-llenar carrito
+  - `exportarExcel()` → CSV con BOM UTF-8 (nombre, cédula, celular, ciudad, historial de pedidos)
+- [x] `app/Http/Controllers/Tienda/CarritoController.php` — `store()` actualizado:
+  - Si cliente tiene sesión → actualiza sus datos y vincula `cliente_id` al pedido
+  - Si proporciona cédula → `updateOrCreate` + crea sesión automáticamente
+  - Guarda `cliente_id` en pedido para vincular historial
+
+#### Rutas (`routes/web.php`)
+- [x] `GET  /tienda/cuenta` → `tienda.cuenta.login`
+- [x] `POST /tienda/cuenta/login` → `tienda.cuenta.autenticar`
+- [x] `GET  /tienda/cuenta/mis-pedidos` → `tienda.cuenta`
+- [x] `POST /tienda/cuenta/logout` → `tienda.cuenta.logout`
+- [x] `GET  /tienda/cuenta/datos` → `tienda.cuenta.datos` (AJAX)
+- [x] `GET  /clientes/exportar` → `clientes.exportar` (admin protegido)
+
+#### Frontend
+- [x] `resources/js/Pages/Tienda/Cuenta/Login.jsx` — formulario oscuro, cédula + PIN 4 dígitos, mensaje "tu cuenta se crea al hacer tu primer pedido"
+- [x] `resources/js/Pages/Tienda/Cuenta/Dashboard.jsx` — tarjeta datos cliente + lista pedidos expandibles con badge de estado (coloreado por estado)
+
+### UX Carrito + Navbar cliente
+
+#### HandleInertiaRequests.php
+- [x] Shared prop `clienteTienda` → `{id, nombre}` si hay sesión, `null` si no
+
+#### TiendaLayout.jsx
+- [x] Importado `usePage` de `@inertiajs/react`
+- [x] Si `clienteTienda` → muestra nombre en naranja + link a `/tienda/cuenta/mis-pedidos`
+- [x] Si no → muestra "Mi cuenta" + link a `/tienda/cuenta` (formulario de login)
+
+#### Carrito.jsx
+- [x] `useEffect` al montar → llama AJAX `/tienda/cuenta/datos` → pre-llena formulario si identificado
+- [x] Estado `clienteIdentificado` + `cambiarDireccion`
+- [x] Tarjeta verde "✅ ¿Misma dirección?" con nombre, teléfono y dirección guardada
+- [x] Botones "✓ Usar esta dirección" (default) / "Cambiar dirección" (muestra formulario completo)
+- [x] Campos nombre/teléfono/cédula solo visibles si NO identificado o pidió cambiar
+
+### Seguridad implementada
+- Rate limiting: `RateLimiter::tooManyAttempts($key, 5)` — 5 intentos / 15 min por IP
+- Cédula nunca va en URL (siempre POST)
+- Session regeneration al login (previene session fixation)
+- Mensaje de error genérico (no distingue "cédula no existe" de "PIN malo")
+- Solo borra claves del cliente en logout (no destruye toda la sesión)
+
+---
+
+### Archivos modificados
+
+| Archivo | Acción |
+|---|---|
+| `database/migrations/2026_08_27_000002_create_clientes_table.php` | ✅ creado |
+| `database/migrations/2026_08_27_000003_add_cliente_id_to_pedidos.php` | ✅ creado |
+| `app/Models/Cliente.php` | ✅ creado |
+| `app/Http/Controllers/Tienda/ClienteController.php` | ✅ creado |
+| `app/Http/Controllers/Tienda/CarritoController.php` | ✅ store() actualizado |
+| `app/Http/Middleware/HandleInertiaRequests.php` | ✅ shared prop clienteTienda |
+| `resources/js/Layouts/TiendaLayout.jsx` | ✅ botón Mi cuenta / nombre cliente |
+| `resources/js/Pages/Tienda/Cuenta/Login.jsx` | ✅ creado |
+| `resources/js/Pages/Tienda/Cuenta/Dashboard.jsx` | ✅ creado |
+| `resources/js/Pages/Tienda/Carrito.jsx` | ✅ pre-llenado + ¿misma dirección? |
+| `routes/web.php` | ✅ rutas tienda.cuenta.* + clientes.exportar |
+
+### Git — Pendiente
+- [ ] `git add .`
+- [ ] `git commit -m "feat: cuenta cliente tienda - login cedula+PIN, navbar nombre, carrito misma direccion"`
+- [ ] `git push`
+- [ ] En Railway Console: `php artisan migrate`
+
+### Pendiente — Próxima sesión
+1. Probar flujo completo en producción: hacer pedido con cédula → ver en Mi cuenta
+2. Probar "Misma dirección" en segundo pedido
+3. Exportar CSV clientes desde el admin
+4. Considerar: mostrar enlace "Mis pedidos" en página de confirmación (Gracias.jsx)
 
 > Añade una entrada al cerrar cada sesión con el bloque de la sesión.
 

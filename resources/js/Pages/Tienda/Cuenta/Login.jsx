@@ -126,6 +126,16 @@ export default function Login() {
                             </p>
                         </div>
 
+                        {/* ── ACCESO ADMIN / PROVEEDOR ───────────────────── */}
+                        <div className="mt-4 pt-4 border-t border-gray-800/50 text-center">
+                            <Link
+                                href={route('login')}
+                                className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                            >
+                                ¿Eres administrador o proveedor? → Acceder al panel
+                            </Link>
+                        </div>
+
                     </div>
 
                     {/* ── SEGURIDAD ──────────────────────────────────────── */}

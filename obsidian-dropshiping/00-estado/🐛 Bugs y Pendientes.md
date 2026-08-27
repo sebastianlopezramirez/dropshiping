@@ -2,7 +2,7 @@
 type: dashboard
 tags: [estado, bugs, pendientes]
 created: 2026-08-04
-updated: 2026-08-26
+updated: 2026-08-27
 status: evergreen
 descripcion: "Bugs activos y acciones inmediatas del proyecto"
 ---
@@ -10,6 +10,34 @@ descripcion: "Bugs activos y acciones inmediatas del proyecto"
 # 🐛 Bugs y Pendientes
 
 > Este archivo se actualiza al inicio y cierre de cada sesión.
+
+---
+
+## 🔴 ACCIÓN REQUERIDA — Sesión 18 (2026-08-27)
+
+### Migrar base de datos en Railway
+- [ ] En Railway Console: `php artisan migrate`
+- Crea tabla `clientes` + columna `cliente_id` en `pedidos`
+- Sin esto el login de clientes da error 500
+
+### Probar flujo completo
+- [ ] Hacer pedido con cédula en tienda → verificar que crea cliente en BD
+- [ ] Ir a "Mi cuenta" → identificarse → ver pedidos
+- [ ] Segundo pedido → verificar que aparece "¿Misma dirección?"
+- [ ] Admin → `/clientes/exportar` → descargar CSV
+
+---
+
+## ✅ RESUELTO — Sesión 18 (2026-08-27)
+
+### Sistema completo de cuenta cliente
+- [x] Tabla `clientes` + FK `cliente_id` en pedidos
+- [x] Login por cédula + últimos 4 dígitos del celular (sin contraseña)
+- [x] Rate limiting: 5 intentos / 15 min por IP
+- [x] Navbar: muestra nombre del cliente en naranja si está identificado
+- [x] Carrito: pre-llena automáticamente + "¿Misma dirección?" en segunda compra
+- [x] Dashboard `/tienda/cuenta/mis-pedidos`: pedidos con estados coloreados
+- [x] Exportar CSV clientes para admin
 
 ---
 

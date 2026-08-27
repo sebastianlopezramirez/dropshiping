@@ -16,16 +16,16 @@ descripcion: "Nota de entrada principal del proyecto Dropshipping Colombia"
 
 ## 🚦 Estado actual
 
-> **Última actualización:** 2026-08-07
-> **Sesiones completadas:** 10
+> **Última actualización:** 2026-08-27
+> **Sesiones completadas:** 18
 
 | Indicador | Estado |
 |---|---|
-| App corriendo | ✅ `http://dropshiping.test` (Herd) |
-| Base de datos | ✅ PostgreSQL 17 — `dropshipping_db` |
-| Fases completadas | ✅ FASES 1–7 + Backlog (8 de 10) |
+| App corriendo | ✅ Railway (producción) |
+| Base de datos | ✅ PostgreSQL — Railway |
+| Fases completadas | ✅ FASES 1–8 en curso |
 | Bugs activos | ✅ Ninguno |
-| Siguiente paso | [[FASE 8 — SEO y Tienda Pública]] |
+| Siguiente paso | Probar cuenta cliente en producción (`php artisan migrate` en Railway) |
 
 ---
 
