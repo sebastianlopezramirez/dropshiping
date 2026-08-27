@@ -160,20 +160,28 @@ export default function Dashboard({
                 </div>
 
                 {/* ── KPIs ─────────────────────────────────────────────────── */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
-                        { label: 'Ingresos',   valor: kpis.ingresos,        color: 'text-indigo-600', bg: 'bg-indigo-50',  desc: 'Ventas confirmadas' },
-                        { label: 'Costo',      valor: kpis.costo_productos,  color: 'text-orange-600', bg: 'bg-orange-50',  desc: 'Costo de productos' },
-                        { label: 'Gastos',     valor: kpis.gastos_op,        color: 'text-red-600',    bg: 'bg-red-50',     desc: 'Operativos del período' },
-                        { label: 'Utilidad',   valor: kpis.utilidad,         color: kpis.utilidad >= 0 ? 'text-green-700' : 'text-red-600', bg: kpis.utilidad >= 0 ? 'bg-green-50' : 'bg-red-50', desc: 'Ingresos − Costo − Gastos' },
-                        { label: 'Margen',     valor: `${kpis.margen}%`,     color: kpis.margen >= 20 ? 'text-green-700' : 'text-yellow-700', bg: 'bg-white', noFmt: true, desc: 'Rentabilidad' },
+                        { label: 'Ingresos',        valor: kpis.ingresos,         color: 'text-indigo-600',  bg: 'bg-indigo-50',  desc: 'Ventas confirmadas del período' },
+                        { label: 'Costo productos',  valor: kpis.costo_productos,  color: 'text-orange-600',  bg: 'bg-orange-50',  desc: 'Costo de productos vendidos' },
+                        { label: 'Gastos operativos',valor: kpis.gastos_op,        color: 'text-red-600',     bg: 'bg-red-50',     desc: 'Operativos del período' },
+                        { label: 'Utilidad',         valor: kpis.utilidad,         color: kpis.utilidad >= 0 ? 'text-green-700' : 'text-red-600', bg: kpis.utilidad >= 0 ? 'bg-green-50' : 'bg-red-50', desc: 'Ingresos − Costo − Gastos' },
+                        { label: 'Margen %',         valor: `${kpis.margen}%`,     color: kpis.margen >= 20 ? 'text-green-700' : 'text-yellow-700', bg: 'bg-white', noFmt: true, desc: 'Rentabilidad del período' },
+                        {
+                            label: 'Cuentas x Pagar',
+                            valor: kpis.cuentas_x_pagar,
+                            color: kpis.cuentas_x_pagar > 0 ? 'text-rose-700' : 'text-green-700',
+                            bg: kpis.cuentas_x_pagar > 0 ? 'bg-rose-50' : 'bg-green-50',
+                            desc: 'Deuda acumulada con proveedores',
+                            badge: kpis.cuentas_x_pagar > 0 ? '⚠️ Pendiente de pago' : '✅ Al día',
+                        },
                     ].map((kpi, i) => (
                         <div key={i} className={`${kpi.bg} rounded-xl border border-gray-100 shadow-sm p-4`}>
                             <p className="text-xs text-gray-500 mb-0.5">{kpi.label}</p>
                             <p className={`text-xl font-bold ${kpi.color}`}>
                                 {kpi.noFmt ? kpi.valor : fmtK(kpi.valor)}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">{kpi.desc}</p>
+                            <p className="text-xs text-gray-400 mt-1">{kpi.badge ?? kpi.desc}</p>
                         </div>
                     ))}
                 </div>

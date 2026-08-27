@@ -188,6 +188,11 @@ class ReporteFinancieroController extends Controller
                 ];
             });
 
+        // ── 8. CUENTAS × PAGAR — total saldo pendiente a proveedores ─────
+        // Suma de (deuda_total - total_pagado) de todos los proveedores activos.
+        // No depende del período seleccionado: es la deuda acumulada TOTAL.
+        $cuentasXPagar = $proveedores->sum('saldo_pendiente');
+
         return Inertia::render('Finanzas/Dashboard', [
             'periodo'     => compact('año', 'mes', 'dia') + ['proveedor_id' => $proveedorId],
             'kpis'        => [
@@ -196,6 +201,7 @@ class ReporteFinancieroController extends Controller
                 'gastos_op'       => (float) $gastosOp,
                 'utilidad'        => $utilidad,
                 'margen'          => $margen,
+                'cuentas_x_pagar' => (float) $cuentasXPagar,
             ],
             'ventas'              => $ventas,
             'gastos_por_categoria'=> $gastosPorCategoria,
