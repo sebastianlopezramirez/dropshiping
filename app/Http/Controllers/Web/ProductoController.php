@@ -169,10 +169,6 @@ class ProductoController extends Controller
 
         // Cupones activos y vigentes para seleccionar en el formulario
         $cupones = Cupon::where('activo', true)
-                        ->where(function ($q) {
-                            $q->whereNull('fecha_fin')
-                              ->orWhere('fecha_fin', '>=', now());
-                        })
                         ->orderBy('codigo')
                         ->get(['id', 'codigo', 'descripcion', 'tipo', 'valor']);
 
@@ -320,10 +316,6 @@ class ProductoController extends Controller
 
         // Todos los cupones activos disponibles
         $cupones = Cupon::where('activo', true)
-                        ->where(function ($q) {
-                            $q->whereNull('fecha_fin')
-                              ->orWhere('fecha_fin', '>=', now());
-                        })
                         ->orderBy('codigo')
                         ->get(['id', 'codigo', 'descripcion', 'tipo', 'valor']);
 
