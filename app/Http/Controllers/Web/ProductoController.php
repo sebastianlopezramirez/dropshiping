@@ -168,7 +168,7 @@ class ProductoController extends Controller
                                ->get(['id', 'nombre', 'padre_id']);
 
         // Cupones activos y vigentes para seleccionar en el formulario
-        $cupones = Cupon::where('estado', 'activo')
+        $cupones = Cupon::where('activo', true)
                         ->where(function ($q) {
                             $q->whereNull('fecha_fin')
                               ->orWhere('fecha_fin', '>=', now());
