@@ -354,6 +354,8 @@ class ProductoController extends Controller
             }
 
             unset($datos['imagenes_nuevas']);
+            // Limpiar notas_revision al guardar — el admin revisó y aprobó los cambios
+            $datos['notas_revision'] = null;
             $producto->update($datos);
         });
 

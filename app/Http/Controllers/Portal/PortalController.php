@@ -295,16 +295,60 @@ class PortalController extends Controller
             'imagen_2.image'  => 'El archivo debe ser una imagen (JPG, PNG o WEBP).',
         ]);
 
+        // ─── Construir resumen de cambios (notas_revision) ───────────────────
+        // PENSAR — ¿Para qué sirve?
+        //   El admin verá este texto en el panel antes de aprobar el producto.
+        //   Le dice exactamente qué cambió, sin tener que comparar manualmente.
+        //   Se limpia cuando el admin guarda el producto (ProductoController@update).
+        $cambios = [];
+
+        $nombreNuevo = \Illuminate\Support\Str::title(trim($datos['nombre']));
+        // Comparar en minúsculas para evitar falsos positivos por capitalización
+        if (mb_strtolower($nombreNuevo) !== mb_strtolower((string) $producto->nombre)) {
+            $cambios[] = "Nombre: \"{$producto->nombre}\" → \"{$nombreNuevo}\"";
+        }
+
+        // Redondear a entero para evitar diferencias de punto flotante (pesos colombianos no tienen centavos)
+        $precioNuevo = (int) round((float) $datos['precio']);
+        $precioViejo = (int) round((float) $producto->precio_costo);
+        if ($precioNuevo !== $precioViejo) {
+            $fmt = fn($v) => '$' . number_format($v, 0, ',', '.');
+            $cambios[] = "Precio de costo: {$fmt($precioViejo)} → {$fmt($precioNuevo)}";
+        }
+
+        // Normalizar null y string vacío como equivalentes para evitar falso "descripción actualizada"
+        $descripcionNueva = $datos['descripcion'] ?? null;
+        $descripcionVieja = $producto->descripcion;
+        if (trim((string) $descripcionNueva) !== trim((string) $descripcionVieja)) {
+            $cambios[] = 'Descripción actualizada.';
+        }
+
+        if (!empty($datos['eliminar_imagenes'])) {
+            $cambios[] = 'Eliminó ' . count($datos['eliminar_imagenes']) . ' imagen(es).';
+        }
+        foreach (['imagen_0', 'imagen_1', 'imagen_2'] as $campo) {
+            if ($request->hasFile($campo)) {
+                $cambios[] = 'Agregó imagen(es) nuevas.';
+                break;
+            }
+        }
+
+        $notasRevision = empty($cambios)
+            ? 'El proveedor editó el producto (sin cambios detectados).'
+            : 'Cambios realizados por el proveedor: ' . implode(' | ', $cambios);
+
         // Actualizar campos en la tabla productos
         // PENSAR — ¿Por qué volvemos a 'inactivo'?
         //   El proveedor cambió algo (nombre, precio, fotos).
         //   El admin debe revisar y re-aprobar antes de que vuelva a la tienda.
         //   Esto evita que lleguen productos modificados sin control de calidad.
         $producto->update([
-            'nombre'                => \Illuminate\Support\Str::title(trim($datos['nombre'])),
-            'descripcion'           => $datos['descripcion'] ?? $producto->descripcion,
+            'nombre'                => $nombreNuevo,
+            'descripcion'           => $descripcionNueva ?? $producto->descripcion,
             'permite_contraentrega' => $request->boolean('permite_contraentrega', false),
-            'estado'                => 'inactivo', // Baja automática — requiere re-aprobación del admin
+            'precio_costo'          => $datos['precio'], // Actualizar precio_costo para que admin vea el nuevo precio
+            'estado'                => 'inactivo',       // Baja automática — requiere re-aprobación del admin
+            'notas_revision'        => $notasRevision,   // Resumen para el admin
         ]);
 
         // Eliminar imágenes marcadas por el proveedor

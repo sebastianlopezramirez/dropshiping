@@ -212,6 +212,15 @@ export default function Editar({ producto, categorias }) {
                     <span className="text-gray-900 truncate max-w-xs">{producto.nombre}</span>
                 </div>
 
+                {/* Banner: cambios del proveedor pendientes de revisión */}
+                {producto.notas_revision && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl">
+                        <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ El proveedor editó este producto — revisá antes de activar</p>
+                        <p className="text-sm text-amber-700">{producto.notas_revision}</p>
+                        <p className="text-xs text-amber-500 mt-2">Al guardar el producto, este aviso desaparecerá automáticamente.</p>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* ── SECCIÓN: Información básica ─────────────────── */}

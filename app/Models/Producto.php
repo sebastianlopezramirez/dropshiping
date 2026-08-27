@@ -107,6 +107,7 @@ class Producto extends Model implements HasMedia
         'alto_cm',
         'categoria_id',
         'estado',
+        'notas_revision',
         'permite_contraentrega',
         'meta_titulo',
         'meta_descripcion',
