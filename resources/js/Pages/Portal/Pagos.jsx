@@ -14,10 +14,10 @@
 */
 
 import { useState, useMemo } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 
-export default function Pagos({ proveedor, totalDeuda, totalVentas, totalPagado, saldoPendiente, pedidosList = [], topProductos = [] }) {
+export default function Pagos({ totalVentas, totalPagado, saldoPendiente, pedidosList = [], topProductos = [] }) {
 
     const [filtroEstado, setFiltroEstado] = useState('todos'); // todos | al_dia | debe
     const [ordenar, setOrdenar]           = useState('mora_desc'); // mora_desc | fecha_asc | fecha_desc
@@ -41,7 +41,6 @@ export default function Pagos({ proveedor, totalDeuda, totalVentas, totalPagado,
         return lista;
     }, [pedidosList, filtroEstado, ordenar]);
 
-    const totalDeben   = pedidosList.filter(p => !p.al_dia).reduce((s, p) => s + p.costo_proveedor, 0);
     const countDeben   = pedidosList.filter(p => !p.al_dia).length;
     const countAlDia   = pedidosList.filter(p =>  p.al_dia).length;
     const maxDiaMora   = pedidosList.reduce((m, p) => Math.max(m, p.dias_mora), 0);

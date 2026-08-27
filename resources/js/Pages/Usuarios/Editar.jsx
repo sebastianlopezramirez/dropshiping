@@ -9,9 +9,8 @@
  * 3. La contraseña es opcional (si viene vacía, no se actualiza)
  */
 
-import { useForm, Link } from '@inertiajs/react';
+import { useForm, Link, Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
 import { capitalize } from '@/utils/texto';
 
 export default function Editar({ usuario, roles }) {

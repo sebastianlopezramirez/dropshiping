@@ -11,9 +11,8 @@
  */
 
 // useForm: hook de Inertia para forms — maneja datos, errores, estado de envío
-import { useForm, Link } from '@inertiajs/react';
+import { useForm, Link, Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
 import { capitalize } from '@/utils/texto';
 
 export default function Crear({ roles }) {

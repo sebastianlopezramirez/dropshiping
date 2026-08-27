@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 
-export default function Pedidos({ proveedor, pedidos, filtros, estadisticas }) {
+export default function Pedidos({ pedidos, filtros, estadisticas }) {
 
     const [buscar, setBuscar] = useState(filtros.buscar || '');
     const [estado, setEstado] = useState(filtros.estado || '');
