@@ -89,8 +89,20 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] main button[class*="bg-gray-800"] *,
     [data-tema="claro"] main button[class*="bg-gray-700"] *,
     [data-tema="claro"] main button[class*="bg-gray-900"] *,
-    [data-tema="claro"] main button[class*="border-gray-700"] * {
+    [data-tema="claro"] main button[class*="border-gray-700"] *,
+    [data-tema="claro"] main button[class*="bg-gray-800"] span,
+    [data-tema="claro"] main button[class*="bg-gray-700"] span,
+    [data-tema="claro"] main button[class*="bg-gray-900"] span,
+    [data-tema="claro"] main button[class*="border-gray-700"] span,
+    [data-tema="claro"] main button[class*="bg-gray-800"].text-white,
+    [data-tema="claro"] main button[class*="bg-gray-700"].text-white,
+    [data-tema="claro"] main button[class*="text-gray-400"],
+    [data-tema="claro"] main button[class*="text-gray-300"],
+    [data-tema="claro"] main button[class*="text-gray-200"],
+    [data-tema="claro"] main button[class*="text-gray-100"],
+    [data-tema="claro"] main button[class*="text-white"] {
         color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
     [data-tema="claro"] main button[class*="bg-gray-700"]:hover,
@@ -101,6 +113,19 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] main button[class*="bg-gray-800"] svg,
     [data-tema="claro"] main button[class*="border-gray-700"] svg {
         stroke: #FFFFFF !important;
+    }
+
+    /* ══ REGLA GLOBAL — cualquier botón con fondo oscuro → texto blanco negrilla */
+    [data-tema="claro"] main button[style*="background-color: rgb(28"],
+    [data-tema="claro"] main button[class*="bg-gray"] {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    /* Texto directo dentro del botón (nodo de texto sin etiqueta) */
+    [data-tema="claro"] main button[class*="bg-gray-800"],
+    [data-tema="claro"] main button[class*="bg-gray-900"] {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
 
     /* ══ CATEGORÍAS → carbón + texto blanco ═════════════════════════════ */
