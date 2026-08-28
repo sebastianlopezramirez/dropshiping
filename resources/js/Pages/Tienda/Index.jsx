@@ -27,6 +27,9 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
         return activa?.padre_id ?? activa?.id ?? null;
     });
 
+    // Hero: categoría expandida para mostrar subcategorías antes de filtrar
+    const [catHeroExpandida, setCatHeroExpandida] = useState(null);
+
     const aplicarFiltros = (extra = {}) => {
         const params = {};
         if (busqueda)  params.q          = busqueda;
@@ -182,6 +185,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                             Filtros {hayFiltros && <span className="w-2 h-2 rounded-full bg-orange-500 inline-block"></span>}
                         </button>
                     </div>
+                    {/* ── Tarjetas categorías padre ── */}
                     <div className="gs-categorias grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                         {categoriasRaiz.map(cat => {
                             const emojis = {
@@ -191,21 +195,63 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                 mascotas: '🐾', 'libros-y-entretenimiento': '📚',
                                 'autos-y-motos': '🚗',
                             };
-                            const emoji = emojis[cat.slug] || '🛍️';
+                            const emoji    = emojis[cat.slug] || '🛍️';
+                            const hijos    = hijosDe(cat.id);
+                            const abierta  = catHeroExpandida === cat.id;
                             return (
                                 <button key={cat.id}
-                                    onClick={() => aplicarFiltros({ categoria: cat.slug })}
-                                    className="group flex flex-col items-center justify-center gap-1.5
-                                        bg-gray-900 border border-gray-800 rounded-xl px-2 py-3 h-20
-                                        hover:border-orange-500/50 hover:bg-gray-800 transition-all duration-200">
+                                    onClick={() => {
+                                        if (hijos.length > 0) {
+                                            // Si ya está abierta, cerrar; si no, expandir
+                                            setCatHeroExpandida(abierta ? null : cat.id);
+                                        } else {
+                                            aplicarFiltros({ categoria: cat.slug });
+                                        }
+                                    }}
+                                    className={`group flex flex-col items-center justify-center gap-1.5
+                                        border rounded-xl px-2 py-3 h-20
+                                        transition-all duration-200
+                                        ${abierta
+                                            ? 'bg-orange-500/10 border-orange-500/60'
+                                            : 'bg-gray-900 border-gray-800 hover:border-orange-500/50 hover:bg-gray-800'}`}>
                                     <span className="text-xl group-hover:scale-110 transition-transform duration-200 leading-none">{emoji}</span>
-                                    <span className="text-xs text-white font-bold text-center leading-tight line-clamp-2 group-hover:text-orange-400 transition-colors w-full px-1">
+                                    <span className={`text-xs font-bold text-center leading-tight line-clamp-2 transition-colors w-full px-1
+                                        ${abierta ? 'text-orange-400' : 'text-white group-hover:text-orange-400'}`}>
                                         {cat.nombre}
                                     </span>
                                 </button>
                             );
                         })}
                     </div>
+
+                    {/* ── Subcategorías de la categoría seleccionada ── */}
+                    {catHeroExpandida && (() => {
+                        const padre = categoriasRaiz.find(c => c.id === catHeroExpandida);
+                        const hijos = hijosDe(catHeroExpandida);
+                        return hijos.length > 0 ? (
+                            <div className="mt-3 bg-gray-900 border border-orange-500/20 rounded-2xl p-4">
+                                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-3">
+                                    {padre?.nombre} — elige una subcategoría
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {/* Opción "Ver todos en esta categoría" */}
+                                    <button
+                                        onClick={() => { aplicarFiltros({ categoria: padre.slug }); setCatHeroExpandida(null); }}
+                                        className="text-xs bg-orange-500/10 border border-orange-500/30 text-orange-400 font-semibold px-3 py-1.5 rounded-full hover:bg-orange-500/20 transition-colors">
+                                        Ver todo en {padre?.nombre}
+                                    </button>
+                                    {hijos.map(hijo => (
+                                        <button
+                                            key={hijo.id}
+                                            onClick={() => { aplicarFiltros({ categoria: hijo.slug }); setCatHeroExpandida(null); }}
+                                            className="text-xs bg-gray-800 border border-gray-700 text-gray-300 font-medium px-3 py-1.5 rounded-full hover:border-orange-500/50 hover:text-white hover:bg-gray-700 transition-colors">
+                                            {hijo.nombre}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null;
+                    })()}
                 </section>
             )}
 
