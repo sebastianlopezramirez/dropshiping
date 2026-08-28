@@ -59,6 +59,28 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] main .text-gray-600 { color: #4B5563 !important; }
     [data-tema="claro"] main .text-gray-700 { color: #374151 !important; }
 
+    /* ══ EXCEPCIÓN CRÍTICA — botones carbón: texto SIEMPRE blanco negrilla */
+    [data-tema="claro"] main .gs-categorias button .text-white,
+    [data-tema="claro"] main .gs-categorias button .text-gray-100,
+    [data-tema="claro"] main .gs-categorias button .text-gray-200,
+    [data-tema="claro"] main .gs-categorias button .text-gray-300,
+    [data-tema="claro"] main .gs-categorias button .text-gray-400,
+    [data-tema="claro"] main .gs-categorias button span,
+    [data-tema="claro"] main .gs-categorias button { color: #FFFFFF !important; font-weight: 700 !important; }
+    /* Subcategorías chips */
+    [data-tema="claro"] main .flex-wrap button .text-white,
+    [data-tema="claro"] main .flex-wrap button .text-gray-300,
+    [data-tema="claro"] main .flex-wrap button .text-gray-400,
+    [data-tema="claro"] main .flex-wrap button span,
+    [data-tema="claro"] main .flex-wrap button { color: #FFFFFF !important; font-weight: 700 !important; }
+    /* Cualquier botón con fondo oscuro (bg-gray-800, bg-gray-900, bg-gray-700) */
+    [data-tema="claro"] main button[class*="bg-gray-8"] .text-white,
+    [data-tema="claro"] main button[class*="bg-gray-9"] .text-white,
+    [data-tema="claro"] main button[class*="bg-gray-7"] .text-white,
+    [data-tema="claro"] main button[class*="bg-gray-8"] span,
+    [data-tema="claro"] main button[class*="bg-gray-9"] span,
+    [data-tema="claro"] main button[class*="bg-gray-7"] span { color: #FFFFFF !important; font-weight: 700 !important; }
+
     /* ══ EXCEPCIONES — dentro de cards blancas los textos se mantienen = */
     /* Nombres de producto, precios, categorías */
     [data-tema="claro"] main .bg-gray-900 .text-gray-100,
