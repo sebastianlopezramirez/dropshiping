@@ -36,6 +36,15 @@ export default function Index({ categorias, filtros, stats }) {
         router.delete(route('categorias.destroy', categoria.id));
     };
 
+    const toggleActivo = (categoria) => {
+        const accion = categoria.activo ? 'desactivar' : 'activar';
+        const advertencia = categoria.activo && !categoria.padre_id && categoria.hijos_count > 0
+            ? `\n⚠️ Esto también desactivará sus ${categoria.hijos_count} subcategoría(s).`
+            : '';
+        if (!confirm(`¿${accion.charAt(0).toUpperCase() + accion.slice(1)} la categoría «${categoria.nombre}»?${advertencia}`)) return;
+        router.patch(route('categorias.toggle', categoria.id), {}, { preserveScroll: true });
+    };
+
     return (
         <AuthenticatedLayout header={
             <div className="flex items-center justify-between">
@@ -152,10 +161,22 @@ export default function Index({ categorias, filtros, stats }) {
                                     <td className="px-4 py-3 text-center text-gray-600">{cat.hijos_count}</td>
                                     <td className="px-4 py-3 text-center text-gray-500">{cat.orden}</td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                            ${cat.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                                            {cat.activo ? 'Activa' : 'Inactiva'}
-                                        </span>
+                                        <button
+                                            onClick={() => toggleActivo(cat)}
+                                            title={cat.activo ? 'Clic para desactivar' : 'Clic para activar'}
+                                            className="inline-flex items-center gap-1.5 group"
+                                        >
+                                            {/* Toggle pill */}
+                                            <span className={`relative inline-block w-9 h-5 rounded-full transition-colors duration-200
+                                                ${cat.activo ? 'bg-green-500' : 'bg-gray-300'}`}>
+                                                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200
+                                                    ${cat.activo ? 'translate-x-4' : 'translate-x-0'}`} />
+                                            </span>
+                                            <span className={`text-xs font-medium transition-colors
+                                                ${cat.activo ? 'text-green-700' : 'text-gray-400'}`}>
+                                                {cat.activo ? 'Activa' : 'Inactiva'}
+                                            </span>
+                                        </button>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">

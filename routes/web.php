@@ -423,6 +423,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
              ->except(['show'])
              ->parameters(['categorias' => 'categoria']);
 
+        Route::patch('categorias/{categoria}/toggle', [CategoriaController::class, 'toggle'])
+             ->name('categorias.toggle');
+
     }); // fin grupo admin
 
 }); // fin grupo auth+verified

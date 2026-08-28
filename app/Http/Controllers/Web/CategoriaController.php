@@ -205,6 +205,41 @@ class CategoriaController extends Controller
 
     /*
     |----------------------------------------------------------------------
+    | toggle() — Activar / Desactivar categoría rápidamente
+    |----------------------------------------------------------------------
+    |
+    | PENSAR — ¿Por qué un método separado y no solo update()?
+    |
+    |   Porque en la lista queremos un toggle de un clic sin ir a editar.
+    |   update() requiere validar todos los campos; toggle() solo cambia 'activo'.
+    |
+    |   REGLA DE NEGOCIO:
+    |   Si se desactiva una categoría PADRE, sus hijos también se desactivan
+    |   (no tendría sentido tener subcategorías visibles sin el padre).
+    |   Si se activa una categoría HIJO, el padre no se activa automáticamente
+    |   (el admin decide cuándo volver a publicar el padre).
+    |
+    */
+    public function toggle(Categoria $categoria): RedirectResponse
+    {
+        $nuevo = !$categoria->activo;
+        $categoria->update(['activo' => $nuevo]);
+
+        // Si desactivamos un padre, desactivar también sus hijos
+        if (!$nuevo && is_null($categoria->padre_id)) {
+            $categoria->hijos()->update(['activo' => false]);
+        }
+
+        $accion = $nuevo ? 'activada' : 'desactivada';
+        $extra  = (!$nuevo && $categoria->hijos_count > 0)
+            ? " (y sus subcategorías también fueron desactivadas)"
+            : "";
+
+        return back()->with('exito', "Categoría «{$categoria->nombre}» {$accion}{$extra}.");
+    }
+
+    /*
+    |----------------------------------------------------------------------
     | destroy() — Eliminar categoría
     |----------------------------------------------------------------------
     |
