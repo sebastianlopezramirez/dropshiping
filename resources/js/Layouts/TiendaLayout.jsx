@@ -128,16 +128,47 @@ const ESTILOS_CLARO = `
         font-weight: 700 !important;
     }
 
-    /* ══ CATEGORÍAS → carbón + texto blanco ═════════════════════════════ */
+    /* ══ CATEGORÍAS PADRE → carbón + texto blanco negrilla ══════════════ */
     [data-tema="claro"] main .gs-categorias button {
         background-color: #1C1C1C !important;
         border-color: #1C1C1C !important;
         color: #FFFFFF !important;
+        font-weight: 700 !important;
     }
-    [data-tema="claro"] main .gs-categorias button span { color: #FFFFFF !important; }
+    [data-tema="claro"] main .gs-categorias button span,
+    [data-tema="claro"] main .gs-categorias button * {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
     [data-tema="claro"] main .gs-categorias button:hover {
         background-color: #333333 !important;
         border-color: #F97316 !important;
+    }
+
+    /* ══ PANEL SUBCATEGORÍAS (chip pills) → carbón + texto blanco ════════ */
+    /* Panel contenedor */
+    [data-tema="claro"] main .bg-gray-900.rounded-2xl {
+        background-color: #1C1C1C !important;
+        border-color: #333333 !important;
+    }
+    /* Chips de subcategorías (bg-gray-800) */
+    [data-tema="claro"] main .bg-gray-900.rounded-2xl button,
+    [data-tema="claro"] main .flex-wrap button[class*="bg-gray-800"],
+    [data-tema="claro"] main .flex-wrap button[class*="rounded-full"] {
+        background-color: #333333 !important;
+        border-color: #444444 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    [data-tema="claro"] main .flex-wrap button[class*="bg-gray-800"]:hover,
+    [data-tema="claro"] main .flex-wrap button[class*="rounded-full"]:hover {
+        background-color: #444444 !important;
+        border-color: #F97316 !important;
+        color: #FFFFFF !important;
+    }
+    /* Texto del título del panel "elige una subcategoría" */
+    [data-tema="claro"] main .bg-gray-900.rounded-2xl p {
+        color: #FB923C !important;
     }
 
     /* ══ SIDEBAR ════════════════════════════════════════════════════════ */
