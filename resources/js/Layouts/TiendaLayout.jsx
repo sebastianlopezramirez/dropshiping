@@ -35,14 +35,14 @@ const ESTILOS_CLARO = `
     [data-tema="claro"] nav .text-orange-400 { color: #EA580C !important; }
     [data-tema="claro"] nav .bg-orange-500   { background-color: #EA580C !important; }
 
-    /* ══ FONDO PRINCIPAL → gris claro casi blanco ═══════════════════════ */
+    /* ══ FONDO PRINCIPAL → gris perla ══════════════════════════════════ */
     [data-tema="claro"] main,
-    [data-tema="claro"] main .bg-gray-950 { background-color: #F3F4F6 !important; }
+    [data-tema="claro"] main .bg-gray-950 { background-color: #D9DDE3 !important; }
 
     /* ══ CARDS DE PRODUCTO → blanco con borde suave ═════════════════════ */
-    [data-tema="claro"] main .bg-gray-900  { background-color: #FFFFFF !important; border-color: #E5E7EB !important; }
-    [data-tema="claro"] main .bg-gray-800  { background-color: #F9FAFB !important; }
-    [data-tema="claro"] main .bg-gray-800\\/50 { background-color: rgba(249,250,251,0.8) !important; }
+    [data-tema="claro"] main .bg-gray-900  { background-color: #FFFFFF !important; border-color: #C4C9D1 !important; }
+    [data-tema="claro"] main .bg-gray-800  { background-color: #EEF0F3 !important; }
+    [data-tema="claro"] main .bg-gray-800\\/50 { background-color: rgba(238,240,243,0.8) !important; }
 
     /* ══ BORDES → gris claro ════════════════════════════════════════════ */
     [data-tema="claro"] main .border-gray-800      { border-color: #E5E7EB !important; }
@@ -76,38 +76,43 @@ const ESTILOS_CLARO = `
     }
     [data-tema="claro"] main input::placeholder { color: #9CA3AF !important; }
 
-    /* ══ BOTONES GRISES → fondo blanco borde gris, texto oscuro ════════ */
+    /* ══ BOTONES → carbón #1C1C1C con texto blanco ══════════════════════ */
     [data-tema="claro"] main button[class*="bg-gray-800"],
     [data-tema="claro"] main button[class*="bg-gray-700"],
     [data-tema="claro"] main button[class*="bg-gray-900"],
     [data-tema="claro"] main button[class*="border-gray-700"] {
-        background-color: #FFFFFF !important;
-        border-color: #D1D5DB !important;
-        color: #1E3A8A !important;
+        background-color: #1C1C1C !important;
+        border-color: #1C1C1C !important;
+        color: #FFFFFF !important;
         font-weight: 600 !important;
+    }
+    [data-tema="claro"] main button[class*="bg-gray-800"] *,
+    [data-tema="claro"] main button[class*="bg-gray-700"] *,
+    [data-tema="claro"] main button[class*="bg-gray-900"] *,
+    [data-tema="claro"] main button[class*="border-gray-700"] * {
+        color: #FFFFFF !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
     [data-tema="claro"] main button[class*="bg-gray-700"]:hover,
     [data-tema="claro"] main button[class*="border-gray-700"]:hover {
-        background-color: #EFF6FF !important;
-        border-color: #1E3A8A !important;
-        color: #1E3A8A !important;
+        background-color: #333333 !important;
+        border-color: #333333 !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"] svg,
     [data-tema="claro"] main button[class*="border-gray-700"] svg {
-        stroke: #1E3A8A !important;
+        stroke: #FFFFFF !important;
     }
 
-    /* ══ CATEGORÍAS → blanco con borde gris, texto azul oscuro ═════════ */
+    /* ══ CATEGORÍAS → carbón + texto blanco ═════════════════════════════ */
     [data-tema="claro"] main .gs-categorias button {
-        background-color: #FFFFFF !important;
-        border-color: #D1D5DB !important;
-        color: #1E3A8A !important;
+        background-color: #1C1C1C !important;
+        border-color: #1C1C1C !important;
+        color: #FFFFFF !important;
     }
-    [data-tema="claro"] main .gs-categorias button span { color: #1E3A8A !important; }
+    [data-tema="claro"] main .gs-categorias button span { color: #FFFFFF !important; }
     [data-tema="claro"] main .gs-categorias button:hover {
-        background-color: #EFF6FF !important;
-        border-color: #1E3A8A !important;
+        background-color: #333333 !important;
+        border-color: #F97316 !important;
     }
 
     /* ══ SIDEBAR ════════════════════════════════════════════════════════ */
@@ -195,7 +200,11 @@ export default function TiendaLayout({ children }) {
                             <img
                                 src="/logo.webp"
                                 alt="GadGet Store"
-                                className="h-10 w-auto group-hover:scale-105 transition-transform duration-200"
+                                className={
+                                    temaClaro
+                                        ? "h-11 w-11 rounded-full object-cover border-2 border-gray-300 shadow-sm group-hover:scale-105 transition-transform duration-200"
+                                        : "h-10 w-auto group-hover:scale-105 transition-transform duration-200"
+                                }
                             />
                         </Link>
 
