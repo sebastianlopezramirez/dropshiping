@@ -59,10 +59,10 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
             {mostrandoHero && (
                 <div className="w-full">
                     <img
-                        src="/home-page-gadget-store.webp"
+                        src="/home-page-gadget-store.jpg"
                         alt="GadGet Store — Variedad en una sola tienda"
                         className="w-full object-cover"
-                        style={{ maxHeight: '240px' }}
+                        style={{ maxHeight: '260px' }}
                     />
                 </div>
             )}
