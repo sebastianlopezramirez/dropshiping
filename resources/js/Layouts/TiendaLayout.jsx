@@ -12,172 +12,143 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useCart } from '@/Context/CartContext';
 
 /* ── ESTILOS MODO CLARO ─────────────────────────────────────────────────── */
-/* Paleta: #06B6D4 cyan logo · #FF6B00 naranja logo · #1C1C1C charcoal      */
+/* Paleta: fondo #F3F4F6 gris casi blanco · azul oscuro #1E3A8A · naranja #F97316 */
 const ESTILOS_CLARO = `
-    /* ── FONDOS ─────────────────────────────────────── */
-    /* Fondo base — cyan del logo, un tono más oscuro/vivo */
+    /* ══ NAVBAR → gris claro casi blanco ═══════════════════════════════ */
+    [data-tema="claro"] nav {
+        background-color: #F3F4F6 !important;
+        border-bottom-color: #D1D5DB !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+    }
+    /* Textos e íconos del nav → gris oscuro */
+    [data-tema="claro"] nav .text-gray-400  { color: #4B5563 !important; }
+    [data-tema="claro"] nav .text-gray-100  { color: #111827 !important; }
+    [data-tema="claro"] nav input {
+        background-color: #FFFFFF !important;
+        border-color: #D1D5DB !important;
+        color: #111827 !important;
+    }
+    [data-tema="claro"] nav input::placeholder { color: #9CA3AF !important; }
+    [data-tema="claro"] nav .bg-gray-800 { background-color: #FFFFFF !important; border-color: #D1D5DB !important; }
+    [data-tema="claro"] nav svg { stroke: #4B5563 !important; }
+    /* Íconos naranja y cuenta del cliente → se mantienen */
+    [data-tema="claro"] nav .text-orange-400 { color: #EA580C !important; }
+    [data-tema="claro"] nav .bg-orange-500   { background-color: #EA580C !important; }
+
+    /* ══ FONDO PRINCIPAL → gris claro casi blanco ═══════════════════════ */
     [data-tema="claro"] main,
-    [data-tema="claro"] main .bg-gray-950 { background-color: #0891B2 !important; } /* cyan-600 */
+    [data-tema="claro"] main .bg-gray-950 { background-color: #F3F4F6 !important; }
 
-    /* Cards de producto e información → charcoal #1C1C1C */
-    [data-tema="claro"] main .bg-gray-900 { background-color: #1C1C1C !important; }
+    /* ══ CARDS DE PRODUCTO → blanco con borde suave ═════════════════════ */
+    [data-tema="claro"] main .bg-gray-900  { background-color: #FFFFFF !important; border-color: #E5E7EB !important; }
+    [data-tema="claro"] main .bg-gray-800  { background-color: #F9FAFB !important; }
+    [data-tema="claro"] main .bg-gray-800\\/50 { background-color: rgba(249,250,251,0.8) !important; }
 
-    /* Inputs y superficies secundarias → charcoal más claro */
-    [data-tema="claro"] main .bg-gray-800         { background-color: #2A2A2A !important; }
-    [data-tema="claro"] main .bg-gray-800\\/50     { background-color: rgba(42,42,42,0.7) !important; }
-    [data-tema="claro"] main .bg-gray-700\\/50     { background-color: rgba(55,55,55,0.5) !important; }
+    /* ══ BORDES → gris claro ════════════════════════════════════════════ */
+    [data-tema="claro"] main .border-gray-800      { border-color: #E5E7EB !important; }
+    [data-tema="claro"] main .border-gray-700      { border-color: #D1D5DB !important; }
+    [data-tema="claro"] main .border-gray-700\\/50 { border-color: rgba(209,213,219,0.6) !important; }
 
-    /* Secciones banda alternadas → cyan más vivo */
-    [data-tema="claro"] main section.bg-gray-900   { background-color: #06B6D4 !important; } /* cyan exacto del logo */
+    /* ══ TEXTOS → oscuros sobre fondo claro ════════════════════════════ */
+    [data-tema="claro"] main .text-white   { color: #111827 !important; }
+    [data-tema="claro"] main .text-gray-100 { color: #1F2937 !important; }
+    [data-tema="claro"] main .text-gray-200 { color: #374151 !important; }
+    [data-tema="claro"] main .text-gray-300 { color: #4B5563 !important; }
+    [data-tema="claro"] main .text-gray-400 { color: #6B7280 !important; }
+    [data-tema="claro"] main .text-gray-500 { color: #6B7280 !important; }
+    [data-tema="claro"] main .text-gray-600 { color: #4B5563 !important; }
+    [data-tema="claro"] main .text-gray-700 { color: #374151 !important; }
 
-    /* ── TEXTOS (fondo oscuro → texto blanco se mantiene) */
-    /* Solo ajustamos textos en contextos específicos     */
-    [data-tema="claro"] main .text-gray-500 { color: #A5F3FC !important; } /* cyan-200 */
-    [data-tema="claro"] main .text-gray-600 { color: #67E8F9 !important; } /* cyan-300 */
+    /* ══ EXCEPCIONES — dentro de cards blancas los textos se mantienen = */
+    /* Nombres de producto, precios, categorías */
+    [data-tema="claro"] main .bg-gray-900 .text-gray-100,
+    [data-tema="claro"] main .bg-gray-900 .text-white { color: #111827 !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-gray-400,
+    [data-tema="claro"] main .bg-gray-900 .text-gray-500 { color: #6B7280 !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-gray-600 { color: #4B5563 !important; }
 
-    /* ── BORDES → cyan ───────────────────────────────── */
-    [data-tema="claro"] main .border-gray-800      { border-color: #0891B2 !important; }
-    [data-tema="claro"] main .border-gray-700      { border-color: #0E7490 !important; }
-    [data-tema="claro"] main .border-gray-700\\/50 { border-color: rgba(8,145,178,0.4) !important; }
-
-    /* ── HOVER en listas/sidebar ─────────────────────── */
-    [data-tema="claro"] main .hover\\:bg-gray-800:hover { background-color: #333333 !important; }
-    [data-tema="claro"] main .hover\\:bg-gray-700:hover { background-color: #3D3D3D !important; }
-
-    /* ── INPUTS ──────────────────────────────────────── */
+    /* ══ INPUTS / SELECTS ═══════════════════════════════════════════════ */
     [data-tema="claro"] main input,
     [data-tema="claro"] main select {
-        background-color: #1C1C1C !important;
-        color: #FFFFFF !important;
-        border-color: #0891B2 !important;
+        background-color: #FFFFFF !important;
+        color: #111827 !important;
+        border-color: #D1D5DB !important;
     }
-    [data-tema="claro"] main input::placeholder { color: #67E8F9 !important; }
+    [data-tema="claro"] main input::placeholder { color: #9CA3AF !important; }
 
-    /* ── BOTONES GRISES → NEGRO con letra BLANCA NEGRILLA ─────── */
+    /* ══ BOTONES GRISES → fondo blanco borde gris, texto oscuro ════════ */
     [data-tema="claro"] main button[class*="bg-gray-800"],
-    [data-tema="claro"] main button[class*="border-gray-700"],
     [data-tema="claro"] main button[class*="bg-gray-700"],
-    [data-tema="claro"] main button[class*="bg-gray-600"] {
-        background-color: #111111 !important;
-        border-color: #111111 !important;
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
+    [data-tema="claro"] main button[class*="bg-gray-900"],
+    [data-tema="claro"] main button[class*="border-gray-700"] {
+        background-color: #FFFFFF !important;
+        border-color: #D1D5DB !important;
+        color: #1E3A8A !important;
+        font-weight: 600 !important;
     }
-    [data-tema="claro"] main button[class*="bg-gray-800"] *,
-    [data-tema="claro"] main button[class*="border-gray-700"] *,
-    [data-tema="claro"] main button[class*="bg-gray-700"] *,
-    [data-tema="claro"] main button[class*="bg-gray-600"] * {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
+    [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
+    [data-tema="claro"] main button[class*="bg-gray-700"]:hover,
+    [data-tema="claro"] main button[class*="border-gray-700"]:hover {
+        background-color: #EFF6FF !important;
+        border-color: #1E3A8A !important;
+        color: #1E3A8A !important;
     }
     [data-tema="claro"] main button[class*="bg-gray-800"] svg,
     [data-tema="claro"] main button[class*="border-gray-700"] svg {
-        stroke: #FFFFFF !important;
-    }
-    [data-tema="claro"] main button[class*="bg-gray-800"]:hover,
-    [data-tema="claro"] main button[class*="border-gray-700"]:hover,
-    [data-tema="claro"] main button[class*="bg-gray-700"]:hover,
-    [data-tema="claro"] main button[class*="bg-gray-600"]:hover {
-        background-color: #0E7490 !important;
-        border-color: #0E7490 !important;
+        stroke: #1E3A8A !important;
     }
 
-    /* ── BOTONES CATEGORÍAS VISUALES → CHARCOAL + texto blanco ─ */
+    /* ══ CATEGORÍAS → blanco con borde gris, texto azul oscuro ═════════ */
     [data-tema="claro"] main .gs-categorias button {
-        background-color: #1C1C1C !important;
-        border-color: #1C1C1C !important;
-        color: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border-color: #D1D5DB !important;
+        color: #1E3A8A !important;
     }
-    [data-tema="claro"] main .gs-categorias button span,
-    [data-tema="claro"] main .gs-categorias button .text-gray-400 { color: #FFFFFF !important; }
+    [data-tema="claro"] main .gs-categorias button span { color: #1E3A8A !important; }
     [data-tema="claro"] main .gs-categorias button:hover {
-        background-color: #333333 !important;
-        border-color: #06B6D4 !important;
-        transform: scale(1.03);
+        background-color: #EFF6FF !important;
+        border-color: #1E3A8A !important;
     }
 
-    /* ── SOMBRAS → cyan ──────────────────────────────── */
+    /* ══ SIDEBAR ════════════════════════════════════════════════════════ */
+    [data-tema="claro"] main .bg-gray-900 button { color: #374151 !important; }
+    [data-tema="claro"] main .bg-gray-900 button:hover { background-color: #F3F4F6 !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-gray-500 { color: #6B7280 !important; }
+    [data-tema="claro"] main .bg-gray-900 .text-orange-400 { color: #EA580C !important; }
+    [data-tema="claro"] main .bg-gray-900 .border-gray-700 { border-color: #D1D5DB !important; }
+
+    /* ══ HOVER EN LISTAS ════════════════════════════════════════════════ */
+    [data-tema="claro"] main .hover\\:bg-gray-800:hover { background-color: #F3F4F6 !important; }
+    [data-tema="claro"] main .hover\\:bg-gray-700:hover { background-color: #E5E7EB !important; }
+
+    /* ══ SOMBRAS DE CARDS ═══════════════════════════════════════════════ */
     [data-tema="claro"] main .hover\\:shadow-orange-900\\/20:hover {
-        box-shadow: 0 10px 15px -3px rgba(6,182,212,0.3) !important;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05) !important;
     }
 
-    /* ── FOOTER → rosa #FF1493 ──────────────────────── */
+    /* ══ FOOTER → gris claro ════════════════════════════════════════════ */
     [data-tema="claro"] footer {
-        background-color: #FF1493 !important;
-        border-color: #CC0070 !important;
+        background-color: #F3F4F6 !important;
+        border-top-color: #D1D5DB !important;
     }
-    /* Títulos footer → blanco negrilla */
-    [data-tema="claro"] footer h4 {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-    }
-    /* Texto, párrafos y listas footer → negro */
+    [data-tema="claro"] footer h4 { color: #1E3A8A !important; font-weight: 700 !important; }
     [data-tema="claro"] footer p,
     [data-tema="claro"] footer li,
     [data-tema="claro"] footer a,
     [data-tema="claro"] footer .text-gray-400,
     [data-tema="claro"] footer .text-gray-500,
-    [data-tema="claro"] footer .text-gray-600 {
-        color: #111111 !important;
-    }
-    [data-tema="claro"] footer a:hover { color: #FFFFFF !important; }
-    /* Línea divisoria footer */
-    [data-tema="claro"] footer .border-gray-800 { border-color: #CC0070 !important; }
+    [data-tema="claro"] footer .text-gray-600 { color: #4B5563 !important; }
+    [data-tema="claro"] footer a:hover { color: #1E3A8A !important; }
+    [data-tema="claro"] footer .border-gray-800 { border-color: #D1D5DB !important; }
+    [data-tema="claro"] footer .text-gray-600:last-child { color: #9CA3AF !important; }
 
-    /* ── TEXTOS FUERA DE CARDS (sobre fondo cyan) → NEGRO NEGRILLA ─── */
-    /* Títulos de sección */
-    [data-tema="claro"] main h1:not(.bg-gray-900 h1):not(.bg-gray-800 h1),
-    [data-tema="claro"] main h2:not(.bg-gray-900 h2):not(.bg-gray-800 h2),
-    [data-tema="claro"] main h3:not(.bg-gray-900 h3):not(.bg-gray-800 h3) {
-        color: #111111 !important;
-        font-weight: 700 !important;
-    }
-    /* Textos generales sobre el fondo */
-    [data-tema="claro"] main .text-white:not(.bg-gray-900 *):not(.bg-gray-800 *):not(.bg-gray-700 *),
-    [data-tema="claro"] main .text-gray-100:not(.bg-gray-900 *):not(.bg-gray-800 *),
-    [data-tema="claro"] main .text-gray-200:not(.bg-gray-900 *):not(.bg-gray-800 *),
-    [data-tema="claro"] main .text-gray-300:not(.bg-gray-900 *):not(.bg-gray-800 *) {
-        color: #111111 !important;
-        font-weight: 600 !important;
-    }
-    /* Labels y textos secundarios sobre el fondo */
-    [data-tema="claro"] main .text-gray-400:not(.bg-gray-900 *):not(.bg-gray-800 *),
-    [data-tema="claro"] main .text-gray-500:not(.bg-gray-900 *):not(.bg-gray-800 *) {
-        color: #1C1C1C !important;
-        font-weight: 600 !important;
-    }
-    /* Excepción: textos dentro de BOTONES oscuros siempre blancos */
-    [data-tema="claro"] main button.bg-gray-800,
-    [data-tema="claro"] main button.bg-gray-800 *,
-    [data-tema="claro"] main button[class*="bg-gray-800"],
-    [data-tema="claro"] main button[class*="bg-gray-800"] span,
-    [data-tema="claro"] main button[class*="bg-gray-800"] svg { color: #FFFFFF !important; stroke: #FFFFFF !important; font-weight: 700 !important; }
-    /* Override extra para botones con text-white explícito */
-    [data-tema="claro"] main button[class*="bg-gray-800"][class*="text-white"],
-    [data-tema="claro"] main button[class*="bg-gray-700"][class*="text-white"] { color: #FFFFFF !important; }
-
-    /* ── SIDEBAR / PANEL FILTROS → textos blancos sobre fondo oscuro ─── */
-    [data-tema="claro"] main .bg-gray-900 button.text-gray-400,
-    [data-tema="claro"] main .bg-gray-900 button span,
-    [data-tema="claro"] main .bg-gray-900 button { color: #FFFFFF !important; }
-    [data-tema="claro"] main .bg-gray-900 .text-gray-500 { color: #D1D5DB !important; }
-    /* Ítem activo sigue siendo naranja */
-    [data-tema="claro"] main .bg-gray-900 .text-orange-400 { color: #FB923C !important; }
-
-    /* ── "RECIÉN LLEGADOS" y títulos de sección → NEGRO ─── */
-    [data-tema="claro"] main h2.text-white,
-    [data-tema="claro"] main h2.text-white * { color: #111111 !important; font-weight: 700 !important; }
-
-    /* Excepciones: textos dentro de cards se mantienen como están */
-    [data-tema="claro"] main .bg-gray-900 .text-white,
-    [data-tema="claro"] main .bg-gray-900 .text-gray-100,
-    [data-tema="claro"] main .bg-gray-900 .text-gray-200,
-    [data-tema="claro"] main .bg-gray-900 .text-gray-300 { color: #FFFFFF !important; font-weight: inherit !important; }
-    [data-tema="claro"] main .bg-gray-900 .text-gray-400 { color: #A0AEC0 !important; font-weight: inherit !important; }
-
-    /* ── TRANSICIÓN SUAVE ────────────────────────────── */
-    [data-tema] main, [data-tema] footer, [data-tema] main * {
-        transition: background-color 0.25s ease, color 0.2s ease, border-color 0.2s ease !important;
+    /* ══ TRANSICIÓN SUAVE ════════════════════════════════════════════════ */
+    [data-tema="claro"] nav,
+    [data-tema="claro"] main,
+    [data-tema="claro"] footer,
+    [data-tema="claro"] main *,
+    [data-tema="claro"] nav * {
+        transition: background-color 0.2s ease, color 0.15s ease, border-color 0.2s ease !important;
     }
 `;
 
