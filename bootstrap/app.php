@@ -53,6 +53,11 @@ return Application::configure(basePath: dirname(__DIR__))
         |   Uso: ->middleware('role_or_permission:administrador|ver-reportes')
         |
         */
+        // Excluir rutas externas del CSRF (webhooks de terceros que no envían token)
+        $middleware->validateCsrfTokens(except: [
+            'wompi/webhook', // Wompi llama este endpoint desde sus servidores, sin CSRF
+        ]);
+
         $middleware->alias([
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
