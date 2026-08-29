@@ -102,11 +102,14 @@ export default function Producto({ producto, relacionados, seo, whatsapp, tarifa
 
     const handleAgregarCarrito = () => {
         agregarItem({
-            id:          producto.id,
-            nombre:      producto.nombre,
-            slug:        producto.slug,
-            precio_venta: tieneOferta ? producto.precio_oferta : producto.precio_venta,
-            imagen:      imagenes[0] || null,
+            id:                    producto.id,
+            nombre:                producto.nombre,
+            slug:                  producto.slug,
+            precio_venta:          tieneOferta ? producto.precio_oferta : producto.precio_venta,
+            imagen:                imagenes[0] || null,
+            // Pasamos el campo para que el carrito sepa si este producto
+            // admite pago contra entrega o solo transferencia.
+            permite_contraentrega: producto.permite_contraentrega ?? true,
         });
         setAgregado(true);
         setTimeout(() => setAgregado(false), 2000);

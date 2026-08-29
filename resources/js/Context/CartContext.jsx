@@ -58,12 +58,15 @@ export function CartProvider({ children }) {
                 );
             }
             return [...prev, {
-                id:       producto.id,
-                nombre:   producto.nombre,
-                slug:     producto.slug,
-                precio:   producto.precio_venta,
-                imagen:   producto.imagen,
-                cantidad: 1,
+                id:                    producto.id,
+                nombre:                producto.nombre,
+                slug:                  producto.slug,
+                precio:                producto.precio_venta,
+                imagen:                producto.imagen,
+                // Guardamos si el producto permite pago contra entrega.
+                // Si no se pasa el campo (items viejos en localStorage) asumimos true.
+                permite_contraentrega: producto.permite_contraentrega ?? true,
+                cantidad:              1,
             }];
         });
     };

@@ -160,6 +160,10 @@ export default function Carrito({ tarifas, categorias }) {
     const areaMetro = tarifas.filter(t => t.tipo === 'area_metro');
     const ciudades  = tarifas.filter(t => t.tipo === 'ciudad');
 
+    // Si ALGÚN item del carrito no permite contraentrega, bloqueamos esa opción.
+    // ?? true → items guardados antes de este cambio se tratan como "sí permite".
+    const algunoSinContraentrega = items.some(i => !(i.permite_contraentrega ?? true));
+
     // ─── VALIDAR FORMULARIO ANTES DE ABRIR MODAL ──────────────────────────
     const abrirModalPago = (e) => {
         e.preventDefault();
@@ -570,6 +574,7 @@ export default function Carrito({ tarifas, categorias }) {
                     total={total}
                     municipio={data.municipio}
                     esAreaMetro={esAreaMetro}
+                    algunoSinContraentrega={algunoSinContraentrega}
                     processing={processing}
                     onSeleccionar={confirmarConMetodo}
                     onCerrar={() => setModalPago(false)}
@@ -582,7 +587,7 @@ export default function Carrito({ tarifas, categorias }) {
 }
 
 // ─── MODAL MÉTODO DE PAGO ─────────────────────────────────────────────────
-function ModalMetodoPago({ total, municipio, esAreaMetro, processing, onSeleccionar, onCerrar, datosCliente, items }) {
+function ModalMetodoPago({ total, municipio, esAreaMetro, algunoSinContraentrega, processing, onSeleccionar, onCerrar, datosCliente, items }) {
 
     const cop = (n) => Number(n).toLocaleString('es-CO', {
         style: 'currency', currency: 'COP', maximumFractionDigits: 0
@@ -635,8 +640,12 @@ function ModalMetodoPago({ total, municipio, esAreaMetro, processing, onSeleccio
 
                 <div className="space-y-4">
 
-                    {/* Opción 1: Contra entrega */}
-                    {esAreaMetro ? (
+                    {/* Opción 1: Contra entrega
+                        Se deshabilita si:
+                        a) el cliente está fuera del área metro, O
+                        b) algún producto del carrito no permite contra entrega
+                    */}
+                    {(esAreaMetro && !algunoSinContraentrega) ? (
                         <button
                             onClick={() => onSeleccionar('contra_entrega')}
                             disabled={processing}
@@ -651,8 +660,8 @@ function ModalMetodoPago({ total, municipio, esAreaMetro, processing, onSeleccio
                                     <p className="text-gray-400 text-sm mt-0.5">
                                         Pagas en efectivo cuando recibes el pedido.
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                                        <span className="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full text-xs">Solo área metro de Medellín</span>
+                                    <p className="text-xs text-gray-500 mt-1.5">
+                                        <span className="bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">Solo área metro de Medellín</span>
                                     </p>
                                 </div>
                             </div>
@@ -663,8 +672,21 @@ function ModalMetodoPago({ total, municipio, esAreaMetro, processing, onSeleccio
                                 <div className="text-3xl grayscale">💵</div>
                                 <div>
                                     <p className="font-bold text-gray-500">Pago contra entrega</p>
-                                    <p className="text-gray-600 text-sm mt-0.5">No disponible para {municipio}.</p>
-                                    <p className="text-xs text-gray-600 mt-1">Solo disponible en el área metropolitana de Medellín.</p>
+                                    {algunoSinContraentrega ? (
+                                        <>
+                                            <p className="text-gray-600 text-sm mt-0.5">
+                                                No disponible — uno o más productos solo se venden con pago anticipado.
+                                            </p>
+                                            <p className="text-xs text-gray-600 mt-1">
+                                                Usa transferencia bancaria para continuar.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-gray-600 text-sm mt-0.5">No disponible para {municipio}.</p>
+                                            <p className="text-xs text-gray-600 mt-1">Solo disponible en el área metropolitana de Medellín.</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
