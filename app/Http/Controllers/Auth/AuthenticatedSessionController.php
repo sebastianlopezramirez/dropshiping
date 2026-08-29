@@ -40,9 +40,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Si el usuario tiene rol 'proveedor', lo enviamos a su portal
+        // Si el usuario tiene rol 'proveedor', siempre va directo a su portal.
+        // NO usar ->intended() aquí: si el middleware auth guardó '/dashboard' como
+        // URL intended (proveedor que intentó acceder al admin), ->intended() lo
+        // llevaría al dashboard en lugar del portal.
         if ($request->user()->hasRole('proveedor')) {
-            return redirect()->intended(route('portal.dashboard'));
+            return redirect()->route('portal.dashboard');
         }
 
         // Cualquier otro rol va al dashboard administrativo
