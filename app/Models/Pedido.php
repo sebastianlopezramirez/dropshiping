@@ -70,6 +70,7 @@ class Pedido extends Model
         'descuento',
         'costo_envio',
         'total',
+        'cliente_id',
         'usuario_id',
         'notas',
         'notas_internas',
@@ -169,7 +170,7 @@ class Pedido extends Model
     */
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_id', 'id');
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
     /*

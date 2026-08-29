@@ -361,7 +361,7 @@ class ProductoController extends Controller
             'meta_descripcion'  => 'nullable|string|max:160',
             'sku'               => 'nullable|string|max:50|unique:productos,sku,' . $producto->id,
             'imagenes_nuevas'   => 'nullable|array',
-            'imagenes_nuevas.*' => 'image|max:2048',
+            'imagenes_nuevas.*' => 'image|max:5120|mimes:jpeg,jpg,png,webp',
             'cupon_ids'         => 'nullable|array',
             'cupon_ids.*'       => 'string|exists:cupones,id',
         ]);
