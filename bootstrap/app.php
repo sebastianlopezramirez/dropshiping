@@ -26,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Confiar en el proxy de Railway (HTTPS termina en el edge, llega HTTP al container)
         $middleware->trustProxies(at: '*');
 
+        // Redirigir www → sin www (SEO: dominio canónico)
+        $middleware->prepend(\App\Http\Middleware\RedirectWww::class);
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
