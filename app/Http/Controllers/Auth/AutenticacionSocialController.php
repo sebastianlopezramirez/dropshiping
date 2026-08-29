@@ -38,6 +38,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class AutenticacionSocialController extends Controller
@@ -152,8 +153,17 @@ class AutenticacionSocialController extends Controller
                 'google_id'  => $usuarioGoogle->id,
                 'avatar_url' => $usuarioGoogle->avatar,
                 'estado'     => 'activo',
-                'rol'        => 'cliente', // rol por defecto para login social
-                // Sin 'contrasena' → se queda en null (solo puede entrar con Google)
+                'rol'        => 'cliente',
+                /*
+                | PENSAR — ¿Por qué generamos una contraseña aleatoria?
+                |
+                |   La columna 'contrasena' es NOT NULL → la BD la exige.
+                |   Usuarios OAuth nunca la usan (solo entran con Google).
+                |   Str::random(64) = 64 caracteres imposibles de adivinar.
+                |   El cast 'hashed' del modelo la hashea automáticamente.
+                |   NO usar Hash::make() aquí — se hashearía dos veces.
+                */
+                'contrasena' => Str::random(64),
             ]);
         }
 
