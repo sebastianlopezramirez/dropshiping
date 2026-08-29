@@ -57,23 +57,12 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 
             {/* ── HERO BANNER ──────────────────────────────────────────── */}
             {mostrandoHero && (
-                <div className="w-full flex justify-center px-4 py-4 sm:py-6">
-                    <div className="relative w-full max-w-3xl h-36 sm:h-44 md:h-52 rounded-2xl overflow-hidden shadow-lg">
-                        <img
-                            src="/home-page-gadget-store.jpg"
-                            alt="GadGet Store — Variedad en una sola tienda"
-                            className="w-full h-full object-cover object-center"
-                        />
-                        {/* Overlay con nombre de la tienda */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex flex-col justify-center px-6 sm:px-8">
-                            <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight drop-shadow">
-                                GadGet Store
-                            </h1>
-                            <p className="text-gray-200 text-xs sm:text-sm mt-1 drop-shadow">
-                                Variedad en una sola tienda
-                            </p>
-                        </div>
-                    </div>
+                <div className="w-full h-36 sm:h-48 md:h-56 overflow-hidden">
+                    <img
+                        src="/home-page-gadget-store.jpg"
+                        alt="GadGet Store — Variedad en una sola tienda"
+                        className="w-full h-full object-cover object-center"
+                    />
                 </div>
             )}
 
