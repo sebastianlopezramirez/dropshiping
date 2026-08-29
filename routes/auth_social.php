@@ -43,6 +43,7 @@
 */
 
 use App\Http\Controllers\Auth\AutenticacionSocialController;
+use App\Http\Controllers\Tienda\ClienteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -81,3 +82,24 @@ Route::get('auth/google', [AutenticacionSocialController::class, 'redirigir'])
 */
 Route::get('auth/google/callback', [AutenticacionSocialController::class, 'callback'])
      ->name('auth.google.callback');
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS GOOGLE OAUTH — Tienda (clientes compradores)
+|--------------------------------------------------------------------------
+|
+| Flujo separado del admin porque:
+|   - Usa redirect URI diferente (/tienda/auth/google/callback)
+|   - Crea/busca en la tabla 'clientes' (no 'usuarios')
+|   - Al final setea session('cliente_id'), no Auth::login()
+|   - Redirige a /tienda/cuenta (no al dashboard)
+|
+| VERIFICAR — Agregar en Google Cloud Console:
+|   https://courageous-flexibility-production-1a54.up.railway.app/tienda/auth/google/callback
+|
+*/
+Route::get('tienda/auth/google', [ClienteController::class, 'loginGoogle'])
+     ->name('tienda.auth.google');
+
+Route::get('tienda/auth/google/callback', [ClienteController::class, 'callbackGoogle'])
+     ->name('tienda.auth.google.callback');

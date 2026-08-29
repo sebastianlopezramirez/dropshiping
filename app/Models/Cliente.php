@@ -48,10 +48,12 @@ class Cliente extends Model
     }
 
     protected $fillable = [
-        'cedula',
+        'cedula',       // null si el cliente entró con Google
         'nombre',
-        'celular',
+        'celular',      // null si el cliente entró con Google
         'email',
+        'google_id',    // ID de Google OAuth (null si se registró con cédula)
+        'avatar_url',   // Foto de perfil de Google
         'ciudad',
         'municipio',
         'direccion',

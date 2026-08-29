@@ -30,10 +30,12 @@ use App\Models\Cliente;
 use App\Models\Pedido;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClienteController extends Controller
@@ -166,6 +168,102 @@ class ClienteController extends Controller
             'identificado' => true,
             'datos'        => $cliente->datosCarrito(),
         ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | loginGoogle() — Redirige al login de Google (flujo tienda)
+    |----------------------------------------------------------------------
+    |
+    | ENTENDER — ¿Por qué hay un método separado para la tienda?
+    |
+    |   El admin usa AutenticacionSocialController → redirige al dashboard.
+    |   El cliente de tienda usa este método → redirige a tienda/cuenta.
+    |
+    |   Ambos usan el mismo driver de Google (mismas credenciales),
+    |   pero el callback destino es diferente.
+    |
+    */
+    public function loginGoogle(): RedirectResponse
+    {
+        return Socialite::driver('google')
+            ->redirectUrl(config('services.google.redirect_tienda'))
+            ->redirect();
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | callbackGoogle() — Google regresa aquí con los datos del cliente
+    |----------------------------------------------------------------------
+    |
+    | PENSAR — Casos posibles:
+    |
+    |   CASO A: Cliente nuevo → crear registro en 'clientes' sin cédula
+    |   CASO B: Cliente existente con mismo email → vincular google_id
+    |   CASO C: Cliente que ya usó Google → simplemente loguearlo
+    |   CASO ERROR: Google rechazó → redirigir con mensaje de error
+    |
+    | IMPORTANTE: Al final siempre seteamos session('cliente_id')
+    | que es el mismo mecanismo que usa el login con cédula.
+    | El resto del sistema (carrito, cuenta) funciona sin cambios.
+    |
+    */
+    public function callbackGoogle(Request $request): RedirectResponse
+    {
+        // ── Obtener datos de Google ───────────────────────────────────
+        try {
+            $googleCliente = Socialite::driver('google')
+                ->redirectUrl(config('services.google.redirect_tienda'))
+                ->user();
+        } catch (\Exception $e) {
+            Log::warning('Google OAuth tienda falló', [
+                'error' => $e->getMessage(),
+                'ip'    => $request->ip(),
+            ]);
+            return redirect()->route('tienda.cuenta.login')
+                ->with('error', 'No se pudo conectar con Google. Intentá de nuevo.');
+        }
+
+        // ── Buscar o crear el cliente ─────────────────────────────────
+        /*
+        | PENSAR — ¿Por qué buscamos primero por google_id y luego por email?
+        |
+        |   google_id → búsqueda exacta y segura para clientes que ya usaron Google
+        |   email      → vincula clientes existentes (compraron antes con cédula
+        |                 y pusieron su email, ahora entran con Google)
+        */
+        $cliente = Cliente::where('google_id', $googleCliente->id)->first()
+                ?? Cliente::where('email', $googleCliente->email)->whereNotNull('email')->first();
+
+        if ($cliente) {
+            // Actualizar datos de Google si cambiaron
+            $cliente->update([
+                'google_id'  => $googleCliente->id,
+                'avatar_url' => $googleCliente->avatar,
+                // Completar nombre si no lo tenía
+                'nombre'     => $cliente->nombre ?: $googleCliente->name,
+            ]);
+        } else {
+            // Cliente nuevo — crear sin cédula (cedula es ahora nullable)
+            $cliente = Cliente::create([
+                'nombre'     => $googleCliente->name,
+                'email'      => $googleCliente->email,
+                'google_id'  => $googleCliente->id,
+                'avatar_url' => $googleCliente->avatar,
+                // cedula y celular quedan null
+                // Se pueden completar luego si hace un pedido
+            ]);
+        }
+
+        // ── Crear sesión del cliente (mismo mecanismo que login normal) ─
+        $request->session()->regenerate();
+
+        session([
+            'cliente_id'     => $cliente->id,
+            'cliente_nombre' => $cliente->nombre,
+        ]);
+
+        return redirect()->route('tienda.cuenta');
     }
 
     /*
