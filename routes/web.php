@@ -516,6 +516,29 @@ Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
 
 /*
 |--------------------------------------------------------------------------
+| RUTAS DE AUTENTICACIÓN — Breeze (login, registro, reset contraseña)
+|--------------------------------------------------------------------------
+|
+| Este archivo define las rutas estándar de autenticación generadas
+| por Laravel Breeze:
+|   GET  /login           → formulario de login
+|   POST /login           → procesar login
+|   POST /logout          → cerrar sesión
+|   GET  /register        → formulario de registro
+|   POST /register        → crear cuenta
+|   GET  /forgot-password → solicitar reset
+|   POST /forgot-password → enviar email de reset
+|   GET  /reset-password  → formulario nueva contraseña
+|   POST /reset-password  → guardar nueva contraseña
+|
+| IMPORTANTE: debe cargarse aquí (no en bootstrap/app.php) porque
+| este proyecto usa ->withRouting(web: ...) sin callback then:.
+|
+*/
+require __DIR__.'/auth.php';
+
+/*
+|--------------------------------------------------------------------------
 | RUTAS DE AUTENTICACIÓN SOCIAL — Google OAuth
 |--------------------------------------------------------------------------
 |
