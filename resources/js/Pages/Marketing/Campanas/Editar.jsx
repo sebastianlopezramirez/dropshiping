@@ -81,7 +81,7 @@ export default function Editar({ campana, canales, estados }) {
                                         onClick={() => setData('canal', c.value)}
                                         className={`p-2 border-2 rounded-lg text-xs text-center transition
                                             ${data.canal === c.value
-                                                ? 'border-purple-500 bg-purple-50'
+                                                ? 'border-purple-500 bg-blue-50'
                                                 : 'border-gray-200 hover:border-gray-300'}`}>
                                         {c.label}
                                     </button>
@@ -119,7 +119,7 @@ export default function Editar({ campana, canales, estados }) {
                                         onClick={() => setData('estado', e.value)}
                                         className={`px-4 py-2 border-2 rounded-lg text-sm transition
                                             ${data.estado === e.value
-                                                ? 'border-purple-500 bg-purple-50 text-purple-700 font-medium'
+                                                ? 'border-purple-500 bg-blue-50 text-blue-900 font-medium'
                                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                                         {e.label}
                                     </button>
@@ -152,7 +152,7 @@ export default function Editar({ campana, canales, estados }) {
                             Cancelar
                         </Link>
                         <button type="submit" disabled={processing}
-                            className="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 transition">
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition">
                             {processing ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>

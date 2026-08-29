@@ -236,7 +236,7 @@ export default function Index({ productos, categorias, filtros }) {
                             onClick={() => setMostrarFiltros(v => !v)}
                             className={`px-4 py-2 text-sm font-medium rounded-lg border transition ${
                                 mostrarFiltros
-                                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                                    ? 'bg-gray-50 border-blue-400 text-blue-900'
                                     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                             }`}
                         >
@@ -277,7 +277,7 @@ export default function Index({ productos, categorias, filtros }) {
                         )}
                         <Link
                             href={route('productos.create')}
-                            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
+                            className="px-4 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition"
                         >
                             + Nuevo Producto
                         </Link>
@@ -294,13 +294,13 @@ export default function Index({ productos, categorias, filtros }) {
                             placeholder="Buscar por nombre..."
                             value={buscar}
                             onChange={e => setBuscar(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                         />
 
                         <select
                             value={categoriaId}
                             onChange={e => setCategoriaId(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                         >
                             <option value="">Todas las categorías</option>
                             {categorias.map(cat => (
@@ -311,7 +311,7 @@ export default function Index({ productos, categorias, filtros }) {
                         <select
                             value={estado}
                             onChange={e => setEstado(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                         >
                             <option value="">Todos los estados</option>
                             <option value="activo">Activo</option>
@@ -323,7 +323,7 @@ export default function Index({ productos, categorias, filtros }) {
                         <div className="flex gap-2">
                             <button
                                 type="submit"
-                                className="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
+                                className="flex-1 px-3 py-2 bg-blue-800 text-white text-sm rounded-lg hover:bg-blue-900 transition"
                             >
                                 Filtrar
                             </button>
@@ -357,7 +357,7 @@ export default function Index({ productos, categorias, filtros }) {
                             {productos.data.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
-                                        No hay productos. <Link href={route('productos.create')} className="text-indigo-600 hover:underline">Crear el primero</Link>
+                                        No hay productos. <Link href={route('productos.create')} className="text-blue-800 hover:underline">Crear el primero</Link>
                                     </td>
                                 </tr>
                             ) : (
@@ -431,7 +431,7 @@ export default function Index({ productos, categorias, filtros }) {
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link
                                                     href={route('productos.edit', producto.id)}
-                                                    className="text-xs text-indigo-600 hover:underline"
+                                                    className="text-xs text-blue-800 hover:underline"
                                                 >
                                                     Editar
                                                 </Link>
@@ -460,7 +460,7 @@ export default function Index({ productos, categorias, filtros }) {
                                 href={link.url || '#'}
                                 className={`px-3 py-1 text-sm rounded-lg border transition ${
                                     link.active
-                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        ? 'bg-blue-800 text-white border-blue-800'
                                         : link.url
                                             ? 'border-gray-300 text-gray-600 hover:bg-gray-50'
                                             : 'border-gray-200 text-gray-300 cursor-default'
@@ -532,7 +532,7 @@ export default function Index({ productos, categorias, filtros }) {
                                         setPreview(null);
                                         if (f) previsualizarArchivo(f);
                                     }}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-blue-900 hover:file:bg-gray-100 cursor-pointer"
                                 />
                                 {archivoCsv && (
                                     <p className="text-xs text-gray-500 mt-1">

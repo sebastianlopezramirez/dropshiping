@@ -53,10 +53,10 @@ export default function Pagos({ totalVentas, totalPagado, saldoPendiente, pedido
 
                 {/* ── KPIs principales ─────────────────────────────────── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                        <p className="text-xs text-indigo-600 font-medium mb-1">Ventas totales</p>
-                        <p className="text-xl font-bold text-indigo-700">{fmt(totalVentas)}</p>
-                        <p className="text-xs text-indigo-400 mt-1">Precio pagado por clientes</p>
+                    <div className="bg-gray-50 border border-indigo-100 rounded-xl p-4">
+                        <p className="text-xs text-blue-800 font-medium mb-1">Ventas totales</p>
+                        <p className="text-xl font-bold text-blue-900">{fmt(totalVentas)}</p>
+                        <p className="text-xs text-blue-600 mt-1">Precio pagado por clientes</p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
                         <p className="text-xs text-emerald-600 font-medium mb-1">Total cobrado</p>

@@ -23,7 +23,7 @@ export default function Editar({ gasto, categorias }) {
     };
 
     const inputClass = (campo) =>
-        `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors[campo] ? 'border-red-400' : 'border-gray-300'}`;
+        `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700 ${errors[campo] ? 'border-red-400' : 'border-gray-300'}`;
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800">Editar Gasto</h2>}>
@@ -32,7 +32,7 @@ export default function Editar({ gasto, categorias }) {
             <div className="py-8 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <Link href={route('gastos.index')} className="hover:text-indigo-600">Gastos</Link>
+                    <Link href={route('gastos.index')} className="hover:text-blue-800">Gastos</Link>
                     <span>/</span>
                     <span className="text-gray-900">Editar</span>
                 </div>
@@ -98,7 +98,7 @@ export default function Editar({ gasto, categorias }) {
                             Cancelar
                         </Link>
                         <button type="submit" disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition">
                             {processing ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>

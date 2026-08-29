@@ -65,7 +65,7 @@ export default function Ver({ transaccion }) {
     const colorEstadoPedido = {
         pendiente:      'bg-yellow-100 text-yellow-800',
         en_preparacion: 'bg-blue-100 text-blue-800',
-        enviado:        'bg-indigo-100 text-indigo-800',
+        enviado:        'bg-gray-100 text-blue-900',
         entregado:      'bg-green-100 text-green-800',
         cancelado:      'bg-red-100 text-red-800',
     };
@@ -158,7 +158,7 @@ export default function Ver({ transaccion }) {
                         <div className="flex items-start justify-between mb-4">
                             <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Pedido Asociado</h3>
                             <Link href={route('pedidos.show', pedido.id)}
-                                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                className="text-xs text-blue-800 hover:text-blue-900 font-medium">
                                 Ver pedido completo →
                             </Link>
                         </div>

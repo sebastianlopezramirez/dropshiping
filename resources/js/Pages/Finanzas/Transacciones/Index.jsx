@@ -70,7 +70,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                 {/* Estadísticas */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     {[
-                        { label: 'Ingresos hoy',      valor: fmt(estadisticas.total_hoy),          color: 'text-indigo-600' },
+                        { label: 'Ingresos hoy',      valor: fmt(estadisticas.total_hoy),          color: 'text-blue-800' },
                         { label: 'Transac. hoy',      valor: estadisticas.count_hoy,               color: 'text-blue-600'   },
                         { label: 'Pendientes',         valor: estadisticas.total_pendientes,        color: 'text-yellow-600' },
                         { label: 'Ingresos del mes',  valor: fmt(estadisticas.total_aprobadas_mes), color: 'text-green-700'  },
@@ -94,7 +94,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                             📊 Dashboard
                         </Link>
                         <Link href={route('transacciones.create')}
-                            className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">
+                            className="px-4 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition">
                             + Registrar Pago
                         </Link>
                     </div>
@@ -105,26 +105,26 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                         <input type="text" placeholder="Buscar pedido, cliente..."
                             value={buscar} onChange={e => setBuscar(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                         <select value={estado} onChange={e => setEstado(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                             <option value="">Todos los estados</option>
                             {estados.map(e => <option key={e} value={e}>{etiquetaEstado[e] ?? e}</option>)}
                         </select>
                         <select value={metodo} onChange={e => setMetodo(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                             <option value="">Todos los métodos</option>
                             {metodos.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                         </select>
                         <select value={periodo} onChange={e => setPeriodo(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                             <option value="">Todo el tiempo</option>
                             <option value="hoy">Hoy</option>
                             <option value="semana">Esta semana</option>
                             <option value="mes">Este mes</option>
                         </select>
                         <div className="flex gap-2">
-                            <button type="submit" className="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
+                            <button type="submit" className="flex-1 px-3 py-2 bg-blue-800 text-white text-sm rounded-lg hover:bg-blue-900 transition">
                                 Filtrar
                             </button>
                             <button type="button" onClick={limpiar} className="px-3 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">
@@ -149,7 +149,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                                 <tr>
                                     <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
                                         No hay transacciones.{' '}
-                                        <Link href={route('transacciones.create')} className="text-indigo-600 hover:underline">
+                                        <Link href={route('transacciones.create')} className="text-blue-800 hover:underline">
                                             Registrar el primer pago
                                         </Link>
                                     </td>
@@ -179,7 +179,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                                         <td className="px-4 py-3">
                                             {tx.pedido ? (
                                                 <>
-                                                    <p className="text-sm font-medium text-indigo-600">{tx.pedido.numero_pedido}</p>
+                                                    <p className="text-sm font-medium text-blue-800">{tx.pedido.numero_pedido}</p>
                                                     <p className="text-xs text-gray-700">{tx.pedido.cliente_nombre}</p>
                                                     <p className="text-xs text-gray-400">{tx.pedido.ciudad}</p>
                                                 </>
@@ -218,7 +218,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                                         {/* Acción */}
                                         <td className="px-4 py-3 text-right">
                                             <Link href={route('transacciones.show', tx.id)}
-                                                className="text-xs text-indigo-600 hover:underline">
+                                                className="text-xs text-blue-800 hover:underline">
                                                 Ver detalle
                                             </Link>
                                         </td>
@@ -235,7 +235,7 @@ export default function Index({ transacciones, estadisticas, estados, metodos, f
                     <div className="mt-4 flex items-center justify-center gap-1">
                         {transacciones.links.map((link, i) => (
                             <Link key={i} href={link.url || '#'}
-                                className={`px-3 py-1 text-sm rounded-lg border transition ${link.active ? 'bg-indigo-600 text-white border-indigo-600' : link.url ? 'border-gray-300 text-gray-600 hover:bg-gray-50' : 'border-gray-200 text-gray-300 cursor-default'}`}
+                                className={`px-3 py-1 text-sm rounded-lg border transition ${link.active ? 'bg-blue-800 text-white border-blue-800' : link.url ? 'border-gray-300 text-gray-600 hover:bg-gray-50' : 'border-gray-200 text-gray-300 cursor-default'}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }} />
                         ))}
                     </div>

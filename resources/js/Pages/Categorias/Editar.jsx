@@ -24,7 +24,7 @@ function Campo({ label, name, type = 'text', placeholder = '', nota = '', requir
                         : val);
                 }}
                 placeholder={placeholder}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700 focus:border-transparent
                     ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
             />
             {nota && <p className="mt-1 text-xs text-gray-500">{nota}</p>}
@@ -80,7 +80,7 @@ export default function Editar({ categoria, padres }) {
                                 value={data.descripcion}
                                 onChange={e => setData('descripcion', e.target.value)}
                                 rows={3}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700 focus:border-transparent resize-none"
                             />
                         </div>
                     </div>
@@ -94,7 +94,7 @@ export default function Editar({ categoria, padres }) {
                             <select
                                 value={data.padre_id}
                                 onChange={e => setData('padre_id', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700">
                                 <option value="">Sin padre (categoría raíz)</option>
                                 {padres.map(p => (
                                     <option key={p.id} value={p.id}>{p.nombre}</option>
@@ -116,7 +116,7 @@ export default function Editar({ categoria, padres }) {
                                 <label className="flex items-center gap-3 cursor-pointer">
                                     <input type="checkbox" checked={data.activo}
                                         onChange={e => setData('activo', e.target.checked)}
-                                        className="w-4 h-4 text-indigo-600 rounded" />
+                                        className="w-4 h-4 text-blue-800 rounded" />
                                     <div>
                                         <div className="font-medium text-gray-800 text-sm">Categoría activa</div>
                                         <div className="text-xs text-gray-500">Visible en la tienda</div>
@@ -133,7 +133,7 @@ export default function Editar({ categoria, padres }) {
                             Cancelar
                         </Link>
                         <button type="submit" disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition">
                             {processing ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>

@@ -31,10 +31,17 @@ const STORAGE_KEY = 'gadget_carrito';
 export function CartProvider({ children }) {
 
     // Inicializar desde localStorage
+    // NOTA: filtramos items sin `precio` que quedaron de versiones anteriores
+    // del carrito (antes no se guardaba el precio). Sin este filtro el carrito
+    // muestra $ NaN para items huérfanos.
     const [items, setItems] = useState(() => {
         try {
             const guardado = localStorage.getItem(STORAGE_KEY);
-            return guardado ? JSON.parse(guardado) : [];
+            if (!guardado) return [];
+            const parsed = JSON.parse(guardado);
+            return parsed.filter(item =>
+                item.precio != null && !isNaN(parseFloat(item.precio))
+            );
         } catch {
             return [];
         }

@@ -48,18 +48,18 @@ function MiniCrearCategoria({ padreId, onCreada, onCerrar, esAdmin }) {
 
     if (!esAdmin) return null;
     return (
-        <div className="mt-2 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-            <p className="text-xs font-semibold text-indigo-700 mb-2">
+        <div className="mt-2 p-3 bg-gray-50 border border-indigo-200 rounded-lg">
+            <p className="text-xs font-semibold text-blue-900 mb-2">
                 {padreId ? '+ Nueva subcategoría' : '+ Nueva categoría padre'}
             </p>
             <div className="flex gap-2">
                 <input type="text" value={nombre} onChange={e => setNombre(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && guardar()}
                     placeholder="Nombre..."
-                    className="flex-1 border border-indigo-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="flex-1 border border-blue-400 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     autoFocus />
                 <button onClick={guardar} disabled={guardando}
-                    className="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50">
+                    className="px-3 py-1 text-xs font-medium text-white bg-blue-800 rounded hover:bg-blue-900 disabled:opacity-50">
                     {guardando ? '...' : 'Crear'}
                 </button>
                 <button onClick={onCerrar} className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700">✕</button>
@@ -208,7 +208,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <Link href={route('productos.index')} className="hover:text-indigo-600">Productos</Link>
+                    <Link href={route('productos.index')} className="hover:text-blue-800">Productos</Link>
                     <span>/</span>
                     <span className="text-gray-900 truncate max-w-xs">{producto.nombre}</span>
                 </div>
@@ -243,7 +243,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                     const v = e.target.value;
                                     setData('nombre', capitalize(v));
                                 }}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                             />
                             <Error campo="nombre" />
                         </div>
@@ -257,7 +257,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 value={data.descripcion_corta}
                                 onChange={e => setData('descripcion_corta', capitalize(e.target.value))}
                                 maxLength={300}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                             />
                             <Error campo="descripcion_corta" />
                         </div>
@@ -270,7 +270,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 value={data.descripcion}
                                 onChange={e => setData('descripcion', e.target.value)}
                                 rows={5}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                             />
                             <Error campo="descripcion" />
                         </div>
@@ -283,7 +283,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 type="text"
                                 value={data.sku}
                                 onChange={e => setData('sku', e.target.value)}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                             />
                             <Error campo="sku" />
                         </div>
@@ -304,7 +304,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                     step="100"
                                     value={data.precio_costo}
                                     onChange={e => setData('precio_costo', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                 />
                                 <Error campo="precio_costo" />
                             </div>
@@ -319,7 +319,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                     step="100"
                                     value={data.precio_venta}
                                     onChange={e => setData('precio_venta', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                 />
                                 <Error campo="precio_venta" />
                             </div>
@@ -334,7 +334,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                     step="100"
                                     value={data.precio_oferta}
                                     onChange={e => setData('precio_oferta', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Vacío = sin descuento"
                                 />
                                 <Error campo="precio_oferta" />
@@ -342,7 +342,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                         </div>
 
                         {data.precio_costo > 0 && data.precio_venta > 0 && (
-                            <div className="mt-3 p-3 bg-indigo-50 rounded-lg text-sm text-indigo-700">
+                            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-blue-900">
                                 Margen estimado:{' '}
                                 <strong>
                                     {Math.round(((data.precio_venta - data.precio_costo) / data.precio_venta) * 100)}%
@@ -365,7 +365,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                         <select
                                             value={categoriaPadreId}
                                             onChange={e => handleCategoriaPadre(e.target.value)}
-                                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                         >
                                             <option value="">— Selecciona categoría —</option>
                                             {categoriasPadre.map(cat => (
@@ -375,7 +375,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                         {esAdmin && (
                                             <button type="button" onClick={() => { setMiniPadre(v => !v); setMiniHija(false); }}
                                                 title="Crear nueva categoría padre"
-                                                className="shrink-0 px-2 py-2 text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 text-sm font-bold">
+                                                className="shrink-0 px-2 py-2 text-blue-800 border border-blue-400 rounded-lg hover:bg-gray-50 text-sm font-bold">
                                                 +
                                             </button>
                                         )}
@@ -391,7 +391,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                             <select
                                                 value={data.categoria_id}
                                                 onChange={e => setData('categoria_id', e.target.value)}
-                                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                             >
                                                 <option value={categoriaPadreId}>— Sin subcategoría —</option>
                                                 {subcategorias.map(sub => (
@@ -401,7 +401,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                             {esAdmin && (
                                                 <button type="button" onClick={() => { setMiniHija(v => !v); setMiniPadre(false); }}
                                                     title="Crear nueva subcategoría"
-                                                    className="shrink-0 px-2 py-2 text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 text-sm font-bold">
+                                                    className="shrink-0 px-2 py-2 text-blue-800 border border-blue-400 rounded-lg hover:bg-gray-50 text-sm font-bold">
                                                     +
                                                 </button>
                                             )}
@@ -422,7 +422,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 <select
                                     value={data.estado}
                                     onChange={e => setData('estado', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                 >
                                     <option value="borrador">Borrador</option>
                                     <option value="activo">Activo</option>
@@ -442,7 +442,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                             checked={data.permite_contraentrega}
                                             onChange={e => setData('permite_contraentrega', e.target.checked)}
                                         />
-                                        <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_contraentrega ? 'bg-indigo-500' : 'bg-gray-300'}`} />
+                                        <div className={`w-10 h-6 rounded-full transition-colors ${data.permite_contraentrega ? 'bg-blue-700' : 'bg-gray-300'}`} />
                                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${data.permite_contraentrega ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </div>
                                     <div>
@@ -463,7 +463,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                     min="0"
                                     value={data.stock}
                                     onChange={e => setData('stock', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Vacío = ilimitado"
                                 />
                                 <Error campo="stock" />
@@ -498,7 +498,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                             />
                                             {/* Badge "Principal" en la primera imagen */}
                                             {i === 0 && (
-                                                <span className="absolute -top-1 -left-1 bg-indigo-600 text-white text-xs px-1 rounded">
+                                                <span className="absolute -top-1 -left-1 bg-blue-800 text-white text-xs px-1 rounded">
                                                     Principal
                                                 </span>
                                             )}
@@ -530,7 +530,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 setData('imagenes_nuevas', archivos);
                                 setPreviews(archivos.map(f => URL.createObjectURL(f)));
                             }}
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-50 file:text-blue-900 hover:file:bg-gray-100"
                         />
                         <Error campo="imagenes_nuevas" />
 
@@ -542,7 +542,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                         key={i}
                                         src={url}
                                         alt={`nueva ${i + 1}`}
-                                        className="w-20 h-20 object-cover rounded-lg border-2 border-dashed border-indigo-300"
+                                        className="w-20 h-20 object-cover rounded-lg border-2 border-dashed border-blue-400"
                                     />
                                 ))}
                             </div>
@@ -558,7 +558,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                     {cupones.length > 0 && (
                         <div className="border border-violet-200 rounded-lg p-4 bg-violet-50 space-y-3">
                             <p className="text-sm font-semibold text-violet-800">🏷️ Cupones de descuento</p>
-                            <p className="text-xs text-violet-600">
+                            <p className="text-xs text-blue-800">
                                 Seleccioná los cupones del módulo Marketing que aplican a este producto.
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -588,7 +588,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                                 className="mt-0.5 accent-violet-600"
                                             />
                                             <div>
-                                                <p className="text-sm font-mono font-bold text-violet-700">{cupon.codigo}</p>
+                                                <p className="text-sm font-mono font-bold text-blue-900">{cupon.codigo}</p>
                                                 <p className="text-xs text-gray-500">{cupon.descripcion}</p>
                                                 <span className="inline-block mt-1 text-xs bg-violet-200 text-violet-800 px-2 py-0.5 rounded-full font-medium">
                                                     {etiqueta}
@@ -599,7 +599,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                                 })}
                             </div>
                             {data.cupon_ids.length > 0 && (
-                                <p className="text-xs text-violet-700 font-medium">
+                                <p className="text-xs text-blue-900 font-medium">
                                     ✅ {data.cupon_ids.length} cupón(es) seleccionado(s)
                                 </p>
                             )}
@@ -617,7 +617,7 @@ export default function Editar({ producto, categorias, cupones = [], cuponesAsig
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition disabled:opacity-50"
                         >
                             {processing ? 'Guardando...' : 'Guardar cambios'}
                         </button>

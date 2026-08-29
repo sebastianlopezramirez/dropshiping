@@ -33,7 +33,7 @@ const cop = (n) => Number(n).toLocaleString('es-CO', {
 const colorEstado = {
     pendiente:  'bg-yellow-100 text-yellow-700',
     procesando: 'bg-blue-100 text-blue-700',
-    enviado:    'bg-indigo-100 text-indigo-700',
+    enviado:    'bg-gray-100 text-blue-900',
     entregado:  'bg-green-100 text-green-700',
     completado: 'bg-green-100 text-green-700',
     cancelado:  'bg-red-100 text-red-700',
@@ -161,7 +161,7 @@ export default function Dashboard({
                                     <div className="w-full flex gap-0.5 items-end" style={{ height: '120px' }}>
                                         {/* Barra ingresos */}
                                         <div
-                                            className="flex-1 bg-indigo-400 rounded-t transition-all"
+                                            className="flex-1 bg-blue-600 rounded-t transition-all"
                                             style={{ height: `${Math.round((m.ingresos / maxIngreso) * 100)}%`, minHeight: m.ingresos > 0 ? '4px' : '0' }}
                                             title={`Ingresos: ${cop(m.ingresos)}`}
                                         />
@@ -179,7 +179,7 @@ export default function Dashboard({
                         {/* Leyenda */}
                         <div className="flex gap-4 mt-3 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
-                                <span className="w-3 h-3 bg-indigo-400 rounded-sm inline-block"></span> Ingresos
+                                <span className="w-3 h-3 bg-blue-600 rounded-sm inline-block"></span> Ingresos
                             </span>
                             <span className="flex items-center gap-1">
                                 <span className="w-3 h-3 bg-red-300 rounded-sm inline-block"></span> Gastos
@@ -209,7 +209,7 @@ export default function Dashboard({
                                         {/* Barra de progreso proporcional */}
                                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-indigo-400 rounded-full"
+                                                className="h-full bg-blue-600 rounded-full"
                                                 style={{ width: `${Math.round((total / kpis.total_pedidos_mes) * 100)}%` }}
                                             />
                                         </div>
@@ -234,7 +234,7 @@ export default function Dashboard({
                             <div className="space-y-3">
                                 {productos_mas_vendidos.map((p, i) => (
                                     <div key={i} className="flex items-center gap-3">
-                                        <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
+                                        <span className="w-6 h-6 rounded-full bg-gray-100 text-blue-800 text-xs font-bold flex items-center justify-center shrink-0">
                                             {i + 1}
                                         </span>
                                         <div className="flex-1 min-w-0">
@@ -320,16 +320,16 @@ export default function Dashboard({
 */
 function KpiCard({ titulo, valor, color, icono, nota }) {
     const colores = {
-        indigo: 'bg-indigo-50 border-indigo-100',
+        indigo: 'bg-gray-50 border-indigo-100',
         green:  'bg-green-50 border-green-100',
         red:    'bg-red-50 border-red-100',
-        purple: 'bg-purple-50 border-purple-100',
+        purple: 'bg-blue-50 border-purple-100',
     };
     const textColores = {
-        indigo: 'text-indigo-700',
+        indigo: 'text-blue-900',
         green:  'text-green-700',
         red:    'text-red-700',
-        purple: 'text-purple-700',
+        purple: 'text-blue-900',
     };
 
     return (

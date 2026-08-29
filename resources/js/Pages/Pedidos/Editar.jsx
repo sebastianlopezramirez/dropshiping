@@ -58,8 +58,8 @@ export default function Editar({ pedido, estados }) {
     const colorEstado = {
         pendiente:      'bg-yellow-100 text-yellow-800',
         confirmado:     'bg-blue-100 text-blue-800',
-        en_preparacion: 'bg-purple-100 text-purple-800',
-        enviado:        'bg-indigo-100 text-indigo-800',
+        en_preparacion: 'bg-blue-100 text-blue-900',
+        enviado:        'bg-gray-100 text-blue-900',
         entregado:      'bg-green-100 text-green-800',
         devuelto:       'bg-orange-100 text-orange-800',
         cancelado:      'bg-red-100 text-red-800',
@@ -77,7 +77,7 @@ export default function Editar({ pedido, estados }) {
 
     // Clases reutilizables
     const inputClass = (campo) =>
-        `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+        `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700 ${
             errors[campo] ? 'border-red-400' : 'border-gray-300'
         }`;
 
@@ -100,9 +100,9 @@ export default function Editar({ pedido, estados }) {
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <Link href={route('pedidos.index')} className="hover:text-indigo-600">Pedidos</Link>
+                    <Link href={route('pedidos.index')} className="hover:text-blue-800">Pedidos</Link>
                     <span>/</span>
-                    <Link href={route('pedidos.show', pedido.id)} className="hover:text-indigo-600">{pedido.numero_pedido}</Link>
+                    <Link href={route('pedidos.show', pedido.id)} className="hover:text-blue-800">{pedido.numero_pedido}</Link>
                     <span>/</span>
                     <span className="text-gray-900">Editar</span>
                 </div>
@@ -360,7 +360,7 @@ export default function Editar({ pedido, estados }) {
                         <button
                             type="submit"
                             disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition"
                         >
                             {processing ? 'Guardando...' : 'Guardar Cambios'}
                         </button>

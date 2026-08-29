@@ -65,7 +65,7 @@ export default function Index({ campanas, estadisticas, canales, estados, filtro
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-800">Campañas de Marketing</h2>
                 <Link href={route('campanas.create')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition">
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition">
                     <span className="text-base leading-none">+</span> Nueva Campaña
                 </Link>
             </div>
@@ -155,7 +155,7 @@ export default function Index({ campanas, estadisticas, canales, estados, filtro
                             {campanas.data.length === 0 ? (
                                 <tr>
                                     <td colSpan={8} className="text-center py-12 text-gray-400">
-                                        No hay campañas. <Link href={route('campanas.create')} className="text-purple-600 hover:underline">Crear la primera →</Link>
+                                        No hay campañas. <Link href={route('campanas.create')} className="text-blue-800 hover:underline">Crear la primera →</Link>
                                     </td>
                                 </tr>
                             ) : campanas.data.map(c => (
@@ -192,7 +192,7 @@ export default function Index({ campanas, estadisticas, canales, estados, filtro
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link href={route('campanas.show', c.id)}
-                                                className="text-xs px-3 py-1 border border-purple-200 rounded-lg text-purple-600 hover:bg-purple-50 transition">
+                                                className="text-xs px-3 py-1 border border-purple-200 rounded-lg text-blue-800 hover:bg-blue-50 transition">
                                                 Ver
                                             </Link>
                                             <Link href={route('campanas.edit', c.id)}

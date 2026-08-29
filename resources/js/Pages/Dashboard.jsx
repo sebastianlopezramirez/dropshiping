@@ -167,7 +167,7 @@ export default function Dashboard() {
                                 <Link href={route('cupones.index')} className="text-orange-600 hover:text-orange-800 text-sm font-medium">
                                     Cupones →
                                 </Link>
-                                <Link href={route('campanas.index')} className="text-purple-600 hover:text-purple-900 text-sm font-medium">
+                                <Link href={route('campanas.index')} className="text-blue-800 hover:text-purple-900 text-sm font-medium">
                                     Campañas →
                                 </Link>
                                 <a href="/marketing/exportar"

@@ -157,7 +157,7 @@ export default function Crear({ productos, estados }) {
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <Link href={route('pedidos.index')} className="hover:text-indigo-600">Pedidos</Link>
+                    <Link href={route('pedidos.index')} className="hover:text-blue-800">Pedidos</Link>
                     <span>/</span>
                     <span className="text-gray-900">Nuevo pedido</span>
                 </div>
@@ -175,7 +175,7 @@ export default function Crear({ productos, estados }) {
                                 </label>
                                 <input type="text" value={data.cliente_nombre}
                                     onChange={e => setData('cliente_nombre', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Juan Carlos Pérez" />
                                 <Error campo="cliente_nombre" />
                             </div>
@@ -186,7 +186,7 @@ export default function Crear({ productos, estados }) {
                                 </label>
                                 <input type="email" value={data.cliente_email}
                                     onChange={e => setData('cliente_email', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="juan@ejemplo.com" />
                                 <Error campo="cliente_email" />
                             </div>
@@ -195,7 +195,7 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
                                 <input type="text" value={data.cliente_telefono}
                                     onChange={e => setData('cliente_telefono', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="3001234567" />
                             </div>
 
@@ -203,7 +203,7 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Cédula / NIT</label>
                                 <input type="text" value={data.cliente_documento}
                                     onChange={e => setData('cliente_documento', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="1234567890" />
                             </div>
                         </div>
@@ -220,7 +220,7 @@ export default function Crear({ productos, estados }) {
                                 </label>
                                 <input type="text" value={data.direccion_entrega}
                                     onChange={e => setData('direccion_entrega', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Calle 123 # 45-67" />
                                 <Error campo="direccion_entrega" />
                             </div>
@@ -231,7 +231,7 @@ export default function Crear({ productos, estados }) {
                                 </label>
                                 <input type="text" value={data.ciudad}
                                     onChange={e => setData('ciudad', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Bogotá" />
                                 <Error campo="ciudad" />
                             </div>
@@ -242,7 +242,7 @@ export default function Crear({ productos, estados }) {
                                 </label>
                                 <input type="text" value={data.departamento}
                                     onChange={e => setData('departamento', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Cundinamarca" />
                                 <Error campo="departamento" />
                             </div>
@@ -251,7 +251,7 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Barrio</label>
                                 <input type="text" value={data.barrio}
                                     onChange={e => setData('barrio', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Chapinero" />
                             </div>
 
@@ -259,7 +259,7 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Código postal</label>
                                 <input type="text" value={data.codigo_postal}
                                     onChange={e => setData('codigo_postal', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="110111" />
                             </div>
                         </div>
@@ -272,7 +272,7 @@ export default function Crear({ productos, estados }) {
                             <button
                                 type="button"
                                 onClick={() => setMostrarSelector(!mostrarSelector)}
-                                className="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg hover:bg-indigo-100 transition"
+                                className="px-3 py-1.5 bg-gray-50 text-blue-900 text-sm font-medium rounded-lg hover:bg-gray-100 transition"
                             >
                                 + Agregar producto
                             </button>
@@ -287,7 +287,7 @@ export default function Crear({ productos, estados }) {
                                     value={buscarProducto}
                                     onChange={e => setBuscarProducto(e.target.value)}
                                     autoFocus
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-700"
                                 />
                                 <div className="space-y-1 max-h-48 overflow-y-auto">
                                     {productosFiltrados.length === 0 ? (
@@ -309,7 +309,7 @@ export default function Crear({ productos, estados }) {
                                                     <p className="text-sm font-medium text-gray-900 truncate">{p.nombre}</p>
                                                     {p.sku && <p className="text-xs text-gray-400">SKU: {p.sku}</p>}
                                                 </div>
-                                                <span className="text-sm font-semibold text-indigo-600">
+                                                <span className="text-sm font-semibold text-blue-800">
                                                     {formatearPrecio(p.precio_oferta || p.precio_venta)}
                                                 </span>
                                             </button>
@@ -345,7 +345,7 @@ export default function Crear({ productos, estados }) {
                                             <input
                                                 type="number" min="1" value={item.cantidad}
                                                 onChange={e => actualizarItem(item.producto_id, 'cantidad', e.target.value)}
-                                                className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-700"
                                             />
                                         </div>
 
@@ -355,7 +355,7 @@ export default function Crear({ productos, estados }) {
                                             <input
                                                 type="number" min="0" value={item.precio_unitario}
                                                 onChange={e => actualizarItem(item.producto_id, 'precio_unitario', e.target.value)}
-                                                className="w-28 border border-gray-300 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                className="w-28 border border-gray-300 rounded px-2 py-1 text-sm text-right focus:outline-none focus:ring-1 focus:ring-blue-700"
                                             />
                                         </div>
 
@@ -387,7 +387,7 @@ export default function Crear({ productos, estados }) {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                                 <select value={data.estado} onChange={e => setData('estado', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                                     {estados.map(e => (
                                         <option key={e} value={e}>{e.replace('_', ' ')}</option>
                                     ))}
@@ -398,14 +398,14 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Costo de envío (COP)</label>
                                 <input type="number" min="0" step="1000" value={data.costo_envio}
                                     onChange={e => setData('costo_envio', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Descuento (COP)</label>
                                 <input type="number" min="0" step="1000" value={data.descuento}
                                     onChange={e => setData('descuento', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                             </div>
                         </div>
 
@@ -442,13 +442,13 @@ export default function Crear({ productos, estados }) {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Instrucciones del cliente</label>
                                 <textarea value={data.notas} onChange={e => setData('notas', e.target.value)}
                                     rows={3} placeholder="Ej: Dejar con el portero..."
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Notas internas (no visibles al cliente)</label>
                                 <textarea value={data.notas_internas} onChange={e => setData('notas_internas', e.target.value)}
                                     rows={3} placeholder="Ej: Cliente frecuente, dar prioridad..."
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                             </div>
                         </div>
                     </div>
@@ -460,7 +460,7 @@ export default function Crear({ productos, estados }) {
                             Cancelar
                         </Link>
                         <button type="submit" disabled={processing || items.length === 0}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed">
                             {processing ? 'Guardando...' : 'Crear Pedido'}
                         </button>
                     </div>

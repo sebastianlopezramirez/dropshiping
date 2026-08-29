@@ -103,7 +103,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                 {/* ── ESTADÍSTICAS ──────────────────────────────────────────── */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
-                        { label: 'Pedidos hoy',    valor: estadisticas.total_hoy,   color: 'text-indigo-600' },
+                        { label: 'Pedidos hoy',    valor: estadisticas.total_hoy,   color: 'text-blue-800' },
                         { label: 'Pendientes',      valor: estadisticas.pendientes,  color: 'text-yellow-600' },
                         { label: 'Confirmados',     valor: estadisticas.confirmados, color: 'text-blue-600' },
                         { label: 'Ventas del mes',  valor: fmt(estadisticas.total_mes), color: 'text-green-600' },
@@ -130,7 +130,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                             </h2>
                         </div>
                         <Link href={route('pedidos.create')}
-                            className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition">
+                            className="px-3 py-1.5 bg-blue-800 text-white text-xs font-medium rounded-lg hover:bg-blue-900 transition">
                             + Nuevo pedido
                         </Link>
                     </div>
@@ -148,7 +148,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-sm font-bold text-indigo-700">{pedido.numero_pedido}</span>
+                                            <span className="text-sm font-bold text-blue-900">{pedido.numero_pedido}</span>
                                             <span className="text-xs text-gray-400">
                                                 {new Date(pedido.creado_en).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                             </span>
@@ -176,7 +176,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                         <div className="flex flex-col gap-1.5">
                                             <button
                                                 onClick={() => cambiarEstado(pedido, 'confirmado')}
-                                                className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition whitespace-nowrap"
+                                                className="px-3 py-1.5 bg-blue-800 text-white text-xs font-semibold rounded-lg hover:bg-blue-900 transition whitespace-nowrap"
                                             >
                                                 → Confirmar
                                             </button>
@@ -209,16 +209,16 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             <input type="text" placeholder="Buscar por cliente o # pedido..."
                                 value={buscar} onChange={e => setBuscar(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                             <select value={estado} onChange={e => setEstado(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                                 <option value="">Todos los estados</option>
                                 {estados.map(e => (
                                     <option key={e} value={e}>{etiquetaEstado[e] ?? e}</option>
                                 ))}
                             </select>
                             <select value={periodo} onChange={e => setPeriodo(e.target.value)}
-                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                                 <option value="">Todos los períodos</option>
                                 <option value="hoy">Hoy</option>
                                 <option value="semana">Esta semana</option>
@@ -226,7 +226,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                             </select>
                             <div className="flex gap-2">
                                 <button type="submit"
-                                    className="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
+                                    className="flex-1 px-3 py-2 bg-blue-800 text-white text-sm rounded-lg hover:bg-blue-900 transition">
                                     Filtrar
                                 </button>
                                 <button type="button" onClick={limpiarFiltros}
@@ -259,7 +259,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                         historial.data.map(pedido => (
                                             <tr key={pedido.id} className="hover:bg-gray-50 transition">
                                                 <td className="px-4 py-3">
-                                                    <p className="text-sm font-medium text-indigo-600">{pedido.numero_pedido}</p>
+                                                    <p className="text-sm font-medium text-blue-800">{pedido.numero_pedido}</p>
                                                     <p className="text-xs text-gray-400">{new Date(pedido.creado_en).toLocaleDateString('es-CO')}</p>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -280,7 +280,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                                         {siguienteEstado[pedido.estado] && (
                                                             <button
                                                                 onClick={() => cambiarEstado(pedido, siguienteEstado[pedido.estado])}
-                                                                className="text-xs text-indigo-500 hover:underline"
+                                                                className="text-xs text-blue-700 hover:underline"
                                                             >
                                                                 → {etiquetaEstado[siguienteEstado[pedido.estado]]}
                                                             </button>
@@ -290,7 +290,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link href={route('pedidos.show', pedido.id)} className="text-xs text-gray-600 hover:underline">Ver</Link>
-                                                        <Link href={route('pedidos.edit', pedido.id)} className="text-xs text-indigo-600 hover:underline">Editar</Link>
+                                                        <Link href={route('pedidos.edit', pedido.id)} className="text-xs text-blue-800 hover:underline">Editar</Link>
                                                         <button onClick={() => eliminarPedido(pedido)} className="text-xs text-red-500 hover:underline">Eliminar</button>
                                                     </div>
                                                 </td>
@@ -309,7 +309,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                 <Link key={i} href={link.url || '#'}
                                     className={`px-3 py-1 text-sm rounded-lg border transition ${
                                         link.active
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            ? 'bg-blue-800 text-white border-blue-800'
                                             : link.url
                                                 ? 'border-gray-300 text-gray-600 hover:bg-gray-50'
                                                 : 'border-gray-200 text-gray-300 cursor-default'
@@ -329,7 +329,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
                         <h3 className="text-lg font-bold text-gray-900 mb-1">Confirmar pedido</h3>
                         <p className="text-sm text-gray-500 mb-5">
-                            <span className="font-medium text-indigo-600">{modalConfirmar.numero_pedido}</span>
+                            <span className="font-medium text-blue-800">{modalConfirmar.numero_pedido}</span>
                             {' '}— {modalConfirmar.cliente_nombre}
                         </p>
                         <div className="bg-gray-50 rounded-lg px-4 py-3 mb-5 flex justify-between items-center">
@@ -350,7 +350,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                     onClick={() => setMetodoPagoModal(valor)}
                                     className={`px-3 py-2 rounded-lg border text-sm font-medium transition text-left ${
                                         metodoPagoModal === valor
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                            ? 'border-blue-800 bg-gray-50 text-blue-900'
                                             : 'border-gray-200 text-gray-600 hover:border-gray-400'
                                     }`}>
                                     {etiqueta}
@@ -366,7 +366,7 @@ export default function Index({ pendientes, historial, estadisticas, estados, fi
                                 Cancelar
                             </button>
                             <button type="button" onClick={confirmarConPago} disabled={confirmando}
-                                className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition">
+                                className="flex-1 px-4 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-60 transition">
                                 {confirmando ? 'Confirmando...' : 'Confirmar pedido'}
                             </button>
                         </div>

@@ -32,7 +32,7 @@ function Campo({ label, name, type = 'text', placeholder = '', nota = '', requir
                         : val);
                 }}
                 placeholder={placeholder}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700 focus:border-transparent
                     ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
             />
             {nota && <p className="mt-1 text-xs text-gray-500">{nota}</p>}
@@ -163,7 +163,7 @@ export default function Crear({ padres }) {
                                 value={data.descripcion}
                                 onChange={e => setData('descripcion', e.target.value)}
                                 rows={3} placeholder="Descripción opcional de la categoría..."
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700 focus:border-transparent resize-none"
                             />
                         </div>
                     </div>
@@ -178,7 +178,7 @@ export default function Crear({ padres }) {
                                 <select
                                     value={data.padre_id}
                                     onChange={e => setData('padre_id', e.target.value)}
-                                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700">
                                     <option value="">Sin padre (categoría raíz)</option>
                                     {padresLocales.map(p => (
                                         <option key={p.id} value={p.id}>{p.nombre}</option>
@@ -186,22 +186,22 @@ export default function Crear({ padres }) {
                                 </select>
                                 <button type="button" onClick={() => setMiniPadre(v => !v)}
                                     title="Crear nueva categoría padre"
-                                    className="shrink-0 px-2 py-2 text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 text-sm font-bold">
+                                    className="shrink-0 px-2 py-2 text-blue-800 border border-blue-400 rounded-lg hover:bg-gray-50 text-sm font-bold">
                                     +
                                 </button>
                             </div>
                             {miniPadre && (
-                                <div className="mt-2 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                    <p className="text-xs font-semibold text-indigo-700 mb-2">+ Nueva categoría raíz</p>
+                                <div className="mt-2 p-3 bg-gray-50 border border-indigo-200 rounded-lg">
+                                    <p className="text-xs font-semibold text-blue-900 mb-2">+ Nueva categoría raíz</p>
                                     <div className="flex gap-2">
                                         <input type="text" value={nombreNuevoPadre}
                                             onChange={e => setNombreNuevoPadre(e.target.value)}
                                             onKeyDown={e => e.key === 'Enter' && crearPadreInline()}
                                             placeholder="Nombre..."
-                                            className="flex-1 border border-indigo-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                            className="flex-1 border border-blue-400 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                             autoFocus />
                                         <button type="button" onClick={crearPadreInline} disabled={creandoPadre}
-                                            className="px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50">
+                                            className="px-3 py-1 text-xs font-medium text-white bg-blue-800 rounded hover:bg-blue-900 disabled:opacity-50">
                                             {creandoPadre ? '...' : 'Crear'}
                                         </button>
                                         <button type="button" onClick={() => setMiniPadre(false)}
@@ -222,7 +222,7 @@ export default function Crear({ padres }) {
                                         ¿Crear subcategoría dentro de este padre? <span className="text-gray-400 font-normal">(opcional)</span>
                                     </label>
                                     <button type="button" onClick={() => setMiniHija(v => !v)}
-                                        className="text-xs text-indigo-600 hover:underline font-medium">
+                                        className="text-xs text-blue-800 hover:underline font-medium">
                                         {miniHija ? 'Cancelar' : '+ Agregar subcategoría'}
                                     </button>
                                 </div>
@@ -265,7 +265,7 @@ export default function Crear({ padres }) {
                                 <label className="flex items-center gap-3 cursor-pointer">
                                     <input type="checkbox" checked={data.activo}
                                         onChange={e => setData('activo', e.target.checked)}
-                                        className="w-4 h-4 text-indigo-600 rounded" />
+                                        className="w-4 h-4 text-blue-800 rounded" />
                                     <div>
                                         <div className="font-medium text-gray-800 text-sm">Categoría activa</div>
                                         <div className="text-xs text-gray-500">Visible en la tienda</div>
@@ -282,7 +282,7 @@ export default function Crear({ padres }) {
                             Cancelar
                         </Link>
                         <button type="submit" disabled={processing}
-                            className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                            className="px-6 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition">
                             {processing ? 'Guardando...' : 'Crear Categoría'}
                         </button>
                     </div>

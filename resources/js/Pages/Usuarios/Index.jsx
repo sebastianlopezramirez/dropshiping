@@ -163,7 +163,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
                             {/* Botón crear nuevo usuario */}
                             <Link
                                 href={route('usuarios.create')}
-                                className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition-colors"
                             >
                                 + Nuevo Usuario
                             </Link>
@@ -202,7 +202,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
                                             {/* Nombre + Avatar inicial */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm mr-3">
+                                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-blue-900 font-semibold text-sm mr-3">
                                                         {u.nombre?.charAt(0).toUpperCase()}
                                                     </div>
                                                     <span className="text-sm font-medium text-gray-900">{u.nombre}</span>
@@ -235,7 +235,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                                                 <Link
                                                     href={route('usuarios.edit', u.id)}
-                                                    className="text-indigo-600 hover:text-indigo-900"
+                                                    className="text-blue-800 hover:text-indigo-900"
                                                 >
                                                     Editar
                                                 </Link>
@@ -273,7 +273,7 @@ export default function Index({ usuarios, filtros, estadisticas }) {
                                                 preserveScroll
                                                 className={`px-3 py-1 text-sm rounded ${
                                                     link.active
-                                                        ? 'bg-indigo-600 text-white'
+                                                        ? 'bg-blue-800 text-white'
                                                         : 'text-gray-600 hover:bg-gray-100'
                                                 }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}

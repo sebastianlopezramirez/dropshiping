@@ -50,7 +50,7 @@ export default function Index({ categorias, filtros, stats }) {
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-800">Categorías</h2>
                 <Link href={route('categorias.create')}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                    className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition">
                     + Nueva Categoría
                 </Link>
             </div>
@@ -91,7 +91,7 @@ export default function Index({ categorias, filtros, stats }) {
                         <div className="flex-1 min-w-48">
                             <input type="text" value={buscar} onChange={e => setBuscar(e.target.value)}
                                 placeholder="Buscar por nombre o slug..."
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700 focus:border-transparent" />
                         </div>
                         <select value={activo} onChange={e => setActivo(e.target.value)}
                             className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -106,7 +106,7 @@ export default function Index({ categorias, filtros, stats }) {
                             <option value="sub">Solo subcategorías</option>
                         </select>
                         <button type="submit"
-                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                            className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 transition">
                             Filtrar
                         </button>
                         {(buscar || activo || tipo) && (
@@ -181,7 +181,7 @@ export default function Index({ categorias, filtros, stats }) {
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-2">
                                             <Link href={route('categorias.edit', cat.id)}
-                                                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                className="text-xs text-blue-800 hover:text-blue-900 font-medium">
                                                 Editar
                                             </Link>
                                             <button onClick={() => eliminar(cat)}
@@ -207,7 +207,7 @@ export default function Index({ categorias, filtros, stats }) {
                                         onClick={() => link.url && router.get(link.url)}
                                         className={`px-3 py-1 text-xs rounded border transition
                                             ${link.active
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                ? 'bg-blue-800 text-white border-blue-800'
                                                 : link.url
                                                     ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
                                                     : 'border-gray-200 text-gray-300 cursor-not-allowed'}`}

@@ -172,8 +172,8 @@ export default function Editar({ usuario, roles }) {
 
                             {/* ─── Perfil de proveedor (solo visible si el rol es proveedor) ─── */}
                             {data.rol === 'proveedor' && (
-                                <div className="border border-indigo-200 rounded-lg p-4 bg-indigo-50 space-y-4">
-                                    <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">
+                                <div className="border border-indigo-200 rounded-lg p-4 bg-gray-50 space-y-4">
+                                    <p className="text-xs font-semibold text-blue-900 uppercase tracking-wide">
                                         Perfil de Proveedor
                                     </p>
 
@@ -232,7 +232,7 @@ export default function Editar({ usuario, roles }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                    className="bg-blue-800 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {processing ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>

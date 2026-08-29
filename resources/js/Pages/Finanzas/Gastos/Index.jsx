@@ -89,20 +89,20 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
                 <form onSubmit={aplicarFiltros} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <select value={categoria} onChange={e => setCategoria(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                             <option value="">Todas las categorías</option>
                             {categorias.map(c => (
                                 <option key={c.value} value={c.value}>{c.icono} {c.label}</option>
                             ))}
                         </select>
                         <select value={periodo} onChange={e => setPeriodo(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                             <option value="">Todo el tiempo</option>
                             <option value="mes_actual">Este mes</option>
                             <option value="mes_pasado">Mes pasado</option>
                         </select>
                         <div className="sm:col-span-2 flex gap-2">
-                            <button type="submit" className="flex-1 px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
+                            <button type="submit" className="flex-1 px-3 py-2 bg-blue-800 text-white text-sm rounded-lg hover:bg-blue-900 transition">
                                 Filtrar
                             </button>
                             <button type="button" onClick={limpiar} className="px-3 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">
@@ -127,7 +127,7 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
                                 <tr>
                                     <td colSpan={5} className="px-4 py-12 text-center text-gray-400">
                                         Sin gastos registrados.{' '}
-                                        <Link href={route('gastos.create')} className="text-indigo-600 hover:underline">
+                                        <Link href={route('gastos.create')} className="text-blue-800 hover:underline">
                                             Registrar el primero
                                         </Link>
                                     </td>
@@ -155,7 +155,7 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link href={route('gastos.edit', gasto.id)}
-                                                        className="text-xs text-indigo-600 hover:underline">Editar</Link>
+                                                        className="text-xs text-blue-800 hover:underline">Editar</Link>
                                                     <button onClick={() => eliminar(gasto)}
                                                         className="text-xs text-red-500 hover:underline">Eliminar</button>
                                                 </div>
@@ -173,7 +173,7 @@ export default function Index({ gastos, estadisticas, categorias, filtros }) {
                     <div className="mt-4 flex items-center justify-center gap-1">
                         {gastos.links.map((link, i) => (
                             <Link key={i} href={link.url || '#'}
-                                className={`px-3 py-1 text-sm rounded-lg border transition ${link.active ? 'bg-indigo-600 text-white border-indigo-600' : link.url ? 'border-gray-300 text-gray-600 hover:bg-gray-50' : 'border-gray-200 text-gray-300 cursor-default'}`}
+                                className={`px-3 py-1 text-sm rounded-lg border transition ${link.active ? 'bg-blue-800 text-white border-blue-800' : link.url ? 'border-gray-300 text-gray-600 hover:bg-gray-50' : 'border-gray-200 text-gray-300 cursor-default'}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }} />
                         ))}
                     </div>

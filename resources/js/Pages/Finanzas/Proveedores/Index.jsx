@@ -85,7 +85,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
 
                 {/* ── Breadcrumb ── */}
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Link href={route('reportes.financiero')} className="hover:text-indigo-600">Finanzas</Link>
+                    <Link href={route('reportes.financiero')} className="hover:text-blue-800">Finanzas</Link>
                     <span>/</span>
                     <span className="text-gray-900">Proveedores</span>
                 </div>
@@ -132,7 +132,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                                     <tr key={p.id} className="hover:bg-gray-50 transition">
                                         <td className="px-4 py-3">
                                             <button onClick={() => setDrawerDetalle(drawerDetalle?.id === p.id ? null : p)}
-                                                className="text-sm font-medium text-indigo-600 hover:underline text-left">
+                                                className="text-sm font-medium text-blue-800 hover:underline text-left">
                                                 {p.nombre_empresa}
                                             </button>
                                             <p className="text-xs text-gray-400">{p.persona_contacto} · {p.telefono}</p>
@@ -157,7 +157,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                                         </td>
                                         <td className="px-4 py-3">
                                             <button onClick={() => abrirModal(p)}
-                                                className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition">
+                                                className="px-3 py-1.5 bg-blue-800 text-white text-xs font-medium rounded-lg hover:bg-blue-900 transition">
                                                 💳 Registrar pago
                                             </button>
                                         </td>
@@ -171,14 +171,14 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                 {/* ── Drawer detalle de pedidos del mes ── */}
                 {drawerDetalle && (
                     <div className="bg-white rounded-xl border border-indigo-200 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-indigo-100 flex items-center justify-between bg-indigo-50">
+                        <div className="px-6 py-4 border-b border-indigo-100 flex items-center justify-between bg-gray-50">
                             <div>
                                 <h3 className="text-base font-semibold text-indigo-900">
                                     {drawerDetalle.nombre_empresa} — Pedidos del mes
                                 </h3>
-                                <p className="text-xs text-indigo-500">{drawerDetalle.pedidos_mes?.length ?? 0} pedidos confirmados/entregados</p>
+                                <p className="text-xs text-blue-700">{drawerDetalle.pedidos_mes?.length ?? 0} pedidos confirmados/entregados</p>
                             </div>
-                            <button onClick={() => setDrawerDetalle(null)} className="text-indigo-400 hover:text-indigo-700 text-xl">✕</button>
+                            <button onClick={() => setDrawerDetalle(null)} className="text-blue-600 hover:text-blue-900 text-xl">✕</button>
                         </div>
                         <div className="p-4 space-y-3">
                             {drawerDetalle.pedidos_mes?.length === 0 ? (
@@ -186,7 +186,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                             ) : drawerDetalle.pedidos_mes?.map((ped) => (
                                 <div key={ped.id} className="border border-gray-100 rounded-lg p-3">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium text-indigo-700">{ped.numero_pedido}</span>
+                                        <span className="text-sm font-medium text-blue-900">{ped.numero_pedido}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs text-gray-400">{ped.fecha}</span>
                                             <span className="text-sm font-bold text-orange-600">{fmt(ped.costo_proveedor)}</span>
@@ -266,7 +266,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                                 </label>
                                 <input type="number" min="1" step="100"
                                     value={data.monto} onChange={e => setData('monto', e.target.value)}
-                                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.monto ? 'border-red-400' : 'border-gray-300'}`}
+                                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700 ${errors.monto ? 'border-red-400' : 'border-gray-300'}`}
                                     placeholder="500000" />
                                 {errors.monto && <p className="text-red-500 text-xs mt-1">{errors.monto}</p>}
                             </div>
@@ -275,12 +275,12 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Fecha <span className="text-red-500">*</span></label>
                                     <input type="date" value={data.fecha_pago} onChange={e => setData('fecha_pago', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Método <span className="text-red-500">*</span></label>
                                     <select value={data.metodo_pago} onChange={e => setData('metodo_pago', e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700">
                                         {Object.entries(metodos_pago).map(([k, v]) => (
                                             <option key={k} value={k}>{v}</option>
                                         ))}
@@ -291,14 +291,14 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
                                 <input type="text" value={data.concepto} onChange={e => setData('concepto', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Liquidación agosto 2026" />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
                                 <textarea rows={2} value={data.notas} onChange={e => setData('notas', e.target.value)}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-700"
                                     placeholder="Comprobante #12345..." />
                             </div>
 
@@ -308,7 +308,7 @@ export default function Index({ proveedores, metodos_pago, flash }) {
                                     Cancelar
                                 </button>
                                 <button type="submit" disabled={processing}
-                                    className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+                                    className="flex-1 px-4 py-2 bg-blue-800 text-white text-sm font-medium rounded-lg hover:bg-blue-900 disabled:opacity-50 transition">
                                     {processing ? 'Guardando...' : '✓ Registrar pago'}
                                 </button>
                             </div>

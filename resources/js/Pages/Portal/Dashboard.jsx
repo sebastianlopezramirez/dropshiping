@@ -64,8 +64,8 @@ export default function Dashboard({ proveedor, estadisticas, ultimasVentas = [],
                         {
                             label: 'Mis ventas (mes)',
                             valor: fmt(estadisticas.ventas_mes),
-                            color: 'text-indigo-600',
-                            bg:    'bg-indigo-50',
+                            color: 'text-blue-800',
+                            bg:    'bg-gray-50',
                             desc:  'A precio de costo',
                         },
                         {

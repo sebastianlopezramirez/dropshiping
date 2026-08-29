@@ -284,7 +284,7 @@ export default function Crear({ roles }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                    className="bg-blue-800 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {/* processing: true mientras Inertia envía al server */}
                                     {processing ? 'Guardando...' : 'Crear Usuario'}
