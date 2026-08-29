@@ -5,9 +5,61 @@
 */
 
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TiendaLayout from '@/Layouts/TiendaLayout';
 import { useCart } from '@/Context/CartContext';
+
+/* ── PWA Install Banner ─────────────────────────────────────────────────── */
+function PwaBanner() {
+    const [promptEvento, setPromptEvento] = useState(null);
+    const [visible, setVisible]           = useState(false);
+
+    useEffect(() => {
+        // Solo mostrar si no lo han descartado antes
+        if (localStorage.getItem('pwa_descartado')) return;
+
+        const handler = (e) => {
+            e.preventDefault();
+            setPromptEvento(e);
+            setVisible(true);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const instalar = async () => {
+        if (!promptEvento) return;
+        promptEvento.prompt();
+        const { outcome } = await promptEvento.userChoice;
+        if (outcome === 'accepted') setVisible(false);
+        setPromptEvento(null);
+    };
+
+    const descartar = () => {
+        localStorage.setItem('pwa_descartado', '1');
+        setVisible(false);
+    };
+
+    if (!visible) return null;
+
+    return (
+        <div className="fixed bottom-20 left-4 right-4 z-50 bg-gray-900 border border-orange-500/50 rounded-2xl shadow-2xl p-4 flex items-center gap-3 sm:max-w-sm sm:left-auto sm:right-4">
+            <img src="/logo.png" alt="GadGet Store" className="w-12 h-12 rounded-xl shrink-0 object-cover" onError={e => e.target.style.display='none'} />
+            <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold leading-tight">Instala GadGet Store</p>
+                <p className="text-gray-400 text-xs mt-0.5">Accede más rápido desde tu pantalla de inicio</p>
+            </div>
+            <div className="flex flex-col gap-1.5 shrink-0">
+                <button onClick={instalar} className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                    Instalar
+                </button>
+                <button onClick={descartar} className="text-gray-500 hover:text-gray-300 text-xs text-center transition-colors">
+                    Ahora no
+                </button>
+            </div>
+        </div>
+    );
+}
 
 export default function Index({ productos, categorias, filtros = {}, categoriaActual = null, productosNuevos = [] }) {
 
@@ -57,14 +109,18 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 
             {/* ── HERO BANNER ──────────────────────────────────────────── */}
             {mostrandoHero && (
-                <div className="w-full h-36 sm:h-48 md:h-56 overflow-hidden">
+                <div className="w-full h-36 xs:h-40 sm:h-48 md:h-56 overflow-hidden" style={{ maxHeight: '224px' }}>
                     <img
                         src="/home-page-gadget-store.jpg"
                         alt="GadGet Store — Variedad en una sola tienda"
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover object-top"
+                        style={{ display: 'block', maxWidth: '100%' }}
                     />
                 </div>
             )}
+
+            {/* ── PWA INSTALL BANNER ───────────────────────────────────── */}
+            <PwaBanner />
 
             {/* ── DRAWER FILTROS MÓVIL ──────────────────────────────────── */}
             {filtroMovil && (
