@@ -57,12 +57,11 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
 
             {/* ── HERO BANNER ──────────────────────────────────────────── */}
             {mostrandoHero && (
-                <div className="w-full">
+                <div className="w-full h-40 sm:h-52 md:h-64 lg:h-72 overflow-hidden">
                     <img
                         src="/home-page-gadget-store.jpg"
                         alt="GadGet Store — Variedad en una sola tienda"
-                        className="w-full object-cover"
-                        style={{ maxHeight: '260px' }}
+                        className="w-full h-full object-cover object-center"
                     />
                 </div>
             )}
