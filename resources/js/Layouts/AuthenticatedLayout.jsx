@@ -17,6 +17,8 @@ import { useState } from 'react';
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, productosPendientes = 0, pedidosPendientes = 0 } = usePage().props;
     const user = auth.user;
+    // auth.roles viene de getRoleNames() → array de strings, ej: ['super_administrador']
+    const esSuperAdmin = (auth.roles ?? []).includes('super_administrador');
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
     return (
@@ -66,6 +68,15 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                 <NavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</NavLink>
                                 <NavLink href={route('reportes.financiero')} active={route().current('reportes.*') || route().current('transacciones.*') || route().current('gastos.*')}>Finanzas</NavLink>
+
+                                {esSuperAdmin && (
+                                    <NavLink href={route('admin.costos')} active={route().current('admin.costos')}>
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" title="Sistema activo" />
+                                            Costos
+                                        </span>
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -161,6 +172,14 @@ export default function AuthenticatedLayout({ header, children }) {
                         </ResponsiveNavLink>
                         <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</ResponsiveNavLink>
                         <ResponsiveNavLink href={route('reportes.financiero')} active={route().current('reportes.*')}>Finanzas</ResponsiveNavLink>
+                        {esSuperAdmin && (
+                            <ResponsiveNavLink href={route('admin.costos')} active={route().current('admin.costos')}>
+                                <span className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                                    Costos del sistema
+                                </span>
+                            </ResponsiveNavLink>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-800 px-4 py-3">

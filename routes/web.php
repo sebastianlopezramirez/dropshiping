@@ -361,9 +361,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('analytics', [AnalyticsController::class, 'dashboard'])
              ->name('analytics.dashboard');
 
-        // Dashboard de Costos — monitoreo de servicios externos y semáforos
+        // Dashboard de Costos — solo super administrador (información sensible de infraestructura)
         Route::get('admin/costos', [CostosController::class, 'index'])
-             ->name('admin.costos');
+             ->name('admin.costos')
+             ->middleware('role:super_administrador');
 
         /*
         |----------------------------------------------------------------------
