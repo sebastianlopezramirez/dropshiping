@@ -393,7 +393,10 @@ class Producto extends Model implements HasMedia
         // Nuevo sistema: Spatie Media Library en R2
         $media = $this->getFirstMedia('imagenes');
         if ($media) {
-            return $media->getUrl('thumbnail');
+            // Usamos thumbnail si ya fue generado, de lo contrario la URL original
+            // (el thumbnail puede no estar listo si el queue worker no procesa aún)
+            $hasThumb = $media->hasGeneratedConversion('thumbnail');
+            return $hasThumb ? $media->getUrl('thumbnail') : $media->getUrl();
         }
 
         // Fallback: campo legacy 'imagenes' (JSONB array de URLs)
