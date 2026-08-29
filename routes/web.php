@@ -45,6 +45,7 @@ use App\Http\Controllers\Tienda\ClienteController;
 use App\Http\Controllers\Web\TarifaController;
 use App\Http\Controllers\Web\MarketingExportController;
 use App\Http\Controllers\Web\LeadController;
+use App\Http\Controllers\Web\CostosController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -359,6 +360,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Dashboard de Analytics — métricas ejecutivas del negocio
         Route::get('analytics', [AnalyticsController::class, 'dashboard'])
              ->name('analytics.dashboard');
+
+        // Dashboard de Costos — monitoreo de servicios externos y semáforos
+        Route::get('admin/costos', [CostosController::class, 'index'])
+             ->name('admin.costos');
 
         /*
         |----------------------------------------------------------------------
