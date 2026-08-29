@@ -7,7 +7,7 @@
 | El cambio de colores se aplica via CSS inyectado — sin tocar cada componente.
 */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useCart } from '@/Context/CartContext';
 
@@ -244,6 +244,31 @@ export default function TiendaLayout({ children }) {
     // Cliente identificado — viene del shared prop de HandleInertiaRequests
     const { clienteTienda } = usePage().props;
 
+    // ── SIDEBAR DE PERFIL ─────────────────────────────────────────────────
+    const [sidebarAbierto, setSidebarAbierto] = useState(false);
+    const [perfil, setPerfil]                 = useState(null);
+
+    // Carga el perfil completo la primera vez que se abre el sidebar
+    useEffect(() => {
+        if (sidebarAbierto && clienteTienda && !perfil) {
+            fetch(route('tienda.cuenta.datos'))
+                .then(r => r.json())
+                .then(d => { if (d.identificado) setPerfil(d.datos); });
+        }
+    }, [sidebarAbierto]);
+
+    // Cierra sidebar con Escape
+    useEffect(() => {
+        const onKey = (e) => { if (e.key === 'Escape') setSidebarAbierto(false); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
+    const cerrarSesion = () => {
+        setSidebarAbierto(false);
+        router.post(route('tienda.cuenta.logout'));
+    };
+
     // ── TEMA ──────────────────────────────────────────────────────────────
     const [temaClaro, setTemaClaro] = useState(() => {
         try { return localStorage.getItem('gs-tema') === 'claro'; } catch { return false; }
@@ -353,13 +378,12 @@ export default function TiendaLayout({ children }) {
 
                             {/* ── CUENTA DEL CLIENTE ────────────────────── */}
                             {clienteTienda ? (
-                                /* Cliente identificado → muestra su nombre */
-                                <Link
-                                    href={route('tienda.cuenta')}
+                                /* Cliente identificado → abre sidebar con sus datos */
+                                <button
+                                    onClick={() => setSidebarAbierto(true)}
                                     className="flex items-center gap-1.5 text-sm font-medium text-orange-400 hover:text-orange-300 transition-colors px-2 py-1"
-                                    title="Ver mis pedidos"
+                                    title="Ver mis datos"
                                 >
-                                    {/* Ícono persona */}
                                     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                             d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -367,7 +391,7 @@ export default function TiendaLayout({ children }) {
                                     <span className="hidden sm:inline max-w-[100px] truncate">
                                         {clienteTienda.nombre?.split(' ')[0]}
                                     </span>
-                                </Link>
+                                </button>
                             ) : (
                                 /* No identificado → botón Mi cuenta */
                                 <Link
@@ -457,6 +481,100 @@ export default function TiendaLayout({ children }) {
                     </div>
                 </div>
             </footer>
+
+            {/* ── SIDEBAR PERFIL DEL CLIENTE ────────────────────────────── */}
+            {/* Backdrop oscuro */}
+            {sidebarAbierto && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+                    onClick={() => setSidebarAbierto(false)}
+                />
+            )}
+
+            {/* Panel deslizable desde la derecha */}
+            <div className={`
+                fixed top-0 right-0 h-full w-80 max-w-[90vw] z-50
+                bg-gray-900 border-l border-gray-700 shadow-2xl
+                transform transition-transform duration-300 ease-in-out flex flex-col
+                ${sidebarAbierto ? 'translate-x-0' : 'translate-x-full'}
+            `}>
+                {/* Encabezado */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                            {clienteTienda?.nombre?.charAt(0).toUpperCase() ?? '?'}
+                        </div>
+                        <div>
+                            <p className="text-white font-semibold text-sm leading-tight">
+                                {clienteTienda?.nombre?.split(' ').slice(0, 2).join(' ')}
+                            </p>
+                            <p className="text-orange-400 text-xs">Cliente</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setSidebarAbierto(false)}
+                        className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Datos del perfil */}
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                    {!perfil ? (
+                        <p className="text-gray-500 text-sm text-center py-6 animate-pulse">Cargando datos...</p>
+                    ) : (
+                        <>
+                            {/* Fila de dato */}
+                            {[
+                                { label: 'Nombre completo', valor: perfil.nombre,    icono: '👤' },
+                                { label: 'Cédula',          valor: perfil.cedula,    icono: '🪪' },
+                                { label: 'Celular',         valor: perfil.celular,   icono: '📱' },
+                                { label: 'Correo',          valor: perfil.email,     icono: '✉️' },
+                                { label: 'Ciudad',          valor: perfil.ciudad,    icono: '🏙️' },
+                                { label: 'Municipio',       valor: perfil.municipio, icono: '📍' },
+                                { label: 'Dirección',       valor: perfil.direccion, icono: '🏠' },
+                            ].map(({ label, valor, icono }) => valor ? (
+                                <div key={label} className="bg-gray-800 rounded-xl px-4 py-3">
+                                    <p className="text-gray-500 text-xs mb-0.5">{icono} {label}</p>
+                                    <p className="text-gray-100 text-sm font-medium">{valor}</p>
+                                </div>
+                            ) : null)}
+
+                            <p className="text-gray-600 text-xs text-center pt-1">
+                                Tus datos se actualizan automáticamente con cada pedido.
+                            </p>
+                        </>
+                    )}
+                </div>
+
+                {/* Acciones */}
+                <div className="px-5 py-4 border-t border-gray-700 space-y-2">
+                    <Link
+                        href={route('tienda.cuenta')}
+                        onClick={() => setSidebarAbierto(false)}
+                        className="flex items-center justify-center gap-2 w-full bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Mis pedidos
+                    </Link>
+                    <button
+                        onClick={cerrarSesion}
+                        className="flex items-center justify-center gap-2 w-full border border-gray-700 hover:bg-gray-800 text-gray-400 hover:text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
 
             {/* ── BOTONES FLOTANTES ─────────────────────────────────────── */}
             <a href="https://wa.me/573137921336?text=Hola%2C%20me%20interesa%20un%20producto%20de%20GadGet%20Store"

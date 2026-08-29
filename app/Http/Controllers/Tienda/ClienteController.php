@@ -114,7 +114,7 @@ class ClienteController extends Controller
             'cliente_nombre' => $cliente->nombre,
         ]);
 
-        return redirect()->route('tienda.cuenta');
+        return redirect()->route('tienda.index');
     }
 
     /*
@@ -283,7 +283,7 @@ class ClienteController extends Controller
             'cliente_nombre' => $cliente->nombre,
         ]);
 
-        return redirect()->route('tienda.cuenta');
+        return redirect()->route('tienda.index');
     }
 
     /*
