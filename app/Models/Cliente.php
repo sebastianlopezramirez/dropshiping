@@ -99,12 +99,17 @@ class Cliente extends Model
 
     /**
      * Retorna los datos para pre-llenar el carrito.
-     * Solo campos necesarios — no exponemos el celular completo.
+     *
+     * PENSAR — ¿Por qué incluimos email?
+     *   Los clientes que entran con Google tienen email pero no celular.
+     *   El carrito necesita pre-llenar el email para que no lo tengan
+     *   que escribir y para que quede guardado en el Excel de marketing.
      */
     public function datosCarrito(): array
     {
         return [
             'nombre'    => $this->nombre,
+            'email'     => $this->email ?? '',
             'celular'   => $this->celular,
             'ciudad'    => $this->ciudad ?? '',
             'municipio' => $this->municipio ?? '',

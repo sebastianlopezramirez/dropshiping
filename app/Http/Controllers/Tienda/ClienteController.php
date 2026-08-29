@@ -9,10 +9,14 @@
 |
 |   Maneja la "cuenta" del cliente en la tienda pública:
 |
-|   login()     → muestra el formulario de identificación
-|   autenticar()→ verifica cédula + últimos 4 del cel → crea sesión
-|   cuenta()    → dashboard del cliente (mis pedidos)
-|   logout()    → destruye la sesión del cliente
+|   login()          → muestra el formulario de identificación
+|   autenticar()     → verifica cédula + últimos 4 del cel → crea sesión
+|   cuenta()         → dashboard del cliente (mis pedidos)
+|   logout()         → destruye la sesión del cliente
+|   datosActuales()  → API: datos para pre-llenar el carrito
+|   loginGoogle()    → redirige al OAuth de Google
+|   callbackGoogle() → recibe datos de Google y crea/vincula cliente
+|   exportarExcel()  → descarga CSV de todos los clientes (solo admins)
 |
 | SEGURIDAD:
 |
@@ -147,8 +151,16 @@ class ClienteController extends Controller
     | datosActuales() — API: retorna datos del cliente para pre-llenar carrito
     |----------------------------------------------------------------------
     |
-    | El carrito llama a esta ruta AJAX al cargar para pre-llenar
-    | nombre, celular, ciudad, dirección si el cliente está identificado.
+    | ENTENDER — ¿Qué retorna?
+    |
+    |   - identificado: true/false → ¿hay sesión activa?
+    |   - perfilIncompleto: true si el cliente entró con Google y aún
+    |     no tiene celular. El carrito mostrará el formulario completo
+    |     para capturar los datos que faltan para marketing.
+    |   - datos: nombre, email, celular, ciudad, municipio, dirección
+    |
+    | El carrito llama a esta ruta AJAX al cargar para pre-llenar campos
+    | y decidir si mostrar la tarjeta "Usar esta dirección" o el formulario.
     |
     */
     public function datosActuales(Request $request)
@@ -164,9 +176,18 @@ class ClienteController extends Controller
             return response()->json(['identificado' => false]);
         }
 
+        // PENSAR — ¿Cuándo está incompleto el perfil?
+        //
+        //   Clientes que entraron con Google tienen nombre + email pero
+        //   no tienen celular ni dirección. Les mostramos el formulario
+        //   completo en el carrito para capturar esos datos la primera vez.
+        //   A partir del segundo pedido ya estarán completos.
+        $perfilIncompleto = empty($cliente->celular);
+
         return response()->json([
-            'identificado' => true,
-            'datos'        => $cliente->datosCarrito(),
+            'identificado'    => true,
+            'perfilIncompleto' => $perfilIncompleto,
+            'datos'           => $cliente->datosCarrito(),
         ]);
     }
 
@@ -250,8 +271,7 @@ class ClienteController extends Controller
                 'email'      => $googleCliente->email,
                 'google_id'  => $googleCliente->id,
                 'avatar_url' => $googleCliente->avatar,
-                // cedula y celular quedan null
-                // Se pueden completar luego si hace un pedido
+                // cedula y celular quedan null → se completan en el primer pedido
             ]);
         }
 
@@ -316,11 +336,11 @@ class ClienteController extends Controller
                 $ultimoPedido  = $cliente->pedidos->first()?->creado_en ?? '';
 
                 fputcsv($output, [
-                    $cliente->cedula,
+                    $cliente->cedula   ?? '',
                     $cliente->nombre,
-                    $cliente->celular,
-                    $cliente->email ?? '',
-                    $cliente->ciudad ?? '',
+                    $cliente->celular  ?? '',
+                    $cliente->email    ?? '',
+                    $cliente->ciudad   ?? '',
                     $cliente->municipio ?? '',
                     $cliente->direccion ?? '',
                     $totalPedidos,

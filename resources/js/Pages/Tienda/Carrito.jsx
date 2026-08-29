@@ -13,6 +13,17 @@
 |   4. El pedido queda guardado en BD con estado "pendiente"
 |   5. El admin confirma el pago por sus medios y cambia el estado en el panel
 |
+| GOOGLE OAUTH — Clientes con perfil incompleto:
+|
+|   Cuando un cliente entra con Google tiene nombre + email pero no tiene
+|   celular ni dirección. Al llegar al carrito:
+|   - El endpoint tienda.cuenta.datos retorna perfilIncompleto: true
+|   - Se muestra el formulario completo (no la tarjeta "Usar esta dirección")
+|   - Se pre-llenan nombre y email de Google
+|   - El cliente completa celular, municipio y dirección
+|   - Al confirmar, CarritoController@store actualiza su registro en BD
+|   - Desde ese momento el Excel de clientes tiene todos los datos
+|
 */
 
 import { Head, Link, router } from '@inertiajs/react';
@@ -42,6 +53,12 @@ export default function Carrito({ tarifas, categorias }) {
     // (solo muestra la tarjeta "¿Misma dirección?")
     const [cambiarDireccion, setCambiarDireccion] = useState(false);
 
+    // PENSAR — perfilIncompleto:
+    //   true cuando el cliente entró con Google y no tiene celular/dirección aún.
+    //   En ese caso mostramos el formulario completo aunque esté "identificado",
+    //   para capturar los datos que faltan para el Excel de marketing.
+    const [perfilIncompleto, setPerfilIncompleto] = useState(false);
+
     // ─── FORMULARIO (estado local, no useForm) ─────────────────────────────
     const [data, setDataState] = useState({
         cliente_nombre:   '',
@@ -65,16 +82,23 @@ export default function Carrito({ tarifas, categorias }) {
     //   sabe es ClienteController::datosActuales(). Llamamos a esa ruta AJAX
     //   al montar el componente para pre-llenar si aplica.
     //
+    //   El endpoint también retorna perfilIncompleto: true cuando el cliente
+    //   entró con Google y todavía no tiene celular guardado.
+    //
     useEffect(() => {
         fetch(route('tienda.cuenta.datos'), { headers: { 'Accept': 'application/json' } })
             .then(r => r.json())
             .then(json => {
                 if (json.identificado && json.datos) {
                     setClienteIdentificado(true);
+                    // Marcar perfil incompleto para clientes Google sin celular
+                    setPerfilIncompleto(json.perfilIncompleto ?? false);
                     setDataState(prev => ({
                         ...prev,
-                        cliente_nombre:   json.datos.nombre   || prev.cliente_nombre,
-                        cliente_telefono: json.datos.celular  || prev.cliente_telefono,
+                        cliente_nombre:   json.datos.nombre    || prev.cliente_nombre,
+                        cliente_telefono: json.datos.celular   || prev.cliente_telefono,
+                        // Pre-llenar email de Google para que no lo tenga que escribir
+                        cliente_email:    json.datos.email     || prev.cliente_email,
                         municipio:        json.datos.municipio || prev.municipio,
                         direccion:        json.datos.direccion || prev.direccion,
                         ciudad:           json.datos.ciudad    || prev.ciudad,
@@ -261,10 +285,11 @@ export default function Carrito({ tarifas, categorias }) {
                                 <h2 className="text-lg font-bold text-white">Datos del pedido</h2>
 
                                 {/* ── TARJETA "¿MISMA DIRECCIÓN?" ─────────────
-                                    Solo aparece cuando el cliente está identificado
-                                    y aún no pidió cambiar dirección.
+                                    Solo aparece cuando el cliente está identificado,
+                                    NO pidió cambiar dirección, y su perfil está completo
+                                    (tiene celular guardado — no es cliente nuevo de Google).
                                 ──────────────────────────────────────────────── */}
-                                {clienteIdentificado && !cambiarDireccion && (
+                                {clienteIdentificado && !cambiarDireccion && !perfilIncompleto && (
                                     <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 space-y-3">
                                         <div className="flex items-center gap-2">
                                             <span className="text-green-400 text-lg">✅</span>
@@ -300,10 +325,13 @@ export default function Carrito({ tarifas, categorias }) {
                                 )}
 
                                 {/* ── FORMULARIO COMPLETO ──────────────────────
-                                    Siempre visible si NO está identificado.
-                                    Visible si está identificado pero pidió cambiar.
+                                    Aparece cuando:
+                                    - NO está identificado (cliente nuevo)
+                                    - Pidió cambiar dirección
+                                    - Tiene perfil incompleto (entró con Google,
+                                      no tiene celular/dirección aún)
                                 ──────────────────────────────────────────────── */}
-                                {(!clienteIdentificado || cambiarDireccion) && (<>
+                                {(!clienteIdentificado || cambiarDireccion || perfilIncompleto) && (<>
 
                                 {cambiarDireccion && (
                                     <button
@@ -313,6 +341,16 @@ export default function Carrito({ tarifas, categorias }) {
                                     >
                                         ← Volver a usar dirección guardada
                                     </button>
+                                )}
+
+                                {/* Banner para clientes Google con perfil incompleto */}
+                                {perfilIncompleto && (
+                                    <div className="flex items-start gap-3 bg-blue-950/60 border border-blue-700/50 rounded-xl px-4 py-3 text-sm text-blue-300">
+                                        <span className="text-lg shrink-0">👋</span>
+                                        <span>
+                                            Hola <strong className="text-white">{data.cliente_nombre}</strong>, completá tus datos de entrega para finalizar el pedido. Solo te los pedimos una vez.
+                                        </span>
+                                    </div>
                                 )}
 
                                 <div>
