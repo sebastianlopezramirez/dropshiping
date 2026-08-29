@@ -23,7 +23,7 @@ return [
     ],
 
     'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
+        'key'    => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
@@ -31,7 +31,7 @@ return [
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+            'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
 
@@ -65,6 +65,25 @@ return [
     */
     'whatsapp' => [
         'numero' => env('WHATSAPP_NUMERO', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google OAuth — Login con Gmail
+    |--------------------------------------------------------------------------
+    |
+    | Credenciales del proyecto "Gadget Store" en Google Cloud Console.
+    | Para editar: https://console.cloud.google.com → proyecto gadget-store-507012
+    | → APIs & Services → Google Auth Platform → Clients
+    |
+    | Al pasar a producción agregar el redirect URI en Google Cloud Console:
+    | https://tudominio.com/auth/google/callback
+    |
+    */
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI'),
     ],
 
 ];

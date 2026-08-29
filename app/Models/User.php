@@ -199,7 +199,9 @@ class User extends Authenticatable
         'rol',                  // Rol principal: admin, vendedor, cliente, etc.
         'estado',               // activo / inactivo / suspendido
         'email_verificado_en',  // Cuándo verificó el email (null = no verificado)
-        'url_avatar',           // URL de la foto de perfil
+        'url_avatar',           // URL de la foto de perfil (perfil propio)
+        'google_id',            // ID de Google OAuth (null si registro por email)
+        'avatar_url',           // URL del avatar de Google (null si registro por email)
         'limite_credito',       // Para clientes mayoristas
         'plazos_credito',       // Días de crédito
     ];

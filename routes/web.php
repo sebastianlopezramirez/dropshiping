@@ -516,9 +516,15 @@ Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
 
 /*
 |--------------------------------------------------------------------------
-| RUTAS DE AUTENTICACIÓN — Generadas por Breeze
+| RUTAS DE AUTENTICACIÓN SOCIAL — Google OAuth
 |--------------------------------------------------------------------------
-| Contiene: /login, /register, /logout, /forgot-password, etc.
-| El archivo auth.php fue creado automáticamente por Breeze.
+|
+| Define las 2 rutas del flujo OAuth con Google:
+|   GET /auth/google          → redirige al login de Google
+|   GET /auth/google/callback → Google regresa aquí con el token
+|
+| El controlador AutenticacionSocialController maneja todo el flujo:
+| crea el usuario si es nuevo, o lo loguea si ya existe.
+|
 */
-require __DIR__.'/auth.php';
+require __DIR__.'/auth_social.php';
