@@ -398,10 +398,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         |
         */
 
-        // AJAX: validar código de cupón + calcular descuento
-        // IMPORTANTE: va ANTES de Route::resource para evitar conflicto con {cupon}
-        Route::post('cupones/validar', [CuponController::class, 'validar'])
-             ->name('cupones.validar');
+        // NOTA: La ruta POST cupones/validar es PÚBLICA y vive en el grupo /tienda.
+        // No se repite aquí para evitar que Ziggy sobreescriba el nombre 'cupones.validar'
+        // con la URL del admin (que requiere auth y rompería la validación desde el carrito).
 
         // CRUD de cupones (sin show — la lista ya tiene toda la info necesaria)
         Route::resource('cupones', CuponController::class)
