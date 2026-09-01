@@ -199,7 +199,7 @@ class AutenticacionSocialController extends Controller
         $destino = match(true) {
             $usuario->hasRole(['super_administrador', 'administrador']) => route('dashboard'),
             $usuario->hasRole('proveedor')                             => route('portal.dashboard'),
-            default                                                    => route('dashboard'),
+            default                                                    => route('tienda.index'),
         };
 
         return redirect()->intended($destino);
