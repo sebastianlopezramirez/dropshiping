@@ -37,6 +37,7 @@ export default function Editar({ categoria, padres }) {
 
     const { data, setData, put, processing, errors } = useForm({
         nombre:      categoria.nombre      || '',
+        emoji:       categoria.emoji       || '',
         slug:        categoria.slug        || '',
         descripcion: categoria.descripcion || '',
         imagen_url:  categoria.imagen_url  || '',
@@ -70,6 +71,29 @@ export default function Editar({ categoria, padres }) {
                         <Campo label="Nombre" name="nombre" required
                             data={data} onChange={setData} errors={errors} />
 
+
+                        {/* Campo Emoji */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Emoji <span className="text-gray-400 font-normal">(opcional)</span>
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="text"
+                                    value={data.emoji}
+                                    onChange={e => setData('emoji', e.target.value)}
+                                    placeholder="⌚"
+                                    maxLength={2}
+                                    className={`w-16 text-center text-2xl border rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-700 focus:border-transparent
+                                        ${errors.emoji ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+                                />
+                                <p className="text-xs text-gray-500">
+                                    Pega o escribe un emoji. Ej: ⌚ 👗 📱 💍 👟
+                                </p>
+                            </div>
+                            {errors.emoji && <p className="mt-1 text-xs text-red-600">{errors.emoji}</p>}
+                        </div>
+
                         <Campo label="Slug" name="slug"
                             nota="Déjalo vacío para regenerarlo desde el nombre."
                             data={data} onChange={setData} errors={errors} />
@@ -97,7 +121,7 @@ export default function Editar({ categoria, padres }) {
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-700">
                                 <option value="">Sin padre (categoría raíz)</option>
                                 {padres.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                                    <option key={p.id} value={p.id}>{p.emoji ? p.emoji + ' ' : ''}{p.nombre}</option>
                                 ))}
                             </select>
                             {errors.padre_id && <p className="mt-1 text-xs text-red-600">{errors.padre_id}</p>}

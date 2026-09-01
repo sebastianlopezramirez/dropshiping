@@ -100,7 +100,7 @@ class CategoriaController extends Controller
     {
         return Inertia::render('Categorias/Crear', [
             'padres' => Categoria::raices()->activas()->ordenadas()
-                ->select('id', 'nombre')
+                ->select('id', 'nombre', 'emoji')
                 ->get(),
         ]);
     }
@@ -126,6 +126,7 @@ class CategoriaController extends Controller
             'descripcion' => ['nullable', 'string', 'max:500'],
             'imagen_url'  => ['nullable', 'url', 'max:500'],
             'padre_id'    => ['nullable', 'exists:categorias,id'],
+            'emoji'       => ['nullable', 'string', 'max:10'],
             'orden'       => ['nullable', 'integer', 'min:0'],
             'activo'      => ['boolean'],
         ]);
@@ -169,7 +170,7 @@ class CategoriaController extends Controller
             // Excluir la categoría actual para que no pueda ser su propio padre
             'padres'    => Categoria::raices()->activas()->ordenadas()
                 ->where('id', '!=', $categoria->id)
-                ->select('id', 'nombre')
+                ->select('id', 'nombre', 'emoji')
                 ->get(),
         ]);
     }
@@ -187,6 +188,7 @@ class CategoriaController extends Controller
             'descripcion' => ['nullable', 'string', 'max:500'],
             'imagen_url'  => ['nullable', 'url', 'max:500'],
             'padre_id'    => ['nullable', 'exists:categorias,id'],
+            'emoji'       => ['nullable', 'string', 'max:10'],
             'orden'       => ['nullable', 'integer', 'min:0'],
             'activo'      => ['boolean'],
         ]);

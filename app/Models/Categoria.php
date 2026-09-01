@@ -87,6 +87,7 @@ class Categoria extends Model
     */
     protected $fillable = [
         'nombre',
+        'emoji',
         'slug',
         'descripcion',
         'imagen_url',
