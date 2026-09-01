@@ -43,7 +43,7 @@ function PwaBanner() {
     if (!visible) return null;
 
     return (
-        <div className="fixed bottom-20 left-4 right-4 z-50 bg-gray-900 border border-orange-500/50 rounded-2xl shadow-2xl p-4 flex items-center gap-3 sm:max-w-sm sm:left-auto sm:right-4">
+        <div className="fixed top-4 left-4 right-4 z-50 bg-gray-900 border border-orange-500/50 rounded-2xl shadow-2xl p-4 flex items-center gap-3 sm:max-w-sm sm:left-auto sm:right-4">
             <img src="/logo.png" alt="GadGet Store" className="w-12 h-12 rounded-xl shrink-0 object-cover" onError={e => e.target.style.display='none'} />
             <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-semibold leading-tight">Instala GadGet Store</p>
