@@ -239,22 +239,29 @@ const ESTILOS_CLARO = `
 
 /* ── INDICADOR DE DISPONIBILIDAD (reemplaza logo en navbar) ─────────────── */
 function DisponibilidadIndicador() {
-    const estaDisponible = () => {
+    // Lee la configuración de Inertia shared data (viene del servidor)
+    const { disponibilidad } = usePage().props;
+    const apertura  = disponibilidad?.hora_apertura   ?? 8;
+    const cierre    = disponibilidad?.hora_cierre     ?? 21;
+    const msgOpen   = disponibilidad?.mensaje_abierto ?? 'Disponibles';
+    const msgClosed = disponibilidad?.mensaje_cerrado ?? 'Volvemos pronto';
+
+    const calcularDisponible = () => {
         // Colombia: UTC-5 (sin horario de verano)
         const ahora = new Date();
         const hora = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' })).getHours();
-        return hora >= 8 && hora < 21; // 8am - 9pm COT
+        return hora >= apertura && hora < cierre;
     };
 
-    const [disponible, setDisponible] = useState(estaDisponible);
+    const [disponible, setDisponible] = useState(calcularDisponible);
 
     useEffect(() => {
         // Revisar cada minuto si cambia el estado
         const intervalo = setInterval(() => {
-            setDisponible(estaDisponible());
+            setDisponible(calcularDisponible());
         }, 60000);
         return () => clearInterval(intervalo);
-    }, []);
+    }, [apertura, cierre]);
 
     return (
         <Link href={route('tienda.index')} className="flex items-center gap-2 shrink-0 select-none">
@@ -270,8 +277,8 @@ function DisponibilidadIndicador() {
             </span>
             <span className="text-sm font-semibold leading-tight">
                 {disponible
-                    ? <span className="text-green-400">Disponibles</span>
-                    : <span className="text-gray-400 text-xs">Volvemos a las 8am</span>
+                    ? <span className="text-green-400">{msgOpen}</span>
+                    : <span className="text-gray-400 text-xs">{msgClosed}</span>
                 }
             </span>
         </Link>

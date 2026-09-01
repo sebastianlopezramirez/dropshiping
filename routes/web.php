@@ -46,6 +46,7 @@ use App\Http\Controllers\Web\TarifaController;
 use App\Http\Controllers\Web\MarketingExportController;
 use App\Http\Controllers\Web\LeadController;
 use App\Http\Controllers\Web\CostosController;
+use App\Http\Controllers\Web\ConfiguracionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -401,6 +402,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // NOTA: La ruta POST cupones/validar es PÚBLICA y vive en el grupo /tienda.
         // No se repite aquí para evitar que Ziggy sobreescriba el nombre 'cupones.validar'
         // con la URL del admin (que requiere auth y rompería la validación desde el carrito).
+
+        // Configuración general del sistema (solo super admin)
+        Route::get('configuracion', [ConfiguracionController::class, 'index'])
+             ->name('configuracion.index');
+        Route::post('configuracion', [ConfiguracionController::class, 'actualizar'])
+             ->name('configuracion.actualizar');
 
         // CRUD de cupones (sin show — la lista ya tiene toda la info necesaria)
         Route::resource('cupones', CuponController::class)

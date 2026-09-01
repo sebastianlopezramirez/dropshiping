@@ -7,6 +7,7 @@ use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\Configuracion;
 use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
@@ -82,6 +83,15 @@ class HandleInertiaRequests extends Middleware
                     'nombre' => $request->session()->get('cliente_nombre'),
                 ]
                 : null,
+
+            // Configuración de disponibilidad para el navbar de la tienda
+            // Se cachea en BD, no consulta la DB en cada request
+            'disponibilidad' => [
+                'hora_apertura'   => (int) Configuracion::obtener('disponibilidad_hora_apertura', 8),
+                'hora_cierre'     => (int) Configuracion::obtener('disponibilidad_hora_cierre', 21),
+                'mensaje_cerrado' => Configuracion::obtener('disponibilidad_mensaje_cerrado', 'Volvemos a las 8am'),
+                'mensaje_abierto' => Configuracion::obtener('disponibilidad_mensaje_abierto', 'Disponibles'),
+            ],
         ];
     }
 }

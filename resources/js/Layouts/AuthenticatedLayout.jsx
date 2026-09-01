@@ -173,12 +173,20 @@ export default function AuthenticatedLayout({ header, children }) {
                         <ResponsiveNavLink href={route('usuarios.index')} active={route().current('usuarios.*')}>Usuarios</ResponsiveNavLink>
                         <ResponsiveNavLink href={route('reportes.financiero')} active={route().current('reportes.*')}>Finanzas</ResponsiveNavLink>
                         {esSuperAdmin && (
-                            <ResponsiveNavLink href={route('admin.costos')} active={route().current('admin.costos')}>
-                                <span className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
-                                    Costos del sistema
-                                </span>
-                            </ResponsiveNavLink>
+                            <>
+                                <ResponsiveNavLink href={route('admin.costos')} active={route().current('admin.costos')}>
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                                        Costos del sistema
+                                    </span>
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('configuracion.index')} active={route().current('configuracion.*')}>
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
+                                        Configuración
+                                    </span>
+                                </ResponsiveNavLink>
+                            </>
                         )}
                     </div>
 
