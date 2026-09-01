@@ -198,7 +198,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                 mascotas: '🐾', 'libros-y-entretenimiento': '📚',
                                 'autos-y-motos': '🚗',
                             };
-                            const emoji    = emojis[cat.slug] || '🛍️';
+                            const emoji    = cat.emoji || emojis[cat.slug] || '🛍️';
                             const hijos    = hijosDe(cat.id);
                             const abierta  = catHeroExpandida === cat.id;
                             return (
