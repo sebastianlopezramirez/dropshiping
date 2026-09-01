@@ -196,7 +196,7 @@ class AdminControllersTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->postJson('/cupones/validar', [
+            ->postJson('/tienda/cupones/validar', [
                 'codigo' => 'TEST20',
                 'total'  => 100000,
             ]);
@@ -224,7 +224,7 @@ class AdminControllersTest extends TestCase
         $admin = $this->crearAdmin();
 
         $response = $this->actingAs($admin)
-            ->postJson('/cupones/validar', [
+            ->postJson('/tienda/cupones/validar', [
                 'codigo' => 'CODIGO-QUE-NO-EXISTE',
                 'total'  => 100000,
             ]);
@@ -256,7 +256,7 @@ class AdminControllersTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->postJson('/cupones/validar', [
+            ->postJson('/tienda/cupones/validar', [
                 'codigo' => 'EXPIRADO10',
                 'total'  => 100000,
             ]);
@@ -288,7 +288,7 @@ class AdminControllersTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->postJson('/cupones/validar', [
+            ->postJson('/tienda/cupones/validar', [
                 'codigo' => 'MINIMO50K',
                 'total'  => 20000, // solo $20.000 → no alcanza el mínimo
             ]);
