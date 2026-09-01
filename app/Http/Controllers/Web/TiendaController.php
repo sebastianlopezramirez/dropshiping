@@ -100,7 +100,7 @@ class TiendaController extends Controller
         // Categorías activas para el sidebar de filtros
         $categorias = Categoria::activas()
             ->ordenadas()
-            ->select('id', 'nombre', 'slug', 'padre_id')
+            ->select('id', 'nombre', 'slug', 'padre_id', 'emoji')
             ->get();
 
         // 4 productos más recientes para la sección "Nuevos" (solo sin filtros)
@@ -200,7 +200,7 @@ class TiendaController extends Controller
         // Todas las categorías para el sidebar
         $categorias = Categoria::activas()
             ->ordenadas()
-            ->select('id', 'nombre', 'slug', 'padre_id')
+            ->select('id', 'nombre', 'slug', 'padre_id', 'emoji')
             ->get();
 
         return Inertia::render('Tienda/Index', [
