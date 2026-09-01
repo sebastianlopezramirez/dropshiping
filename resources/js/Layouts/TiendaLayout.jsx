@@ -236,6 +236,48 @@ const ESTILOS_CLARO = `
 `;
 
 
+
+/* ── INDICADOR DE DISPONIBILIDAD (reemplaza logo en navbar) ─────────────── */
+function DisponibilidadIndicador() {
+    const estaDisponible = () => {
+        // Colombia: UTC-5 (sin horario de verano)
+        const ahora = new Date();
+        const hora = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' })).getHours();
+        return hora >= 8 && hora < 21; // 8am - 9pm COT
+    };
+
+    const [disponible, setDisponible] = useState(estaDisponible);
+
+    useEffect(() => {
+        // Revisar cada minuto si cambia el estado
+        const intervalo = setInterval(() => {
+            setDisponible(estaDisponible());
+        }, 60000);
+        return () => clearInterval(intervalo);
+    }, []);
+
+    return (
+        <Link href={route('tienda.index')} className="flex items-center gap-2 shrink-0 select-none">
+            <span className="relative flex h-3 w-3">
+                {disponible ? (
+                    <>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+                    </>
+                ) : (
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                )}
+            </span>
+            <span className="text-sm font-semibold leading-tight">
+                {disponible
+                    ? <span className="text-green-400">Disponibles</span>
+                    : <span className="text-gray-400 text-xs">Volvemos a las 8am</span>
+                }
+            </span>
+        </Link>
+    );
+}
+
 /* ── PWA BANNER (instalar app) ──────────────────────────────────────────── */
 function PwaBanner() {
     const { auth } = usePage().props;
@@ -360,18 +402,8 @@ export default function TiendaLayout({ children }) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16 gap-4">
 
-                        {/* Logo */}
-                        <Link href={route('tienda.index')} className="flex items-center gap-2 shrink-0 group">
-                            <img
-                                src="/logo.webp"
-                                alt="GadGet Store"
-                                className={
-                                    temaClaro
-                                        ? "h-11 w-11 rounded-full object-cover border-2 border-gray-300 shadow-sm group-hover:scale-105 transition-transform duration-200"
-                                        : "h-10 w-auto group-hover:scale-105 transition-transform duration-200"
-                                }
-                            />
-                        </Link>
+                        {/* Indicador de disponibilidad */}
+                        <DisponibilidadIndicador />
 
                         {/* Buscador central */}
                         <form onSubmit={buscar} className="flex-1 max-w-lg hidden sm:block">
