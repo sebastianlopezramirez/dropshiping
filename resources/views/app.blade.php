@@ -24,6 +24,15 @@
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead
+
+        <!-- Captura PWA temprana — antes de que React monte -->
+        <script>
+            window.deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                window.deferredPrompt = e;
+            });
+        </script>
     </head>
     <body class="font-sans antialiased">
         @inertia
