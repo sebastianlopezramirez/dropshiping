@@ -255,6 +255,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('productos/verificar-nombre', [ProductoController::class, 'verificarNombre'])
              ->name('productos.verificar-nombre');
 
+        Route::post('productos/{producto}/autorizar', [ProductoController::class, 'autorizar'])
+             ->name('productos.autorizar');
+
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
 

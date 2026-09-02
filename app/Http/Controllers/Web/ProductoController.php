@@ -105,9 +105,17 @@ class ProductoController extends Controller
                                ->ordenadas()
                                ->get(['id', 'nombre']);
 
+        // Productos pendientes de autorización (estado borrador)
+        // Solo para admin/super_administrador — se muestran al tope
+        $pendientes = Producto::with(['categoria', 'media'])
+            ->where('estado', 'borrador')
+            ->orderBy('creado_en', 'desc')
+            ->get();
+
         return Inertia::render('Productos/Index', [
             'productos'  => $productos,
             'categorias' => $categorias,
+            'pendientes' => $pendientes,
             // Regresamos los filtros activos para que la vista los muestre
             'filtros'    => $request->only(['buscar', 'categoria_id', 'estado', 'precio_min', 'precio_max']),
             // Mensajes flash (éxito, error) para mostrar notificaciones
@@ -808,4 +816,22 @@ class ProductoController extends Controller
 
         return $slug;
     }
+    /*
+    |----------------------------------------------------------------------
+    | autorizar() — Cambia estado borrador → activo
+    |----------------------------------------------------------------------
+    |
+    | PENSAR — ¿Por qué un método separado?
+    |
+    |   El admin solo necesita un clic para aprobar.
+    |   update() requiere validar todos los campos — innecesario aquí.
+    |
+    */
+    public function autorizar(Producto $producto): \Illuminate\Http\RedirectResponse
+    {
+        $producto->update(['estado' => 'activo']);
+
+        return back()->with('exito', "Producto «{$producto->nombre}» autorizado correctamente.");
+    }
+
 }

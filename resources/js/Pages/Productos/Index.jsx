@@ -30,7 +30,7 @@ import { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-export default function Index({ productos, categorias, filtros }) {
+export default function Index({ productos, categorias, filtros, pendientes = [] }) {
     const { auth, flash } = usePage().props;
     const esAdmin        = auth.roles?.includes('super_administrador') || auth.roles?.includes('administrador');
     const puedeImportar  = esAdmin || auth.roles?.includes('proveedor');
@@ -166,6 +166,17 @@ export default function Index({ productos, categorias, filtros }) {
 
     /*
     |----------------------------------------------------------------------
+    | FUNCIÓN: autorizarProducto — borrador → activo
+    |----------------------------------------------------------------------
+    */
+    const autorizarProducto = (producto) => {
+        router.post(route('productos.autorizar', producto.id), {}, {
+            preserveScroll: true,
+        });
+    };
+
+    /*
+    |----------------------------------------------------------------------
     | HELPERS DE PRESENTACIÓN
     |----------------------------------------------------------------------
     */
@@ -218,6 +229,56 @@ export default function Index({ productos, categorias, filtros }) {
                         <ul className="text-sm text-yellow-700 list-disc list-inside space-y-0.5">
                             {flash.errores_importacion.map((e, i) => <li key={i}>{e}</li>)}
                         </ul>
+                    </div>
+                )}
+
+                {/* ── PENDIENTES DE AUTORIZACIÓN ───────────────────── */}
+                {esAdmin && pendientes.length > 0 && (
+                    <div className="mb-6 bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-lg">⏳</span>
+                            <h2 className="text-base font-bold text-amber-800">
+                                Pendientes de autorización
+                            </h2>
+                            <span className="ml-auto bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                {pendientes.length}
+                            </span>
+                        </div>
+                        <div className="space-y-2">
+                            {pendientes.map(p => (
+                                <div key={p.id} className="flex items-center gap-3 bg-white border border-amber-200 rounded-lg px-3 py-2">
+                                    {/* Imagen */}
+                                    {p.media?.[0]?.original_url
+                                        ? <img src={p.media[0].original_url} alt={p.nombre}
+                                            className="w-10 h-10 rounded object-cover shrink-0 border border-gray-200" />
+                                        : <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-400 text-lg shrink-0">📦</div>
+                                    }
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-gray-800 truncate">{p.nombre}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {p.categoria?.nombre ?? 'Sin categoría'} · SKU: {p.sku ?? '—'}
+                                        </p>
+                                    </div>
+                                    {/* Precio */}
+                                    <span className="text-sm font-bold text-gray-700 shrink-0">
+                                        {formatearPrecio(p.precio_venta)}
+                                    </span>
+                                    {/* Botones */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Link href={route('productos.edit', p.id)}
+                                            className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition">
+                                            Editar
+                                        </Link>
+                                        <button
+                                            onClick={() => autorizarProducto(p)}
+                                            className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
+                                            ✓ Autorizar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
