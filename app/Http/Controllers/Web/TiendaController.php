@@ -114,11 +114,20 @@ class TiendaController extends Controller
             ->limit(8)
             ->get();
 
+        // Categoría actual (si filtraron por una)
+        $categoriaActual = null;
+        if ($request->filled('categoria')) {
+            $categoriaActual = Categoria::where('slug', $request->categoria)
+                ->activas()
+                ->first();
+        }
+
         return Inertia::render('Tienda/Index', [
             'productos'       => $productos,
             'categorias'      => $categorias,
             'filtros'         => $request->only(['q', 'categoria', 'precio_min', 'precio_max', 'todos']),
             'productosNuevos' => $productosNuevos,
+            'categoriaActual' => $categoriaActual,
         ]);
     }
 

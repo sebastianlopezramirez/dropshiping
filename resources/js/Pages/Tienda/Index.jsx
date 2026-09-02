@@ -205,8 +205,9 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                 <button key={cat.id}
                                     onClick={() => {
                                         if (hijos.length > 0) {
-                                            // Si ya está abierta, cerrar; si no, expandir
+                                            // Expandir panel Y aplicar filtro para cargar productos
                                             setCatHeroExpandida(abierta ? null : cat.id);
+                                            aplicarFiltros({ categoria: cat.slug });
                                         } else {
                                             aplicarFiltros({ categoria: cat.slug });
                                         }
@@ -529,6 +530,32 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
                                 </div>
                             )}
                         </div>
+
+                        {/* Panel de subcategorías cuando se está viendo una categoría padre */}
+                        {categoriaActual && !categoriaActual.padre_id && hijosDe(categoriaActual.id).length > 0 && (
+                            <div className="mb-5 bg-gray-900 border border-orange-500/20 rounded-2xl p-4">
+                                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-3">
+                                    {categoriaActual.nombre} — elige una subcategoría
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => aplicarFiltros({ categoria: categoriaActual.slug })}
+                                        className="text-xs bg-orange-500/10 border border-orange-500/30 text-orange-400 font-semibold px-3 py-1.5 rounded-full hover:bg-orange-500/20 transition-colors">
+                                        Ver todo en {categoriaActual.nombre}
+                                    </button>
+                                    {hijosDe(categoriaActual.id).map(hijo => (
+                                        <button key={hijo.id}
+                                            onClick={() => aplicarFiltros({ categoria: hijo.slug })}
+                                            className={`text-xs border font-medium px-3 py-1.5 rounded-full transition-colors
+                                                ${filtros.categoria === hijo.slug
+                                                    ? 'bg-orange-500/20 border-orange-500/50 text-orange-300'
+                                                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-orange-500/50 hover:text-white hover:bg-gray-700'}`}>
+                                            {hijo.emoji ? hijo.emoji + ' ' : ''}{hijo.nombre}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {productos.data.length === 0 ? (
                             <div className="text-center py-24 bg-gray-900 rounded-2xl border border-gray-800">
