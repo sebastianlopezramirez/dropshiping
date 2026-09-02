@@ -188,11 +188,16 @@ class TiendaController extends Controller
             ->activas()
             ->firstOrFail();
 
-        // Productos de esta categoría (activos + con stock)
+        // IDs de esta categoría + todas sus subcategorías hijas
+        $idsCategoria = Categoria::where('id', $categoria->id)
+            ->orWhere('padre_id', $categoria->id)
+            ->pluck('id');
+
+        // Productos de esta categoría y sus hijos (activos + con stock)
         $productos = Producto::with(['categoria', 'media'])
             ->activos()
             ->conStock()
-            ->where('categoria_id', $categoria->id)
+            ->whereIn('categoria_id', $idsCategoria)
             ->orderBy('creado_en', 'desc')
             ->paginate(16)
             ->withQueryString();
