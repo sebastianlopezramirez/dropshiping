@@ -490,6 +490,15 @@ export default function Index({ productos, categorias, filtros, pendientes = [] 
                                         {/* Acciones */}
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                {(producto.estado === 'borrador' || producto.estado === 'inactivo') && (
+                                                    <button
+                                                        onClick={() => autorizarProducto(producto)}
+                                                        className="text-xs px-2 py-1 bg-green-600 text-white rounded font-semibold hover:bg-green-700 transition"
+                                                        title="Activar producto"
+                                                    >
+                                                        ✓ Activar
+                                                    </button>
+                                                )}
                                                 <Link
                                                     href={route('productos.edit', producto.id)}
                                                     className="text-xs text-blue-800 hover:underline"

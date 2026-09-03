@@ -67,7 +67,15 @@ class ProductoController extends Controller
     {
         // Construimos el query base — aún no ejecuta nada en la BD
         // 'media' → eager load imágenes de Spatie (evita N+1 al acceder a thumbnails)
+        // Orden: borrador primero → inactivo → activo → agotado
+        // Dentro de cada grupo, los más recientes primero
         $query = Producto::with(['categoria', 'media'])
+                         ->orderByRaw("CASE estado
+                             WHEN 'borrador'  THEN 0
+                             WHEN 'inactivo'  THEN 1
+                             WHEN 'agotado'   THEN 2
+                             WHEN 'activo'    THEN 3
+                             ELSE 4 END")
                          ->orderBy('creado_en', 'desc');
 
         // ─── FILTROS ──────────────────────────────────────────────────────
@@ -829,9 +837,13 @@ class ProductoController extends Controller
     */
     public function autorizar(Producto $producto): \Illuminate\Http\RedirectResponse
     {
+        // Funciona para borrador e inactivo → ambos pasan a activo
+        $estadoAnterior = $producto->estado;
         $producto->update(['estado' => 'activo']);
 
-        return back()->with('exito', "Producto «{$producto->nombre}» autorizado correctamente.");
+        $accion = $estadoAnterior === 'borrador' ? 'autorizado' : 'activado';
+
+        return back()->with('exito', "Producto «{$producto->nombre}» {$accion} correctamente.");
     }
 
 }
