@@ -60,7 +60,7 @@ export default function Index({ productos, categorias, filtros = {}, categoriaAc
             {mostrandoHero && (
                 <div className="w-full overflow-hidden bg-black">
                     <img
-                        src="/home-page-gadget-store.webp"
+                        src="/logo-banner-gadgetstoremed.webp"
                         alt="GadGet Store — Variedad en una sola tienda"
                         className="w-full h-auto block"
                         style={{ display: 'block', maxWidth: '100%' }}
