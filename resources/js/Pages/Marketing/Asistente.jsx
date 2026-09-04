@@ -1,21 +1,16 @@
 /*
 |--------------------------------------------------------------------------
-| PÁGINA: Marketing/Asistente.jsx
+| PÁGINA: Marketing/Asistente.jsx  — Mobile-first refactor
 |--------------------------------------------------------------------------
 |
-| ENTENDER — ¿Qué hace esta página?
+| ENTENDER — ¿Qué cambió?
 |
-|   Es el ÍNDICE del Asistente de Marketing Pro.
-|   Solo visible para super_administrador.
+|   Versión 2: diseño mobile-first.
+|   - Móvil: categorías en drawer deslizable (botón ☰ Categorías)
+|   - Móvil: productos como tarjetas verticales (no tabla)
+|   - Desktop: layout de dos columnas original (sin cambios)
 |
-|   Izquierda: árbol de categorías → subcategorías (como navegar la tienda)
-|   Derecha: tabla de productos con SKU, ROAS actual, fase, estado semáforo
-|
-|   El admin hace clic en un producto → va a AsistenteProducto.jsx
-|
-| FLUJO:
-|   Dashboard (card Marketing → 🚀 Asistente Pro) → esta página
-|   → clic en producto → /marketing/asistente/{producto}
+|   El flujo de negocio es idéntico — solo cambia la presentación.
 |
 */
 
@@ -24,35 +19,33 @@ import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 // ──────────────────────────────────────────────────────────────────────
-// SUBCOMPONENTE: Nodo del árbol de categorías
+// SUBCOMPONENTE: Nodo del árbol de categorías (sin cambios)
 // ──────────────────────────────────────────────────────────────────────
 function NodoCategoria({ categoria, seleccionada, onSeleccionar }) {
     const [expandido, setExpandido] = useState(false);
-    const tieneHijos   = categoria.hijos && categoria.hijos.length > 0;
-    const activa       = seleccionada?.id === categoria.id;
+    const tieneHijos = categoria.hijos && categoria.hijos.length > 0;
+    const activa     = seleccionada?.id === categoria.id;
 
     return (
         <div>
-            {/* Fila de la categoría */}
             <button
                 onClick={() => {
                     onSeleccionar(categoria);
                     if (tieneHijos) setExpandido(!expandido);
                 }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
                     activa
                         ? 'bg-orange-50 text-orange-700 font-semibold'
                         : 'text-gray-700 hover:bg-gray-100'
                 }`}
             >
                 {tieneHijos && (
-                    <span className="text-gray-400 text-xs w-3">
+                    <span className="text-gray-400 text-xs w-3 flex-shrink-0">
                         {expandido ? '▾' : '▸'}
                     </span>
                 )}
-                {!tieneHijos && <span className="w-3" />}
-                <span className="truncate">{categoria.nombre}</span>
-                {/* Badge con cantidad de productos */}
+                {!tieneHijos && <span className="w-3 flex-shrink-0" />}
+                <span className="truncate flex-1">{categoria.nombre}</span>
                 {(categoria.productos?.length ?? 0) > 0 && (
                     <span className="ml-auto bg-gray-200 text-gray-600 text-xs rounded-full px-2 py-0.5 flex-shrink-0">
                         {categoria.productos.length}
@@ -60,7 +53,6 @@ function NodoCategoria({ categoria, seleccionada, onSeleccionar }) {
                 )}
             </button>
 
-            {/* Subcategorías (hijos) */}
             {tieneHijos && expandido && (
                 <div className="ml-4 border-l border-gray-200 pl-2 mt-1 space-y-0.5">
                     {categoria.hijos.map(hijo => (
@@ -78,34 +70,63 @@ function NodoCategoria({ categoria, seleccionada, onSeleccionar }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// SUBCOMPONENTE: Badge de estado del producto en el asistente
+// SUBCOMPONENTE: Badge de estado IA
 // ──────────────────────────────────────────────────────────────────────
 function BadgeEstado({ roas, totalMetricas }) {
-    if (!totalMetricas || totalMetricas === 0) {
-        return (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">
-                ⚪ Sin iniciar
-            </span>
-        );
-    }
-    if (roas >= 3.5) {
-        return (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-medium">
-                🟢 Escalando
-            </span>
-        );
-    }
-    if (roas >= 2.5) {
-        return (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">
-                🟡 Optimizando
-            </span>
-        );
-    }
+    if (!totalMetricas || totalMetricas === 0)
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">⚪ Sin iniciar</span>;
+    if (roas >= 3.5)
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-medium">🟢 Escalando</span>;
+    if (roas >= 2.5)
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">🟡 Optimizando</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">🔴 Atención</span>;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// SUBCOMPONENTE: Panel de categorías (contenido reutilizado en drawer y sidebar)
+// ──────────────────────────────────────────────────────────────────────
+function PanelCategorias({ categorias, categoriaSeleccionada, onSeleccionar, onCerrar }) {
     return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">
-            🔴 Atención
-        </span>
+        <div className="flex flex-col h-full">
+            {/* Header del panel */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+                <h3 className="text-sm font-semibold text-gray-700">📂 Categorías</h3>
+                {/* Botón cerrar solo visible en móvil */}
+                {onCerrar && (
+                    <button
+                        onClick={onCerrar}
+                        className="md:hidden text-gray-400 hover:text-gray-600 text-xl leading-none p-1"
+                    >
+                        ✕
+                    </button>
+                )}
+            </div>
+
+            {/* Lista de categorías */}
+            <div className="p-2 space-y-0.5 flex-1 overflow-y-auto">
+                {/* "Todos los productos" */}
+                <button
+                    onClick={() => { onSeleccionar(null); onCerrar?.(); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${
+                        !categoriaSeleccionada
+                            ? 'bg-orange-50 text-orange-700 font-semibold'
+                            : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                >
+                    <span>🏪</span>
+                    <span>Todos los productos</span>
+                </button>
+
+                {categorias.map(cat => (
+                    <NodoCategoria
+                        key={cat.id}
+                        categoria={cat}
+                        seleccionada={categoriaSeleccionada}
+                        onSeleccionar={(c) => { onSeleccionar(c); onCerrar?.(); }}
+                    />
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -115,46 +136,40 @@ function BadgeEstado({ roas, totalMetricas }) {
 export default function Asistente({ categorias, estadisticas }) {
 
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
-    const [buscar, setBuscar] = useState('');
+    const [buscar, setBuscar]       = useState('');
+    const [drawerAbierto, setDrawerAbierto] = useState(false);
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', {
         style: 'currency', currency: 'COP', minimumFractionDigits: 0,
     }).format(v ?? 0);
 
-    // ── Obtener todos los productos de la categoría seleccionada ──
+    // ── Calcular lista de productos según categoría seleccionada ──
     const productosDeCategoria = () => {
         if (!categoriaSeleccionada) {
-            // Si no hay categoría seleccionada, mostrar todos
             const todos = [];
             categorias.forEach(cat => {
                 (cat.productos || []).forEach(p => todos.push(p));
-                (cat.hijos || []).forEach(hijo => {
-                    (hijo.productos || []).forEach(p => todos.push(p));
-                });
+                (cat.hijos || []).forEach(hijo =>
+                    (hijo.productos || []).forEach(p => todos.push(p))
+                );
             });
             return todos;
         }
-
-        // Productos de la categoría seleccionada
         const directos = categoriaSeleccionada.productos || [];
-
-        // También incluir productos de subcategorías si la seleccionada es padre
-        const deHijos = [];
-        if (categoriaSeleccionada.hijos) {
-            categoriaSeleccionada.hijos.forEach(h => {
-                (h.productos || []).forEach(p => deHijos.push(p));
-            });
-        }
-
+        const deHijos  = [];
+        (categoriaSeleccionada.hijos || []).forEach(h =>
+            (h.productos || []).forEach(p => deHijos.push(p))
+        );
         return [...directos, ...deHijos];
     };
 
-    // ── Filtrar por búsqueda (nombre o SKU) ──
     const productosFiltrados = productosDeCategoria().filter(p => {
         if (!buscar.trim()) return true;
         const q = buscar.toLowerCase();
         return p.nombre.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q);
     });
+
+    const tituloCat = categoriaSeleccionada ? `📁 ${categoriaSeleccionada.nombre}` : '🏪 Todos los productos';
 
     return (
         <AuthenticatedLayout
@@ -163,88 +178,112 @@ export default function Asistente({ categorias, estadisticas }) {
                     <div className="flex items-center gap-3">
                         <span className="text-2xl">🚀</span>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Asistente de Marketing Pro</h2>
-                            <p className="text-sm text-gray-500">Estrategia y optimización con IA para cada producto</p>
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Asistente de Marketing Pro</h2>
+                            <p className="text-xs sm:text-sm text-gray-500">Estrategia y optimización con IA para cada producto</p>
                         </div>
                     </div>
-                    <Link
-                        href={route('campanas.index')}
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                        ← Volver a Campañas
+                    <Link href={route('campanas.index')} className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap">
+                        ← Campañas
                     </Link>
                 </div>
             }
         >
             <Head title="Asistente Marketing Pro" />
 
-            <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            {/* ══ DRAWER MÓVIL: categorías deslizables ══
+                Solo visible en móvil (md:hidden). Overlay + panel lateral.  */}
+            {drawerAbierto && (
+                <div className="md:hidden fixed inset-0 z-50 flex">
+                    {/* Fondo oscuro semi-transparente → cerrar al hacer clic */}
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setDrawerAbierto(false)}
+                    />
+                    {/* Panel deslizable desde la izquierda */}
+                    <div className="relative w-72 max-w-[85vw] bg-white h-full shadow-xl flex flex-col animate-slide-in-left">
+                        <PanelCategorias
+                            categorias={categorias}
+                            categoriaSeleccionada={categoriaSeleccionada}
+                            onSeleccionar={setCategoriaSeleccionada}
+                            onCerrar={() => setDrawerAbierto(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <div className="py-4 px-3 sm:py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
                 {/* ── Tarjetas de estadísticas ── */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Productos activos</p>
-                        <p className="text-2xl font-bold text-gray-900 mt-1">{estadisticas.total_productos}</p>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Productos activos</p>
+                        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{estadisticas.total_productos}</p>
                     </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Con métricas</p>
-                        <p className="text-2xl font-bold text-blue-600 mt-1">{estadisticas.con_metricas}</p>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Con métricas</p>
+                        <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">{estadisticas.con_metricas}</p>
                     </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">🟢 Escalando</p>
-                        <p className="text-2xl font-bold text-green-600 mt-1">{estadisticas.escalando}</p>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">🟢 Escalando</p>
+                        <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">{estadisticas.escalando}</p>
                     </div>
                 </div>
 
-                {/* ── Layout de dos columnas ── */}
+                {/* ── BARRA MÓVIL: buscador + botón categorías ── */}
+                <div className="md:hidden flex gap-2 mb-3">
+                    <button
+                        onClick={() => setDrawerAbierto(true)}
+                        className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm flex-shrink-0"
+                    >
+                        ☰ <span className="hidden xs:inline">Categorías</span>
+                        {categoriaSeleccionada && (
+                            <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 ml-1">1</span>
+                        )}
+                    </button>
+                    <input
+                        type="text"
+                        placeholder="Buscar producto o SKU…"
+                        value={buscar}
+                        onChange={e => setBuscar(e.target.value)}
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    />
+                </div>
+
+                {/* Etiqueta de categoría activa en móvil */}
+                {categoriaSeleccionada && (
+                    <div className="md:hidden mb-3 flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Filtrando por:</span>
+                        <span className="bg-orange-50 text-orange-700 text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1">
+                            {categoriaSeleccionada.nombre}
+                            <button onClick={() => setCategoriaSeleccionada(null)} className="ml-1 hover:text-orange-900">✕</button>
+                        </span>
+                    </div>
+                )}
+
+                {/* ══ LAYOUT DESKTOP: dos columnas ══ */}
                 <div className="flex gap-5">
 
-                    {/* ══ COLUMNA IZQUIERDA: Árbol de categorías ══ */}
-                    <div className="w-64 flex-shrink-0">
+                    {/* Sidebar de categorías — SOLO DESKTOP */}
+                    <div className="hidden md:block w-64 flex-shrink-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                                <h3 className="text-sm font-semibold text-gray-700">📂 Categorías</h3>
-                            </div>
-                            <div className="p-2 space-y-0.5 max-h-[calc(100vh-280px)] overflow-y-auto">
-                                {/* Opción "Todos" */}
-                                <button
-                                    onClick={() => setCategoriaSeleccionada(null)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                                        !categoriaSeleccionada
-                                            ? 'bg-orange-50 text-orange-700 font-semibold'
-                                            : 'text-gray-700 hover:bg-gray-100'
-                                    }`}
-                                >
-                                    <span>🏪</span>
-                                    <span>Todos los productos</span>
-                                </button>
-
-                                {/* Árbol de categorías */}
-                                {categorias.map(cat => (
-                                    <NodoCategoria
-                                        key={cat.id}
-                                        categoria={cat}
-                                        seleccionada={categoriaSeleccionada}
-                                        onSeleccionar={setCategoriaSeleccionada}
-                                    />
-                                ))}
-                            </div>
+                            <PanelCategorias
+                                categorias={categorias}
+                                categoriaSeleccionada={categoriaSeleccionada}
+                                onSeleccionar={setCategoriaSeleccionada}
+                                onCerrar={null}
+                            />
                         </div>
                     </div>
 
-                    {/* ══ COLUMNA DERECHA: Tabla de productos ══ */}
+                    {/* ══ COLUMNA DE PRODUCTOS (ocupa todo el ancho en móvil) ══ */}
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
-                            {/* Header con buscador */}
-                            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
+                            {/* Header con buscador DESKTOP */}
+                            <div className="hidden md:flex px-4 py-3 border-b border-gray-100 items-center justify-between gap-3">
                                 <h3 className="text-sm font-semibold text-gray-700">
-                                    {categoriaSeleccionada
-                                        ? `📁 ${categoriaSeleccionada.nombre}`
-                                        : '🏪 Todos los productos'}
-                                    <span className="ml-2 text-gray-400 font-normal">
-                                        ({productosFiltrados.length})
-                                    </span>
+                                    {tituloCat}
+                                    <span className="ml-2 text-gray-400 font-normal">({productosFiltrados.length})</span>
                                 </h3>
                                 <input
                                     type="text"
@@ -255,93 +294,143 @@ export default function Asistente({ categorias, estadisticas }) {
                                 />
                             </div>
 
-                            {/* Tabla */}
+                            {/* Header MÓVIL — solo título y contador */}
+                            <div className="md:hidden px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                <h3 className="text-sm font-semibold text-gray-700">
+                                    {tituloCat}
+                                    <span className="ml-2 text-gray-400 font-normal">({productosFiltrados.length})</span>
+                                </h3>
+                            </div>
+
+                            {/* Estado vacío */}
                             {productosFiltrados.length === 0 ? (
                                 <div className="py-16 text-center text-gray-400">
                                     <p className="text-4xl mb-3">📦</p>
                                     <p className="text-sm">
-                                        {buscar
-                                            ? 'No hay productos que coincidan con la búsqueda.'
-                                            : 'No hay productos en esta categoría.'}
+                                        {buscar ? 'No hay productos que coincidan.' : 'No hay productos en esta categoría.'}
                                     </p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="bg-gray-50 text-left">
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">SKU</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Producto</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Precio</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado tienda</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado IA</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {productosFiltrados.map(producto => (
-                                                <tr key={producto.id} className="hover:bg-gray-50 transition-colors">
-                                                    {/* SKU */}
-                                                    <td className="px-4 py-3">
-                                                        <code className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
-                                                            {producto.sku || '—'}
-                                                        </code>
-                                                    </td>
+                                <>
+                                    {/* ── VISTA MÓVIL: tarjetas ── */}
+                                    <div className="md:hidden divide-y divide-gray-100">
+                                        {productosFiltrados.map(producto => (
+                                            <div key={producto.id} className="p-4">
+                                                {/* Fila 1: SKU + Estado tienda */}
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <code className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">
+                                                        {producto.sku || '—'}
+                                                    </code>
+                                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                        producto.estado === 'activo'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : 'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                        {producto.estado === 'activo' ? '✅ Activo' : '📝 Borrador'}
+                                                    </span>
+                                                </div>
 
-                                                    {/* Nombre */}
-                                                    <td className="px-4 py-3">
-                                                        <p className="font-medium text-gray-900 line-clamp-1">{producto.nombre}</p>
-                                                    </td>
+                                                {/* Fila 2: Nombre del producto */}
+                                                <p className="font-semibold text-gray-900 text-sm mb-1 leading-snug">
+                                                    {producto.nombre}
+                                                </p>
 
-                                                    {/* Precio */}
-                                                    <td className="px-4 py-3 text-gray-600 tabular-nums">
+                                                {/* Fila 3: Precio + Estado IA */}
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className="text-sm text-gray-700 font-medium tabular-nums">
                                                         {fmt(producto.precio_venta)}
-                                                    </td>
+                                                    </span>
+                                                    <BadgeEstado roas={0} totalMetricas={0} />
+                                                </div>
 
-                                                    {/* Estado tienda */}
-                                                    <td className="px-4 py-3">
-                                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                            producto.estado === 'activo'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-yellow-100 text-yellow-700'
-                                                        }`}>
-                                                            {producto.estado === 'activo' ? '✅ Activo' : '📝 Borrador'}
-                                                        </span>
-                                                    </td>
+                                                {/* Botón Analizar — ancho completo en móvil */}
+                                                <Link
+                                                    href={route('marketing.asistente.producto', producto.id)}
+                                                    className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                                                >
+                                                    🤖 Analizar con IA
+                                                </Link>
+                                            </div>
+                                        ))}
+                                    </div>
 
-                                                    {/* Estado IA (sin métricas por ahora en esta vista) */}
-                                                    <td className="px-4 py-3">
-                                                        <BadgeEstado roas={0} totalMetricas={0} />
-                                                    </td>
-
-                                                    {/* Botón analizar */}
-                                                    <td className="px-4 py-3 text-right">
-                                                        <Link
-                                                            href={route('marketing.asistente.producto', producto.id)}
-                                                            className="inline-flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                                                        >
-                                                            🤖 Analizar
-                                                        </Link>
-                                                    </td>
+                                    {/* ── VISTA DESKTOP: tabla ── */}
+                                    <div className="hidden md:block overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-50 text-left">
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">SKU</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Producto</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Precio</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado tienda</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado IA</th>
+                                                    <th className="px-4 py-3"></th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {productosFiltrados.map(producto => (
+                                                    <tr key={producto.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 py-3">
+                                                            <code className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono">
+                                                                {producto.sku || '—'}
+                                                            </code>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <p className="font-medium text-gray-900 line-clamp-1">{producto.nombre}</p>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-gray-600 tabular-nums">
+                                                            {fmt(producto.precio_venta)}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                producto.estado === 'activo'
+                                                                    ? 'bg-green-100 text-green-700'
+                                                                    : 'bg-yellow-100 text-yellow-700'
+                                                            }`}>
+                                                                {producto.estado === 'activo' ? '✅ Activo' : '📝 Borrador'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <BadgeEstado roas={0} totalMetricas={0} />
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <Link
+                                                                href={route('marketing.asistente.producto', producto.id)}
+                                                                className="inline-flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                                                            >
+                                                                🤖 Analizar
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
                             )}
                         </div>
 
-                        {/* Leyenda de estados */}
-                        <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
+                        {/* Leyenda de estados — oculta en móvil para ganar espacio */}
+                        <div className="hidden sm:flex mt-3 items-center gap-4 text-xs text-gray-500">
                             <span>⚪ Sin iniciar</span>
                             <span>🟢 Escalando (ROAS ≥ 3.5x)</span>
                             <span>🟡 Optimizando (ROAS 2.5–3.5x)</span>
                             <span>🔴 Atención (ROAS &lt; 2.5x)</span>
                         </div>
                     </div>
-
                 </div>
             </div>
+
+            {/* ── CSS para la animación del drawer ── */}
+            <style>{`
+                @keyframes slide-in-left {
+                    from { transform: translateX(-100%); }
+                    to   { transform: translateX(0); }
+                }
+                .animate-slide-in-left {
+                    animation: slide-in-left 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                }
+            `}</style>
         </AuthenticatedLayout>
     );
 }
