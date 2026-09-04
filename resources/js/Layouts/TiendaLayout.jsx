@@ -622,7 +622,7 @@ export default function TiendaLayout({ children }) {
 
                     <div className="border-t border-gray-800 mt-6 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
                         <span>© {new Date().getFullYear()} GadGet Store · Todos los derechos reservados</span>
-                        <span>Hecho con ❤️ por <span className="text-orange-500 font-semibold tracking-wide">GENERACION WEB</span></span>
+                        <span>Hecho por <span className="text-orange-500 font-semibold tracking-wide">GENERACION WEB</span></span>
                     </div>
                 </div>
             </footer>
