@@ -160,6 +160,15 @@ export default function Costos({ metrica, costos, historial, periodo }) {
                             </div>
                         </TarjetaServicio>
 
+                        {/* Asistente IA (Groq) */}
+                        <TarjetaServicio icono="🤖" nombre="Asistente IA (Groq)" costo={0} semaforo="verde" porcentaje={0}>
+                            <div className="text-sm text-gray-600">
+                                <p>Modelo <span className="font-medium">Llama 3.3 70B</span> · Free tier activo</p>
+                                <p className="text-green-600">500,000 tokens/día gratuitos · Sin vencimiento</p>
+                                <p className="text-gray-400">Costo sube a ~$0.59 USD / 1M tokens si se paga</p>
+                            </div>
+                        </TarjetaServicio>
+
                     </div>
                 </div>
 

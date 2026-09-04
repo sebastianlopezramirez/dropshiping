@@ -43,6 +43,7 @@ use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\Tienda\CarritoController;
 use App\Http\Controllers\Tienda\ClienteController;
 use App\Http\Controllers\Web\TarifaController;
+use App\Http\Controllers\Web\AsistenteMarketingController;
 use App\Http\Controllers\Web\MarketingExportController;
 use App\Http\Controllers\Web\LeadController;
 use App\Http\Controllers\Web\CostosController;
@@ -256,7 +257,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
              ->name('productos.verificar-nombre');
 
         Route::post('productos/{producto}/autorizar', [ProductoController::class, 'autorizar'])
-             ->name('productos.autorizar');
+             ->name('productos.autorizar')
+             ->middleware('role:super_administrador');
 
         Route::resource('productos', ProductoController::class)
              ->parameters(['productos' => 'producto']);
@@ -311,6 +313,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Exportar base de datos de clientes con consentimiento de marketing
         Route::get('marketing/exportar', [MarketingExportController::class, 'exportar'])
              ->name('marketing.exportar');
+
+        // ──────────────────────────────────────────────────────────────
+        // ASISTENTE DE MARKETING PRO — Solo super_administrador
+        // ──────────────────────────────────────────────────────────────
+        Route::prefix('marketing/asistente')
+             ->middleware('role:super_administrador')
+             ->group(function () {
+                 // Índice: árbol de categorías + productos
+                 Route::get('/', [AsistenteMarketingController::class, 'index'])
+                      ->name('marketing.asistente');
+
+                 // Detalle: análisis de un producto específico
+                 Route::get('{producto}', [AsistenteMarketingController::class, 'show'])
+                      ->name('marketing.asistente.producto');
+
+                 // Llamada a Groq: generar análisis IA (no persiste en BD)
+                 Route::post('{producto}/analizar', [AsistenteMarketingController::class, 'analizar'])
+                      ->name('marketing.asistente.analizar');
+
+                 // Guardar métricas reales del período
+                 Route::post('{producto}/metricas', [AsistenteMarketingController::class, 'guardarMetrica'])
+                      ->name('marketing.asistente.guardar');
+
+                 // Eliminar métricas (solo si producto NO está activo)
+                 Route::delete('{producto}/metricas', [AsistenteMarketingController::class, 'eliminarMetricas'])
+                      ->name('marketing.asistente.eliminar');
+             });
 
         // Exportar lista de clientes registrados (cédula + historial de pedidos)
         Route::get('clientes/exportar', [ClienteController::class, 'exportarExcel'])

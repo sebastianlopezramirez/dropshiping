@@ -5,6 +5,7 @@ import { Head } from '@inertiajs/react';
 export default function Dashboard() {
     const { auth, productosPendientes, pedidosPendientes = 0 } = usePage().props;
     const usuario = auth.user;
+    const esSuperAdmin = (auth.roles ?? []).includes('super_administrador');
 
     return (
         <AuthenticatedLayout
@@ -174,6 +175,12 @@ export default function Dashboard() {
                                     className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-1">
                                     📥 Exportar clientes →
                                 </a>
+                                {esSuperAdmin && (
+                                    <Link href={route('marketing.asistente')}
+                                        className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center gap-1">
+                                        🚀 Asistente Pro →
+                                    </Link>
+                                )}
                             </div>
                         </div>
 
