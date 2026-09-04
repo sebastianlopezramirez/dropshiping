@@ -23,6 +23,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class MetricaAsistente extends Model
 {
@@ -85,7 +86,7 @@ class MetricaAsistente extends Model
     /** Usuario que registró las métricas */
     public function creadoPor()
     {
-        return $this->belongsTo(Usuario::class, 'creado_por');
+        return $this->belongsTo(User::class, 'creado_por');
     }
 
     // ──────────────────────────────────────────────

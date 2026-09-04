@@ -58,12 +58,12 @@ class AsistenteMarketingController extends Controller
     {
         // Cargar árbol de categorías (padre → hijos → productos con sus métricas)
         $categorias = Categoria::whereNull('padre_id')
-            ->where('esta_activo', true)
+            ->where('activo', true)
             ->orderBy('orden')
             ->with([
                 // Subcategorías
                 'hijos' => function ($q) {
-                    $q->where('esta_activo', true)->orderBy('orden');
+                    $q->where('activo', true)->orderBy('orden');
                 },
                 // Productos de categorías raíz
                 'productos' => function ($q) {
