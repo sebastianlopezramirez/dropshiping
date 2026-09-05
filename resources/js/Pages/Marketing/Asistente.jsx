@@ -159,7 +159,8 @@ export default function Asistente({ categorias, estadisticas }) {
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
     const [buscar, setBuscar]               = useState('');
     const [drawerAbierto, setDrawerAbierto] = useState(false);
-    const [filtroRevision, setFiltroRevision] = useState(false);
+    // filtroIA: 'todos' | 'en_analisis' | 'sin_analisis' | 'revisar'
+    const [filtroIA, setFiltroIA]           = useState('todos');
     const [limpiando, setLimpiando]         = useState(null); // id del producto que se está limpiando
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', {
@@ -213,8 +214,12 @@ export default function Asistente({ categorias, estadisticas }) {
             const q = buscar.toLowerCase();
             if (!p.nombre.toLowerCase().includes(q) && !(p.sku || '').toLowerCase().includes(q)) return false;
         }
-        // Filtro de revisión pendiente (≥ 7 días desde inicio sin métricas, o con métricas y ≥ 7 días)
-        if (filtroRevision) {
+        // Filtros IA
+        if (filtroIA === 'en_analisis') {
+            if (!p.ia_iniciado_en) return false;
+        } else if (filtroIA === 'sin_analisis') {
+            if (p.ia_iniciado_en) return false;
+        } else if (filtroIA === 'revisar') {
             const dias = diasDesdeInicio(p.ia_iniciado_en);
             if (dias === null || dias < 7) return false;
         }
@@ -266,19 +271,61 @@ export default function Asistente({ categorias, estadisticas }) {
             <div className="py-4 px-3 sm:py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
                 {/* ── Tarjetas de estadísticas ── */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Productos activos</p>
-                        <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{estadisticas.total_productos}</p>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 mb-4">
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Total</p>
+                        <p className="text-xl font-bold text-gray-900 mt-1">{estadisticas.total_productos}</p>
                     </div>
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Con métricas</p>
-                        <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">{estadisticas.con_metricas}</p>
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">Métricas</p>
+                        <p className="text-xl font-bold text-blue-600 mt-1">{estadisticas.con_metricas}</p>
                     </div>
-                    <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
                         <p className="text-xs text-gray-500 uppercase tracking-wide leading-tight">🟢 Escalando</p>
-                        <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">{estadisticas.escalando}</p>
+                        <p className="text-xl font-bold text-green-600 mt-1">{estadisticas.escalando}</p>
                     </div>
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-blue-100">
+                        <p className="text-xs text-blue-500 uppercase tracking-wide leading-tight">🔵 En análisis</p>
+                        <p className="text-xl font-bold text-blue-700 mt-1">{estadisticas.en_analisis ?? 0}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide leading-tight">⚪ Sin iniciar</p>
+                        <p className="text-xl font-bold text-gray-500 mt-1">{estadisticas.sin_analisis ?? 0}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-100">
+                        <p className="text-xs text-orange-500 uppercase tracking-wide leading-tight">🟠 Revisar</p>
+                        <p className="text-xl font-bold text-orange-600 mt-1">{estadisticas.revisar ?? 0}</p>
+                    </div>
+                </div>
+
+                {/* ── Filtros rápidos IA ── */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    {[
+                        { id: 'todos',       label: '🏪 Todos',         count: estadisticas.total_productos, color: 'gray'   },
+                        { id: 'en_analisis', label: '🔵 En análisis',   count: estadisticas.en_analisis ?? 0, color: 'blue'   },
+                        { id: 'sin_analisis',label: '⚪ Sin iniciar',   count: estadisticas.sin_analisis ?? 0, color: 'slate'  },
+                        { id: 'revisar',     label: '🟠 Necesitan revisión', count: estadisticas.revisar ?? 0, color: 'orange' },
+                    ].map(f => {
+                        const activo = filtroIA === f.id;
+                        const estilos = {
+                            gray:   activo ? 'bg-gray-800 text-white border-gray-800'     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400',
+                            blue:   activo ? 'bg-blue-600 text-white border-blue-600'     : 'bg-white text-blue-600 border-blue-200 hover:border-blue-400',
+                            slate:  activo ? 'bg-slate-600 text-white border-slate-600'   : 'bg-white text-slate-500 border-gray-200 hover:border-slate-400',
+                            orange: activo ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-orange-600 border-orange-200 hover:border-orange-400',
+                        };
+                        return (
+                            <button
+                                key={f.id}
+                                onClick={() => setFiltroIA(f.id)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${estilos[f.color]}`}
+                            >
+                                {f.label}
+                                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${activo ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                    {f.count}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* ── BARRA MÓVIL: buscador + botón categorías ── */}

@@ -540,6 +540,167 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
                 </div>
             )}
 
+            {/* ══════════════════════════════════════════════════════
+                GOOGLE SHOPPING
+            ══════════════════════════════════════════════════════ */}
+            {datos.google_shopping && (
+                <div className="bg-white border-2 border-blue-200 rounded-xl p-4">
+                    <h4 className="text-sm font-bold text-blue-700 mb-3 flex items-center gap-2">
+                        🛒 Google Shopping — Configura tu ficha de producto
+                    </h4>
+                    <div className="space-y-3">
+                        {datos.google_shopping.titulo_optimizado && (
+                            <div className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-blue-600 uppercase mb-1">Título optimizado (70 chars)</p>
+                                <p className="text-sm text-gray-800 font-medium">{datos.google_shopping.titulo_optimizado}</p>
+                            </div>
+                        )}
+                        {datos.google_shopping.descripcion_optimizada && (
+                            <div className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-blue-600 uppercase mb-1">Descripción (150 chars)</p>
+                                <p className="text-sm text-gray-800">{datos.google_shopping.descripcion_optimizada}</p>
+                            </div>
+                        )}
+                        {datos.google_shopping.categoria_google && (
+                            <div className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-blue-600 uppercase mb-1">Categoría Google Taxonomy</p>
+                                <p className="text-sm text-gray-800">{datos.google_shopping.categoria_google}</p>
+                            </div>
+                        )}
+                        {datos.google_shopping.tips_feed && datos.google_shopping.tips_feed.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-blue-600 uppercase mb-2">Tips para el feed</p>
+                                <ul className="space-y-1">
+                                    {datos.google_shopping.tips_feed.map((tip, i) => (
+                                        <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
+                                            <span className="text-blue-500 mt-0.5 flex-shrink-0">✓</span> {tip}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {datos.google_shopping.como_hacerlo && (
+                            <div className="bg-gray-50 border border-blue-100 rounded-lg p-3">
+                                <p className="text-xs font-bold text-blue-700 uppercase mb-2">📋 Cómo hacerlo — paso a paso</p>
+                                <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line">
+                                    {datos.google_shopping.como_hacerlo.replace(/PASO /g, '\nPASO ').trim()}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════
+                GOOGLE SEARCH
+            ══════════════════════════════════════════════════════ */}
+            {datos.google_search && (
+                <div className="bg-white border-2 border-indigo-200 rounded-xl p-4">
+                    <h4 className="text-sm font-bold text-indigo-700 mb-3 flex items-center gap-2">
+                        🔍 Google Search Ads — Palabras clave y anuncios
+                    </h4>
+                    <div className="space-y-3">
+                        {/* Keywords */}
+                        {datos.google_search.palabras_clave && datos.google_search.palabras_clave.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">Palabras clave con CPC máximo</p>
+                                <div className="space-y-2">
+                                    {datos.google_search.palabras_clave.map((kw, i) => (
+                                        <div key={i} className="flex items-start gap-2 bg-indigo-50 rounded-lg px-3 py-2">
+                                            <span className={`text-xs px-2 py-0.5 rounded font-bold flex-shrink-0 ${
+                                                kw.concordancia === 'EXACTA' ? 'bg-indigo-600 text-white' : 'bg-indigo-200 text-indigo-800'
+                                            }`}>{kw.concordancia}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-800">{kw.keyword}</p>
+                                                <p className="text-xs text-gray-500">{kw.intencion}</p>
+                                            </div>
+                                            <span className="text-xs font-bold text-indigo-700 flex-shrink-0">
+                                                CPC máx ${Number(kw.cpc_max_cop).toLocaleString('es-CO')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Titulares */}
+                        {datos.google_search.titulares_responsivos && datos.google_search.titulares_responsivos.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">Titulares para el anuncio responsivo</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {datos.google_search.titulares_responsivos.map((t, i) => (
+                                        <span key={i} className="bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs px-2 py-1 rounded-lg">{t}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Descripciones */}
+                        {datos.google_search.descripciones && datos.google_search.descripciones.length > 0 && (
+                            <div>
+                                <p className="text-xs font-semibold text-indigo-600 uppercase mb-2">Descripciones del anuncio</p>
+                                <div className="space-y-1">
+                                    {datos.google_search.descripciones.map((d, i) => (
+                                        <p key={i} className="text-xs text-gray-700 bg-indigo-50 px-3 py-2 rounded-lg">{d}</p>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {/* Presupuesto */}
+                        {datos.google_search.presupuesto_inicial_cop && (
+                            <div className="flex items-center gap-2 bg-indigo-50 rounded-lg px-3 py-2">
+                                <span className="text-xs font-semibold text-indigo-600">💰 Presupuesto inicial diario:</span>
+                                <span className="text-sm font-bold text-indigo-800">
+                                    ${Number(datos.google_search.presupuesto_inicial_cop).toLocaleString('es-CO')} COP
+                                </span>
+                            </div>
+                        )}
+                        {/* Como hacerlo */}
+                        {datos.google_search.como_hacerlo && (
+                            <div className="bg-gray-50 border border-indigo-100 rounded-lg p-3">
+                                <p className="text-xs font-bold text-indigo-700 uppercase mb-2">📋 Cómo hacerlo — paso a paso</p>
+                                <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line">
+                                    {datos.google_search.como_hacerlo.replace(/PASO /g, '\nPASO ').trim()}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════
+                ALERTAS DE ACCIÓN — SEMÁFORO
+            ══════════════════════════════════════════════════════ */}
+            {datos.alertas_accion && datos.alertas_accion.length > 0 && (
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-4">
+                    <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        🚦 Alertas de acción — Semáforo de rendimiento
+                    </h4>
+                    <div className="space-y-2">
+                        {datos.alertas_accion.map((alerta, i) => {
+                            const estilos = {
+                                ROJO:     { borde: 'border-red-200 bg-red-50',       punto: 'bg-red-500',    texto: 'text-red-700',    badge: 'bg-red-100 text-red-700' },
+                                AMARILLO: { borde: 'border-yellow-200 bg-yellow-50', punto: 'bg-yellow-500', texto: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-700' },
+                                VERDE:    { borde: 'border-green-200 bg-green-50',   punto: 'bg-green-500',  texto: 'text-green-700',  badge: 'bg-green-100 text-green-700' },
+                            };
+                            const e = estilos[alerta.semaforo] ?? estilos.AMARILLO;
+                            return (
+                                <div key={i} className={`flex items-start gap-3 border rounded-lg p-3 ${e.borde}`}>
+                                    <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ${e.punto}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs font-semibold mb-1 ${e.texto}`}>
+                                            {alerta.senal ?? alerta.señal}
+                                        </p>
+                                        <p className="text-xs text-gray-700">{alerta.accion}</p>
+                                    </div>
+                                    <span className={`text-xs px-2 py-0.5 rounded font-bold flex-shrink-0 ${e.badge}`}>
+                                        {alerta.semaforo}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* PRÓXIMA REVISIÓN */}
             {datos.proxima_revision && (
                 <div className="text-center py-3 bg-gray-50 rounded-xl border border-gray-200">

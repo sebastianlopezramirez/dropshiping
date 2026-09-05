@@ -81,13 +81,34 @@ class AsistenteMarketingController extends Controller
             ->get(['id', 'nombre', 'slug', 'padre_id', 'orden']);
 
         // Estadísticas rápidas para el header del asistente
+        $productosActivos = Producto::whereIn('estado', ['activo', 'borrador'])->pluck('id');
+
+        // IDs de productos que YA entraron al proceso IA (tienen ia_iniciado_en)
+        $idsEnAnalisis = Producto::whereIn('id', $productosActivos)
+            ->whereNotNull('ia_iniciado_en')
+            ->pluck('id');
+
+        // Productos que necesitan revisión: llevan más de 7 días en análisis
+        // sin métricas nuevas (posiblemente estancados o sin seguimiento)
+        $idsRevisar = Producto::whereIn('id', $idsEnAnalisis)
+            ->where('ia_iniciado_en', '<=', now()->subDays(7))
+            ->whereNotIn('id',
+                MetricaAsistente::where('creado_en', '>=', now()->subDays(7))
+                    ->distinct('producto_id')
+                    ->pluck('producto_id')
+            )
+            ->pluck('id');
+
         $estadisticas = [
-            'total_productos'   => Producto::whereIn('estado', ['activo', 'borrador'])->count(),
+            'total_productos'   => $productosActivos->count(),
             'con_metricas'      => MetricaAsistente::distinct('producto_id')->count('producto_id'),
             'escalando'         => MetricaAsistente::where('roas', '>=', 3.5)
-                                        ->whereIn('producto_id',
-                                            Producto::where('estado', 'activo')->pluck('id'))
+                                        ->whereIn('producto_id', $productosActivos)
                                         ->distinct('producto_id')->count('producto_id'),
+            // Nuevos filtros
+            'en_analisis'       => $idsEnAnalisis->count(),
+            'sin_analisis'      => $productosActivos->diff($idsEnAnalisis)->count(),
+            'revisar'           => $idsRevisar->count(),
         ];
 
         return Inertia::render('Marketing/Asistente', [
@@ -125,12 +146,19 @@ class AsistenteMarketingController extends Controller
         $roasReciente = $metricas->take(3)->avg('roas') ?? 0;
         $faseActual   = $this->determinarFase($roasReciente, $metricas->count());
 
+        // Días desde que inició el proceso IA
+        $diasDesdeInicio = null;
+        if ($producto->ia_iniciado_en) {
+            $diasDesdeInicio = now()->diffInDays($producto->ia_iniciado_en);
+        }
+
         return Inertia::render('Marketing/AsistenteProducto', [
             'producto'    => array_merge($producto->toArray(), [
-                'margen_porcentaje' => round($margen, 2),
-                'cpa_maximo'        => round($cpaMaximo, 2),
-                'fase_actual'       => $faseActual,
-                'roas_reciente'     => round($roasReciente, 2),
+                'margen_porcentaje'  => round($margen, 2),
+                'cpa_maximo'         => round($cpaMaximo, 2),
+                'fase_actual'        => $faseActual,
+                'roas_reciente'      => round($roasReciente, 2),
+                'dias_desde_inicio'  => $diasDesdeInicio,
             ]),
             'metricas'    => $metricas,
             'puede_eliminar' => $producto->estado !== 'activo',
@@ -460,6 +488,54 @@ IMPORTANTE: Responde SOLO con el JSON, sin texto adicional antes ni después.
 
   "descripcion_lista": "Texto completo listo para copiar y pegar en Instagram o WhatsApp. Debe incluir: nombre EXACTO del producto ({$producto->nombre}), los 3-5 beneficios principales del producto, el precio \${$precio} COP, el link de compra {$urlProducto}, y un CTA claro. Usa emojis. Máximo 8 líneas.",
 
+  "google_shopping": {
+    "titulo_optimizado": "Título exacto máximo 70 caracteres con keyword principal al inicio, beneficio clave y marca si aplica — optimizado para Google Shopping",
+    "descripcion_optimizada": "Descripción de 150 caracteres con keyword principal, beneficio diferenciador, precio y CTA implícito",
+    "categoria_google": "Categoría exacta de Google Product Taxonomy en español (ej: Hogar y jardín > Decoración > Marcos de fotos)",
+    "tips_feed": [
+      "Imagen fondo blanco puro #FFFFFF mínimo 800x800px — fundamental para ser aprobado en Google Shopping",
+      "GTIN o código de barras mejora el ranking y la visibilidad en Shopping — agrega si tienes",
+      "Disponibilidad: en_stock actualizada en tiempo real — un producto sin stock pierde impresiones",
+      "Precio competitivo visible — Google compara precios entre vendedores del mismo producto",
+      "Título con keyword al inicio — los primeros 25 caracteres son los más relevantes para el algoritmo"
+    ],
+    "como_hacerlo": "PASO 1: Ve a merchants.google.com → Productos → Añadir producto manualmente o via feed. PASO 2: Pega el título optimizado EXACTAMENTE como se indica arriba. PASO 3: Sube imagen con fondo blanco puro (#FFFFFF) mínimo 800x800px — rechaza imágenes con fondos de color o texto sobre la imagen. PASO 4: Completa precio, disponibilidad y categoría exacta de Google Product Taxonomy. PASO 5: Enlaza Merchant Center con Google Ads (Herramientas → Cuentas enlazadas). PASO 6: Crea campaña de Shopping ESTÁNDAR (NO Performance Max todavía — necesitas datos primero). PASO 7: Presupuesto inicial $40.000 COP/día, CPC manual hasta tener 30+ conversiones/mes. PASO 8: Cuando tengas 30+ conversiones/mes activa Performance Max con señales de audiencia."
+  },
+
+  "google_search": {
+    "palabras_clave": [
+      { "keyword": "comprar [PRODUCTO] colombia", "concordancia": "EXACTA", "intencion": "Compra directa — máxima prioridad", "cpc_max_cop": 800 },
+      { "keyword": "precio [PRODUCTO] colombia", "concordancia": "FRASE", "intencion": "Comparación de precio", "cpc_max_cop": 600 },
+      { "keyword": "[PRODUCTO] barato colombia", "concordancia": "FRASE", "intencion": "Búsqueda de precio bajo", "cpc_max_cop": 400 },
+      { "keyword": "[PRODUCTO] envio rapido colombia", "concordancia": "FRASE", "intencion": "Beneficio logístico", "cpc_max_cop": 500 },
+      { "keyword": "[PRODUCTO] original colombia", "concordancia": "FRASE", "intencion": "Calidad y confianza", "cpc_max_cop": 550 }
+    ],
+    "titulares_responsivos": [
+      "Titular 1 con keyword principal y beneficio (máx 30 chars)",
+      "Titular 2 con precio o descuento (máx 30 chars)",
+      "Titular 3 con envío o garantía (máx 30 chars)",
+      "Titular 4 con urgencia o escasez (máx 30 chars)",
+      "Titular 5 con prueba social (máx 30 chars)"
+    ],
+    "descripciones": [
+      "Descripción 1: beneficios principales del producto con CTA claro (máx 90 chars)",
+      "Descripción 2: diferenciador + garantía o envío gratis + urgencia (máx 90 chars)"
+    ],
+    "presupuesto_inicial_cop": 40000,
+    "como_hacerlo": "PASO 1: Google Ads → Nueva campaña → Búsqueda → Objetivo: Ventas → URL del producto. PASO 2: Usa CPC manual (NO Smart Bidding ni tROAS hasta tener 30+ conversiones/mes). PASO 3: Crea 2 grupos de anuncios — Grupo A: intención de compra directa (concordancia EXACTA), Grupo B: comparación y precio (concordancia FRASE). PASO 4: Agrega las palabras clave con los CPC máximos indicados arriba — no pagues más. PASO 5: Crea anuncio responsivo de búsqueda con los 5 titulares y 2 descripciones. PASO 6: Activa extensiones: Sitelinks (beneficios), Precio (muestra el precio), Promoción (descuento si tienes). PASO 7: Excluye keywords negativas: gratis, tutorial, cómo hacer, segunda mano, usado. PASO 8: Revisa Search Terms Report cada 3 días y agrega términos irrelevantes como negativas. PASO 9: Cuando tengas 30+ conversiones/mes activa tROAS con objetivo 300% (3x)."
+  },
+
+  "alertas_accion": [
+    { "semaforo": "ROJO", "senal": "ROAS baja de 2.0x por 3 días seguidos", "accion": "PAUSA HOY. Cambia creativos antes de reactivar. Revisa si el precio es competitivo vs competencia." },
+    { "semaforo": "ROJO", "senal": "CTR cae por debajo del 1% en Meta Ads", "accion": "Rota creativos esta semana. Prueba 3 titulares nuevos durante 5 días seguidos." },
+    { "semaforo": "ROJO", "senal": "CPA supera el máximo permitido por 5 días consecutivos", "accion": "Reduce presupuesto 40% o pausa. Revisa segmentación — posiblemente audiencia saturada." },
+    { "semaforo": "AMARILLO", "senal": "Frecuencia en Meta supera 2.5", "accion": "Amplía segmentación o lanza creativos nuevos esta semana. Activa Advantage+ si no lo tienes." },
+    { "semaforo": "AMARILLO", "senal": "CPA supera el máximo por 3 días", "accion": "Reduce presupuesto 30%, revisa segmentación y landing page. Verifica velocidad del sitio." },
+    { "semaforo": "AMARILLO", "senal": "CTR entre 1% y 1.5% por más de 7 días", "accion": "Mejora el gancho visual y el titular. Prueba formato video vs imagen estática." },
+    { "semaforo": "VERDE", "senal": "ROAS supera 4.5x durante 3 días consecutivos", "accion": "Sube presupuesto exactamente 50%. No más de 50% o Meta sale del período de aprendizaje (reinicia)." },
+    { "semaforo": "VERDE", "senal": "CTR supera 2.5% sostenido por 5 días", "accion": "Creativos funcionan muy bien — escala horizontal: copia este creativo a otras audiencias." }
+  ],
+
   "proxima_revision": "En X días"
 }
 
@@ -585,7 +661,7 @@ PROMPT;
                     ],
                 ],
                 'temperature' => 0.3,   // Más determinístico para decisiones de negocio
-                'max_tokens'  => 6000,
+                'max_tokens'  => 8000,
             ]);
 
             if ($respuesta->successful()) {
