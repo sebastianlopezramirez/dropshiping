@@ -385,16 +385,6 @@ export default function Asistente({ categorias, estadisticas }) {
                                     <span className="ml-2 text-gray-400 font-normal">({productosFiltrados.length})</span>
                                 </h3>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => setFiltroRevision(!filtroRevision)}
-                                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                                            filtroRevision
-                                                ? 'bg-orange-500 text-white border-orange-500'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:border-orange-400'
-                                        }`}
-                                    >
-                                        ⏰ Revisión pendiente (+7 días)
-                                    </button>
                                     <input
                                         type="text"
                                         placeholder="Buscar por nombre o SKU…"
