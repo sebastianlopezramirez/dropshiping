@@ -495,30 +495,17 @@ PROMPT;
 
         return ['numero' => 1, 'nombre' => 'Atención', 'color' => 'rojo'];
     }
-    // TEMPORAL: diagnóstico de conexión Groq — eliminar tras solucionar
+    // TEMPORAL: lista modelos disponibles para esta clave Groq
     public function debugGroq(): \Illuminate\Http\JsonResponse
     {
         $apiKey = config('services.groq.api_key');
         if (empty($apiKey)) {
-            return response()->json(['estado' => 'SIN_CLAVE', 'mensaje' => 'config() retornó null']);
+            return response()->json(['estado' => 'SIN_CLAVE']);
         }
-        try {
-            $r = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => "Bearer {$apiKey}",
-                'Content-Type'  => 'application/json',
-            ])->timeout(15)->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model'    => 'llama-3.1-8b-instant',
-                'messages' => [['role' => 'user', 'content' => 'Di "ok"']],
-                'max_tokens' => 5,
-            ]);
-            return response()->json([
-                'estado'       => $r->successful() ? 'OK' : 'ERROR_HTTP',
-                'http_status'  => $r->status(),
-                'clave_prefix' => substr($apiKey, 0, 8) . '...',
-                'body'         => $r->json(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['estado' => 'EXCEPCION', 'mensaje' => $e->getMessage()]);
-        }
+        $r = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => "Bearer {$apiKey}",
+        ])->timeout(15)->get('https://api.groq.com/openai/v1/models');
+        $modelos = collect($r->json('data', []))->pluck('id')->sort()->values();
+        return response()->json(['clave_prefix' => substr($apiKey, 0, 8) . '...', 'modelos_disponibles' => $modelos]);
     }
 }
