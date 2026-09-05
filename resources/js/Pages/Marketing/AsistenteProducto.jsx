@@ -48,7 +48,7 @@ function TarjetaDatoProducto({ icono, label, valor, color = 'gray' }) {
 // ──────────────────────────────────────────────────────────────────────
 // SUBCOMPONENTE: Visualizador del análisis JSON de la IA
 // ──────────────────────────────────────────────────────────────────────
-function PanelAnalisisIA({ analisis, modo }) {
+function PanelAnalisisIA({ analisis, modo, urlProducto }) {
     // Intentar parsear el JSON de la IA
     let datos = null;
     try {
@@ -228,6 +228,33 @@ function PanelAnalisisIA({ analisis, modo }) {
             {datos.copy_meta_ads?.textos && datos.copy_meta_ads.textos.length > 0 && (
                 <div>
                     <h4 className="text-sm font-semibold text-gray-800 mb-2">📢 Copy para Meta Ads</h4>
+
+                    {/* ── Link de compra directa — aparece siempre antes de las variantes ── */}
+                    {urlProducto && (
+                        <div className="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">
+                                    🔗 Link de compra directa
+                                </p>
+                                <p className="text-sm text-indigo-900 font-mono break-all">{urlProducto}</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(urlProducto)
+                                        .then(() => {
+                                            // Feedback visual breve en el botón
+                                            const btn = document.activeElement;
+                                            if (btn) { btn.textContent = '✅ Copiado'; setTimeout(() => { btn.textContent = '📋 Copiar'; }, 1500); }
+                                        })
+                                        .catch(() => {});
+                                }}
+                                className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors"
+                            >
+                                📋 Copiar
+                            </button>
+                        </div>
+                    )}
+
                     <div className="space-y-3">
                         {datos.copy_meta_ads.textos.map((t, i) => (
                             <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
@@ -445,6 +472,12 @@ function PanelAnalisisIA({ analisis, modo }) {
 // COMPONENTE PRINCIPAL
 // ──────────────────────────────────────────────────────────────────────
 export default function AsistenteProducto({ producto, metricas, puede_eliminar }) {
+
+    // URL pública del producto en la tienda — se intenta via Ziggy, con fallback por slug
+    const urlProducto = (() => {
+        try { return route('tienda.producto', producto.slug); }
+        catch { return `${window.location.origin}/productos/${producto.slug}`; }
+    })();
 
     const [modo, setModo] = useState(metricas.length === 0 ? 'lanzamiento' : 'optimizacion');
     const [cargandoIA, setCargandoIA] = useState(false);
@@ -900,7 +933,7 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                 Llama 3.3 70B · Groq
                             </span>
                         </div>
-                        <PanelAnalisisIA analisis={analisisIA} modo={modo} />
+                        <PanelAnalisisIA analisis={analisisIA} modo={modo} urlProducto={urlProducto} />
                     </div>
                 )}
 
