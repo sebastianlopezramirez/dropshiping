@@ -15,7 +15,7 @@
 */
 
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 // ──────────────────────────────────────────────────────────────────────
@@ -71,15 +71,36 @@ function NodoCategoria({ categoria, seleccionada, onSeleccionar }) {
 
 // ──────────────────────────────────────────────────────────────────────
 // SUBCOMPONENTE: Badge de estado IA
+// Muestra cuándo se inició el análisis y cuántos días llevan.
 // ──────────────────────────────────────────────────────────────────────
-function BadgeEstado({ roas, totalMetricas }) {
-    if (!totalMetricas || totalMetricas === 0)
+function BadgeEstado({ roas, totalMetricas, iaIniciadoEn }) {
+    // Sin ningún análisis iniciado
+    if (!iaIniciadoEn) {
         return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">⚪ Sin iniciar</span>;
-    if (roas >= 3.5)
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-medium">🟢 Escalando</span>;
-    if (roas >= 2.5)
-        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">🟡 Optimizando</span>;
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">🔴 Atención</span>;
+    }
+
+    // Calcular días transcurridos desde el primer análisis
+    const inicio = new Date(iaIniciadoEn);
+    const hoy    = new Date();
+    const dias   = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24));
+    const etiq   = dias === 0 ? 'hoy' : dias === 1 ? '1 día' : `${dias} días`;
+
+    // Si tiene métricas reales, mostrar fase
+    if (totalMetricas > 0) {
+        if (roas >= 3.5)
+            return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-medium">🟢 Escalando · {etiq}</span>;
+        if (roas >= 2.5)
+            return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700 font-medium">🟡 Optimizando · {etiq}</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">🔴 Atención · {etiq}</span>;
+    }
+
+    // Tiene fecha de inicio pero aún sin métricas registradas
+    const colorDias = dias >= 7 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700';
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${colorDias}`}>
+            🔵 En seguimiento · {etiq}
+        </span>
+    );
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -136,12 +157,35 @@ function PanelCategorias({ categorias, categoriaSeleccionada, onSeleccionar, onC
 export default function Asistente({ categorias, estadisticas }) {
 
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
-    const [buscar, setBuscar]       = useState('');
+    const [buscar, setBuscar]               = useState('');
     const [drawerAbierto, setDrawerAbierto] = useState(false);
+    const [filtroRevision, setFiltroRevision] = useState(false);
+    const [limpiando, setLimpiando]         = useState(null); // id del producto que se está limpiando
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', {
         style: 'currency', currency: 'COP', minimumFractionDigits: 0,
     }).format(v ?? 0);
+
+    // Calcular días desde ia_iniciado_en
+    const diasDesdeInicio = (iaIniciadoEn) => {
+        if (!iaIniciadoEn) return null;
+        return Math.floor((new Date() - new Date(iaIniciadoEn)) / (1000 * 60 * 60 * 24));
+    };
+
+    // Limpiar análisis: elimina métricas + resetea ia_iniciado_en
+    const limpiarAnalisis = (producto) => {
+        const confirmado = window.confirm(
+            `¿Limpiar el análisis IA de "${producto.nombre}"?\n\nEsto eliminará todas las métricas guardadas y reseteará la fecha de inicio. El producto no se elimina.`
+        );
+        if (!confirmado) return;
+
+        setLimpiando(producto.id);
+        router.delete(route('marketing.asistente.limpiar', producto.id), {
+            preserveScroll: true,
+            onSuccess: () => setLimpiando(null),
+            onError:   () => { setLimpiando(null); alert('Error al limpiar el análisis. Intenta nuevamente.'); },
+        });
+    };
 
     // ── Calcular lista de productos según categoría seleccionada ──
     const productosDeCategoria = () => {
@@ -164,9 +208,17 @@ export default function Asistente({ categorias, estadisticas }) {
     };
 
     const productosFiltrados = productosDeCategoria().filter(p => {
-        if (!buscar.trim()) return true;
-        const q = buscar.toLowerCase();
-        return p.nombre.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q);
+        // Filtro de texto
+        if (buscar.trim()) {
+            const q = buscar.toLowerCase();
+            if (!p.nombre.toLowerCase().includes(q) && !(p.sku || '').toLowerCase().includes(q)) return false;
+        }
+        // Filtro de revisión pendiente (≥ 7 días desde inicio sin métricas, o con métricas y ≥ 7 días)
+        if (filtroRevision) {
+            const dias = diasDesdeInicio(p.ia_iniciado_en);
+            if (dias === null || dias < 7) return false;
+        }
+        return true;
     });
 
     const tituloCat = categoriaSeleccionada ? `📁 ${categoriaSeleccionada.nombre}` : '🏪 Todos los productos';
@@ -280,18 +332,30 @@ export default function Asistente({ categorias, estadisticas }) {
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 
                             {/* Header con buscador DESKTOP */}
-                            <div className="hidden md:flex px-4 py-3 border-b border-gray-100 items-center justify-between gap-3">
+                            <div className="hidden md:flex px-4 py-3 border-b border-gray-100 items-center justify-between gap-3 flex-wrap">
                                 <h3 className="text-sm font-semibold text-gray-700">
                                     {tituloCat}
                                     <span className="ml-2 text-gray-400 font-normal">({productosFiltrados.length})</span>
                                 </h3>
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por nombre o SKU…"
-                                    value={buscar}
-                                    onChange={e => setBuscar(e.target.value)}
-                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                                />
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setFiltroRevision(!filtroRevision)}
+                                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                                            filtroRevision
+                                                ? 'bg-orange-500 text-white border-orange-500'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:border-orange-400'
+                                        }`}
+                                    >
+                                        ⏰ Revisión pendiente (+7 días)
+                                    </button>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por nombre o SKU…"
+                                        value={buscar}
+                                        onChange={e => setBuscar(e.target.value)}
+                                        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                    />
+                                </div>
                             </div>
 
                             {/* Header MÓVIL — solo título y contador */}
@@ -340,16 +404,28 @@ export default function Asistente({ categorias, estadisticas }) {
                                                     <span className="text-sm text-gray-700 font-medium tabular-nums">
                                                         {fmt(producto.precio_venta)}
                                                     </span>
-                                                    <BadgeEstado roas={0} totalMetricas={0} />
+                                                    <BadgeEstado roas={0} totalMetricas={0} iaIniciadoEn={producto.ia_iniciado_en} />
                                                 </div>
 
-                                                {/* Botón Analizar — ancho completo en móvil */}
-                                                <Link
-                                                    href={route('marketing.asistente.producto', producto.id)}
-                                                    className="flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-                                                >
-                                                    🤖 Analizar con IA
-                                                </Link>
+                                                {/* Botones — ancho completo en móvil */}
+                                                <div className="flex gap-2">
+                                                    <Link
+                                                        href={route('marketing.asistente.producto', producto.id)}
+                                                        className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                                                    >
+                                                        🤖 Analizar
+                                                    </Link>
+                                                    {producto.ia_iniciado_en && (
+                                                        <button
+                                                            onClick={() => limpiarAnalisis(producto)}
+                                                            disabled={limpiando === producto.id}
+                                                            className="flex items-center justify-center gap-1 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 text-sm px-3 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+                                                            title="Limpiar análisis IA"
+                                                        >
+                                                            {limpiando === producto.id ? '⏳' : '🗑'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -391,15 +467,27 @@ export default function Asistente({ categorias, estadisticas }) {
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            <BadgeEstado roas={0} totalMetricas={0} />
+                                                            <BadgeEstado roas={0} totalMetricas={0} iaIniciadoEn={producto.ia_iniciado_en} />
                                                         </td>
                                                         <td className="px-4 py-3 text-right">
-                                                            <Link
-                                                                href={route('marketing.asistente.producto', producto.id)}
-                                                                className="inline-flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                                                            >
-                                                                🤖 Analizar
-                                                            </Link>
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <Link
+                                                                    href={route('marketing.asistente.producto', producto.id)}
+                                                                    className="inline-flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                                                                >
+                                                                    🤖 Analizar
+                                                                </Link>
+                                                                {producto.ia_iniciado_en && (
+                                                                    <button
+                                                                        onClick={() => limpiarAnalisis(producto)}
+                                                                        disabled={limpiando === producto.id}
+                                                                        className="inline-flex items-center gap-1 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-500 text-xs px-2 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                                                                        title="Limpiar análisis IA (elimina métricas y resetea fecha)"
+                                                                    >
+                                                                        {limpiando === producto.id ? '⏳' : '🗑'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -411,11 +499,13 @@ export default function Asistente({ categorias, estadisticas }) {
                         </div>
 
                         {/* Leyenda de estados — oculta en móvil para ganar espacio */}
-                        <div className="hidden sm:flex mt-3 items-center gap-4 text-xs text-gray-500">
+                        <div className="hidden sm:flex mt-3 items-center gap-4 text-xs text-gray-500 flex-wrap">
                             <span>⚪ Sin iniciar</span>
+                            <span>🔵 En seguimiento (iniciado, sin métricas)</span>
                             <span>🟢 Escalando (ROAS ≥ 3.5x)</span>
                             <span>🟡 Optimizando (ROAS 2.5–3.5x)</span>
                             <span>🔴 Atención (ROAS &lt; 2.5x)</span>
+                            <span>🗑 = limpiar análisis (libera espacio)</span>
                         </div>
                     </div>
                 </div>

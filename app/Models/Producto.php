@@ -111,6 +111,7 @@ class Producto extends Model implements HasMedia
         'permite_contraentrega',
         'meta_titulo',
         'meta_descripcion',
+        'ia_iniciado_en',
     ];
 
     /*
@@ -143,6 +144,7 @@ class Producto extends Model implements HasMedia
             'creado_en'       => 'datetime',
             'actualizado_en'  => 'datetime',
             'eliminado_en'    => 'datetime',
+            'ia_iniciado_en'  => 'datetime',
         ];
     }
 

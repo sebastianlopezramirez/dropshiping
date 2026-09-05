@@ -68,13 +68,13 @@ class AsistenteMarketingController extends Controller
                 // Productos de categorías raíz
                 'productos' => function ($q) {
                     $q->whereIn('estado', ['activo', 'borrador'])
-                      ->select('id', 'nombre', 'sku', 'estado', 'categoria_id', 'precio_venta', 'precio_costo')
+                      ->select('id', 'nombre', 'sku', 'estado', 'categoria_id', 'precio_venta', 'precio_costo', 'ia_iniciado_en')
                       ->orderBy('nombre');
                 },
                 // Productos de subcategorías
                 'hijos.productos' => function ($q) {
                     $q->whereIn('estado', ['activo', 'borrador'])
-                      ->select('id', 'nombre', 'sku', 'estado', 'categoria_id', 'precio_venta', 'precio_costo')
+                      ->select('id', 'nombre', 'sku', 'estado', 'categoria_id', 'precio_venta', 'precio_costo', 'ia_iniciado_en')
                       ->orderBy('nombre');
                 },
             ])
@@ -186,10 +186,16 @@ class AsistenteMarketingController extends Controller
             ], 503);
         }
 
+        // Guardar fecha del primer análisis si aún no existe
+        if (is_null($producto->ia_iniciado_en)) {
+            $producto->update(['ia_iniciado_en' => now()]);
+        }
+
         return response()->json([
-            'analisis' => $respuesta['contenido'],
-            'modelo'   => 'groq/compound-mini',
-            'modo'     => $modo,
+            'analisis'       => $respuesta['contenido'],
+            'modelo'         => 'groq/compound-mini',
+            'modo'           => $modo,
+            'ia_iniciado_en' => $producto->ia_iniciado_en,
         ]);
     }
 
@@ -254,6 +260,33 @@ class AsistenteMarketingController extends Controller
         return response()->json([
             'exito'   => true,
             'mensaje' => "Se eliminaron {$eliminadas} registros de métricas de «{$producto->nombre}».",
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | PASO 5b — ENTENDER: limpiarAnalisis()
+    |   Elimina todas las métricas del asistente Y resetea ia_iniciado_en.
+    |   Sin restricción de estado — aplica a cualquier producto.
+    |   Útil para productos que ya no se venden y se quiere liberar espacio.
+    |----------------------------------------------------------------------
+    */
+    public function limpiarAnalisis(Producto $producto): JsonResponse
+    {
+        $eliminadas = MetricaAsistente::where('producto_id', $producto->id)->delete();
+
+        $producto->update(['ia_iniciado_en' => null]);
+
+        Log::info("Análisis IA limpiado", [
+            'producto_id'   => $producto->id,
+            'sku'           => $producto->sku,
+            'metricas_del'  => $eliminadas,
+            'limpiado_por'  => Auth::id(),
+        ]);
+
+        return response()->json([
+            'exito'   => true,
+            'mensaje' => "Análisis limpiado: {$eliminadas} métricas eliminadas de «{$producto->nombre}».",
         ]);
     }
 

@@ -343,6 +343,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                  // Eliminar métricas (solo si producto NO está activo)
                  Route::delete('{producto}/metricas', [AsistenteMarketingController::class, 'eliminarMetricas'])
                       ->name('marketing.asistente.eliminar');
+                 // Limpiar análisis IA: elimina métricas + resetea ia_iniciado_en (sin restricción de estado)
+                 Route::delete('{producto}/limpiar-analisis', [AsistenteMarketingController::class, 'limpiarAnalisis'])
+                      ->name('marketing.asistente.limpiar');
              });
 
         // Exportar lista de clientes registrados (cédula + historial de pedidos)

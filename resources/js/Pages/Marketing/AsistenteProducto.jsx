@@ -829,35 +829,64 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                 </div>
                             </div>
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={generarAnalisis}
-                                    disabled={cargandoIA}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                                >
-                                    {cargandoIA ? (
-                                        <>
-                                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                                            </svg>
-                                            Analizando métricas…
-                                        </>
-                                    ) : (
-                                        '🧠 Analizar con IA'
+                            {/* ── PANEL DE ACCIONES con explicación visual ── */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                                {/* Botón 1: Analizar con IA — SOLO pantalla */}
+                                <div className="border-2 border-blue-200 bg-blue-50 rounded-xl p-3">
+                                    <div className="flex items-start gap-2 mb-2">
+                                        <span className="text-lg">🧠</span>
+                                        <div>
+                                            <p className="text-sm font-bold text-blue-800">Analizar con IA</p>
+                                            <p className="text-xs text-blue-600 leading-snug">
+                                                Genera recomendaciones en pantalla usando los datos del formulario.
+                                                <strong className="block mt-0.5">No guarda nada en la base de datos.</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={generarAnalisis}
+                                        disabled={cargandoIA}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {cargandoIA ? (
+                                            <>
+                                                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                                </svg>
+                                                Analizando…
+                                            </>
+                                        ) : (
+                                            '🧠 Analizar con IA'
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Botón 2: Guardar métricas — GUARDA en BD */}
+                                <div className="border-2 border-green-200 bg-green-50 rounded-xl p-3">
+                                    <div className="flex items-start gap-2 mb-2">
+                                        <span className="text-lg">💾</span>
+                                        <div>
+                                            <p className="text-sm font-bold text-green-800">Guardar métricas</p>
+                                            <p className="text-xs text-green-700 leading-snug">
+                                                Registra los datos del formulario en la base de datos (histórico real de Meta Ads).
+                                                <strong className="block mt-0.5">Sí guarda en BD. Selecciona una fase primero.</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={guardarMetricas}
+                                        disabled={guardando || !formMetricas.fase}
+                                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2.5 rounded-lg transition-colors"
+                                    >
+                                        {guardando ? 'Guardando…' : '💾 Guardar métricas'}
+                                    </button>
+                                    {!formMetricas.fase && (
+                                        <p className="text-xs text-green-600 mt-1 text-center">↑ Selecciona una fase para habilitar</p>
                                     )}
-                                </button>
-                                <button
-                                    onClick={guardarMetricas}
-                                    disabled={guardando || !formMetricas.fase}
-                                    className="flex-1 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white font-bold py-3 rounded-xl transition-colors"
-                                >
-                                    {guardando ? 'Guardando…' : '💾 Guardar métricas'}
-                                </button>
+                                </div>
                             </div>
-                            <p className="text-xs text-gray-400 text-center">
-                                "Guardar métricas" registra los datos en BD. "Analizar con IA" genera el análisis en pantalla (no se guarda).
-                            </p>
                         </div>
                     )}
                 </div>
