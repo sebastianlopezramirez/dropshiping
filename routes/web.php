@@ -325,6 +325,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
                       ->name('marketing.asistente');
 
                  // Detalle: análisis de un producto específico
+
+                 // TEMPORAL: diagnóstico Groq — eliminar tras solucionar
+                 Route::get('debug-groq', [AsistenteMarketingController::class, 'debugGroq'])
+                      ->name('marketing.asistente.debug');
+
                  Route::get('{producto}', [AsistenteMarketingController::class, 'show'])
                       ->name('marketing.asistente.producto');
 
@@ -335,11 +340,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                  // Guardar métricas reales del período
                  Route::post('{producto}/metricas', [AsistenteMarketingController::class, 'guardarMetrica'])
                       ->name('marketing.asistente.guardar');
-
-                 // TEMPORAL: diagnóstico Groq — eliminar tras solucionar
-                 Route::get('debug-groq', [AsistenteMarketingController::class, 'debugGroq'])
-                      ->name('marketing.asistente.debug');
-
                  // Eliminar métricas (solo si producto NO está activo)
                  Route::delete('{producto}/metricas', [AsistenteMarketingController::class, 'eliminarMetricas'])
                       ->name('marketing.asistente.eliminar');
