@@ -188,7 +188,7 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis' => $respuesta['contenido'],
-            'modelo'   => 'llama-3.3-70b-versatile',
+            'modelo'   => 'llama3-70b-8192',
             'modo'     => $modo,
         ]);
     }
@@ -449,7 +449,7 @@ PROMPT;
             ])
             ->timeout(30)
             ->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model'       => 'llama-3.3-70b-versatile',
+                'model'       => 'llama3-70b-8192',
                 'messages'    => [
                     [
                         'role'    => 'user',
@@ -507,7 +507,7 @@ PROMPT;
                 'Authorization' => "Bearer {$apiKey}",
                 'Content-Type'  => 'application/json',
             ])->timeout(15)->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model'    => 'llama-3.3-70b-versatile',
+                'model'    => 'llama3-70b-8192',
                 'messages' => [['role' => 'user', 'content' => 'Di "ok"']],
                 'max_tokens' => 5,
             ]);
