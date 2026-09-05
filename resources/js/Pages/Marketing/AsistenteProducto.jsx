@@ -57,7 +57,8 @@ function PanelAnalisisIA({ analisis, modo }) {
         // groq/compound-mini puede devolver texto antes/después del JSON — extraemos solo el bloque {}
         const match = limpio.match(/\{[\s\S]*\}/);
         datos = JSON.parse(match ? match[0] : limpio);
-    } catch {
+    } catch (e) {
+    console.error('Parse error:', e.message, analisis.substring(0, 300));
         // Si no es JSON válido, mostrar como texto
         return (
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
