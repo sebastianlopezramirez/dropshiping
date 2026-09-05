@@ -55,8 +55,7 @@ cmds = [
 cmds = [
     # Compilar assets React/Vite → genera public/build/
     "npm run build",
-    # Cachear config, rutas y vistas de Laravel para mejor rendimiento
-    "php artisan config:cache",
+    # Solo cachear rutas y vistas en build (config se cachea en runtime con las vars reales)
     "php artisan route:cache",
     "php artisan view:cache",
 ]
@@ -64,4 +63,4 @@ cmds = [
 [start]
 # Migrar BD en cada arranque (seguro con --force en producción)
 # y luego levantar el servidor en el puerto que Railway asigna
-cmd = "sh -c 'php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT'"
+cmd = "sh -c 'php artisan config:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT'"
