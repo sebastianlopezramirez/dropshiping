@@ -190,6 +190,185 @@ function PanelAnalisisIA({ analisis, modo }) {
                 </div>
             )}
 
+            {/* COPY ORGÁNICO — Hooks */}
+            {datos.copy_organico?.hooks && datos.copy_organico.hooks.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">🎣 Hooks para los primeros 3 segundos</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                        {datos.copy_organico.hooks.map((h, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
+                                <p className="text-xs font-bold text-orange-600 uppercase mb-1">{h.tipo}</p>
+                                <p className="text-sm text-gray-800 font-medium italic">"{h.texto}"</p>
+                                {h.nota && <p className="text-xs text-gray-500 mt-1">{h.nota}</p>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* COPY ORGÁNICO — Captions */}
+            {datos.copy_organico?.captions && datos.copy_organico.captions.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">✍️ Captions listos para publicar</h4>
+                    <div className="space-y-3">
+                        {datos.copy_organico.captions.map((c, i) => (
+                            <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-0.5 rounded">Variante {c.variante}</span>
+                                    <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded">{c.framework}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.texto}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* COPY META ADS */}
+            {datos.copy_meta_ads?.textos && datos.copy_meta_ads.textos.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">📢 Copy para Meta Ads</h4>
+                    <div className="space-y-3">
+                        {datos.copy_meta_ads.textos.map((t, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded">Variante {t.variante} — {t.tipo}</span>
+                                    <span className="text-xs text-gray-500">{t.mejor_para}</span>
+                                </div>
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{t.texto}</p>
+                            </div>
+                        ))}
+                    </div>
+                    {datos.copy_meta_ads.titulares && datos.copy_meta_ads.titulares.length > 0 && (
+                        <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <h5 className="text-xs font-bold text-blue-800 mb-2 uppercase">Titulares del anuncio</h5>
+                            <div className="space-y-1">
+                                {datos.copy_meta_ads.titulares.map((tit, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-sm">
+                                        <span className="text-blue-600 font-medium flex-1">"{tit.texto}"</span>
+                                        <span className="text-xs text-blue-400 flex-shrink-0">{tit.usa_en}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* BRIEF CREATIVO */}
+            {datos.brief_creativo?.creatividades && datos.brief_creativo.creatividades.length > 0 && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">🎨 Brief Creativo — por prioridad</h4>
+                    <div className="space-y-2">
+                        {datos.brief_creativo.creatividades.map((cr, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-base">{'🥇🥈🥉'[i] ?? '⭐'}</span>
+                                    <span className="font-semibold text-sm text-gray-800">{cr.tipo}</span>
+                                </div>
+                                <ul className="text-xs text-gray-600 space-y-1">
+                                    {cr.acciones && cr.acciones.map((a, j) => (
+                                        <li key={j} className="flex items-start gap-1">
+                                            <span className="text-orange-400 flex-shrink-0">→</span> {a}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* SEGMENTACIÓN */}
+            {datos.segmentacion && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">🎯 Audiencia & Segmentación</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                        {datos.segmentacion.intereses_fria && datos.segmentacion.intereses_fria.length > 0 && (
+                            <div className="bg-white border border-gray-200 rounded-xl p-3">
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">🧊 Audiencia Fría — Intereses</p>
+                                {datos.segmentacion.tamano_audiencia && (
+                                    <p className="text-xs text-gray-400 mb-2">{datos.segmentacion.tamano_audiencia}</p>
+                                )}
+                                <div className="flex flex-wrap gap-1">
+                                    {datos.segmentacion.intereses_fria.map((int, i) => (
+                                        <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 text-xs px-2 py-0.5 rounded">{int}</span>
+                                    ))}
+                                </div>
+                                {datos.segmentacion.edad_min && (
+                                    <p className="text-xs text-gray-400 mt-2">Edad: {datos.segmentacion.edad_min}–{datos.segmentacion.edad_max} · Colombia</p>
+                                )}
+                            </div>
+                        )}
+                        {datos.segmentacion.retargeting_pixeles && datos.segmentacion.retargeting_pixeles.length > 0 && (
+                            <div className="bg-white border border-gray-200 rounded-xl p-3">
+                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">🔥 Retargeting (Pixel)</p>
+                                <div className="flex flex-wrap gap-1">
+                                    {datos.segmentacion.retargeting_pixeles.map((px, i) => (
+                                        <span key={i} className="bg-green-50 text-green-700 border border-green-200 text-xs px-2 py-0.5 rounded">{px}</span>
+                                    ))}
+                                </div>
+                                {datos.segmentacion.lookalike && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                        {datos.segmentacion.lookalike.map((lal, i) => (
+                                            <span key={i} className="bg-purple-50 text-purple-700 border border-purple-200 text-xs px-2 py-0.5 rounded">{lal}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    {datos.segmentacion.broad_advantage && (
+                        <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600">
+                            ⚡ <strong>Broad / Advantage+:</strong> {datos.segmentacion.broad_advantage}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* KPIs */}
+            {datos.kpis && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">📈 KPIs & Señales de decisión</h4>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                        {datos.kpis.ctr_objetivo && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                                <p className="text-xs text-blue-500 uppercase font-semibold mb-1">CTR objetivo</p>
+                                <p className="text-xl font-black text-blue-700">{datos.kpis.ctr_objetivo}%</p>
+                            </div>
+                        )}
+                        {datos.kpis.roas_objetivo && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                                <p className="text-xs text-green-500 uppercase font-semibold mb-1">ROAS objetivo</p>
+                                <p className="text-xl font-black text-green-700">{datos.kpis.roas_objetivo}x</p>
+                            </div>
+                        )}
+                        {datos.kpis.cpa_maximo && (
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                                <p className="text-xs text-orange-500 uppercase font-semibold mb-1">CPA máximo</p>
+                                <p className="text-xl font-black text-orange-700">${Number(datos.kpis.cpa_maximo).toLocaleString('es-CO')}</p>
+                            </div>
+                        )}
+                    </div>
+                    {datos.kpis.senales_escalar && (
+                        <div className="bg-green-50 border-l-4 border-green-400 rounded-r-lg p-3 mb-2">
+                            <p className="text-xs font-bold text-green-700 mb-1">🚀 Señales para ESCALAR</p>
+                            <ul className="text-xs text-green-600 space-y-0.5">
+                                {datos.kpis.senales_escalar.map((s, i) => <li key={i}>• {s}</li>)}
+                            </ul>
+                        </div>
+                    )}
+                    {datos.kpis.senales_pausar && (
+                        <div className="bg-red-50 border-l-4 border-red-400 rounded-r-lg p-3">
+                            <p className="text-xs font-bold text-red-700 mb-1">⛔ Señales para PAUSAR</p>
+                            <ul className="text-xs text-red-600 space-y-0.5">
+                                {datos.kpis.senales_pausar.map((s, i) => <li key={i}>• {s}</li>)}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* AJUSTE DE PRESUPUESTO */}
             {datos.ajuste_presupuesto && (
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">

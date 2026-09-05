@@ -1,0 +1,6 @@
+si algo falla en esta nueva funcion debo hacer este git para traeme de nuevo hasta aqui 4 septiembre 2026
+✅ Backup creado: v1.0-pre-asistente-marketing — si algo falla, git checkout v1.0-pre-asistente-marketing te devuelve aquí.
+
+pendiente alimnar debug temporal para diagnosticar conexion groq
+
+y diseñar o ver como configurar una pagina de seguimiento para ver cad error en tiempo real y corregir

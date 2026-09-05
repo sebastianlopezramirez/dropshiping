@@ -293,49 +293,132 @@ REGLAS DE NEGOCIO (no negociables):
 - CTR mínimo saludable: 1.5%
 - Frecuencia máxima antes de rotar creativos: 2.5
 
-GENERA UNA ESTRATEGIA DE LANZAMIENTO COMPLETA EN FORMATO JSON con esta estructura exacta:
+GENERA UNA ESTRATEGIA DE LANZAMIENTO COMPLETA EN FORMATO JSON con esta estructura exacta.
+IMPORTANTE: Responde SOLO con el JSON, sin texto adicional antes ni después.
+
 {
   "decision": "LANZAR",
-  "resumen": "Una oración de qué hacer",
+  "resumen": "Una oración directa de qué hacer y por qué",
   "presupuesto_diario_cop": 30000,
   "duracion_dias": 7,
-  "objetivo_campana": "CONVERSIONES o TRAFICO",
+  "objetivo_campana": "CONVERSIONES",
+
   "fases": [
     {
       "fase": 1,
-      "nombre": "Nombre de la fase",
-      "duracion": "X días",
+      "nombre": "Prueba inicial y aprendizaje",
+      "duracion": "7 días",
       "presupuesto_diario": 30000,
+      "objetivo": "Qué lograr en esta fase",
+      "acciones": ["Configurar pixel", "Crear 3 creativos", "Segmentar audiencia fría"],
+      "metricas_objetivo": { "ctr": 1.5, "roas": 2.5, "cpa": 50000 }
+    },
+    {
+      "fase": 2,
+      "nombre": "Optimización",
+      "duracion": "14 días",
+      "presupuesto_diario": 50000,
       "objetivo": "Qué lograr",
       "acciones": ["acción 1", "acción 2"],
-      "metricas_objetivo": { "ctr": 1.5, "roas": 2.5, "cpa": 50000 }
+      "metricas_objetivo": { "ctr": 2.0, "roas": 3.5, "cpa": 40000 }
+    },
+    {
+      "fase": 3,
+      "nombre": "Escala",
+      "duracion": "30 días",
+      "presupuesto_diario": 100000,
+      "objetivo": "Qué lograr",
+      "acciones": ["acción 1", "acción 2"],
+      "metricas_objetivo": { "ctr": 2.5, "roas": 4.5, "cpa": 35000 }
     }
   ],
+
+  "copy_organico": {
+    "hooks": [
+      { "tipo": "Hook Pregunta-Dolor", "texto": "Texto del hook específico para este producto", "nota": "Para quién funciona mejor" },
+      { "tipo": "Hook Precio-Shock", "texto": "Texto del hook de precio específico para este producto", "nota": "Dónde usar este hook" },
+      { "tipo": "Hook Identidad-Aspiracional", "texto": "Texto del hook aspiracional específico", "nota": "Audiencia objetivo" },
+      { "tipo": "Hook Estadística", "texto": "Texto con dato estadístico específico del producto", "nota": "Por qué genera engagement" }
+    ],
+    "captions": [
+      { "variante": "A", "framework": "PAS", "texto": "Caption completo usando Pain-Agitate-Solution para este producto. Mínimo 3 párrafos con emojis, beneficios y CTA." },
+      { "variante": "B", "framework": "AIDA", "texto": "Caption completo usando Attention-Interest-Desire-Action para este producto. Mínimo 3 párrafos con emojis, beneficios y CTA." },
+      { "variante": "C", "framework": "Corto-Stories", "texto": "Caption corto (máximo 5 líneas) para Reels e Historias con emojis y CTA." }
+    ]
+  },
+
+  "copy_meta_ads": {
+    "textos": [
+      { "variante": "A", "tipo": "PAS", "mejor_para": "Audiencia fría (intereses)", "texto": "Texto del anuncio en PAS para este producto. 3-5 líneas con beneficios concretos y CTA." },
+      { "variante": "B", "tipo": "AIDA", "mejor_para": "Retargeting (visitaron la página)", "texto": "Texto del anuncio en AIDA para retargeting. Incluir prueba social y garantía." },
+      { "variante": "C", "tipo": "Urgencia", "mejor_para": "Carritos abandonados", "texto": "Texto corto con urgencia y escasez para recuperar carritos abandonados." }
+    ],
+    "titulares": [
+      { "texto": "Titular 1 específico del producto (máx 40 caracteres)", "usa_en": "Meta + Google" },
+      { "texto": "Titular 2 con beneficio clave (máx 40 caracteres)", "usa_en": "Meta" },
+      { "texto": "Titular 3 con precio o oferta (máx 40 caracteres)", "usa_en": "Meta" },
+      { "texto": "Titular 4 para retargeting (máx 40 caracteres)", "usa_en": "Retargeting" }
+    ],
+    "cta": "Comprar ahora"
+  },
+
+  "brief_creativo": {
+    "creatividades": [
+      {
+        "prioridad": 1,
+        "tipo": "Reel demostrativo (15-30s)",
+        "acciones": ["Descripción de qué mostrar en el video", "Qué texto poner en pantalla", "Qué formato y audio usar"]
+      },
+      {
+        "prioridad": 2,
+        "tipo": "Imagen comparativa",
+        "acciones": ["Qué comparar visualmente", "Qué texto incluir", "Qué formato usar"]
+      },
+      {
+        "prioridad": 3,
+        "tipo": "Carrusel de beneficios",
+        "acciones": ["Qué poner en cada tarjeta", "Cuántas tarjetas", "Última tarjeta con CTA"]
+      }
+    ]
+  },
+
   "segmentacion": {
     "pais": "Colombia",
-    "ciudades": ["Bogotá", "Medellín", "Cali", "Barranquilla"],
-    "edad_min": 18,
+    "edad_min": 22,
     "edad_max": 45,
-    "intereses": ["interés 1", "interés 2"],
-    "comportamientos": ["comportamiento 1"]
+    "ciudades": ["Bogotá", "Medellín", "Cali", "Barranquilla"],
+    "intereses_fria": ["interés 1 específico del producto", "interés 2", "interés 3", "interés 4", "interés 5"],
+    "tamano_audiencia": "X.XM - Y.YM personas",
+    "retargeting_pixeles": ["ViewContent 30 días", "AddToCart 14 días", "InitiateCheckout 7 días"],
+    "lookalike": ["LAL 1% Compradores", "LAL 2% Compradores"],
+    "broad_advantage": "Sin intereses — Meta Advantage+ Shopping — activar cuando tengas +50 conversiones/semana"
   },
+
   "creativos": {
     "formato_recomendado": "Reels o Imagen",
-    "duracion_video_segundos": 15,
-    "gancho_apertura": "Texto del gancho en los primeros 3 segundos",
-    "llamado_accion": "COMPRAR_AHORA",
-    "tips_creativos": ["tip 1", "tip 2", "tip 3"]
+    "gancho_apertura": "Texto exacto del gancho para los primeros 3 segundos del video",
+    "tips_creativos": ["tip 1 específico", "tip 2 específico", "tip 3 específico"],
+    "alertas_rotar": ["CTR < 1% por 3 días consecutivos", "Frecuencia > 2.5", "señal 3 específica"]
   },
+
   "horarios": {
     "mejores_dias": ["Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
     "mejor_horario": "18:00 - 22:00 hora Colombia",
-    "justificacion": "Por qué estos horarios"
+    "justificacion": "Por qué estos días y horarios para este producto y audiencia específica"
   },
-  "alertas_rotar_creativo": ["señal 1", "señal 2"],
-  "proxima_revision": "En cuántos días revisar métricas"
+
+  "kpis": {
+    "ctr_objetivo": 1.5,
+    "roas_objetivo": 2.5,
+    "cpa_maximo": 50000,
+    "senales_escalar": ["ROAS ≥ 4.5x durante 3 días consecutivos", "CTR > 2% sostenido", "señal 3"],
+    "senales_pausar": ["ROAS < 2x por 3 días", "CTR < 1% tras rotar creativos", "CPA > CPA máximo por 5 días"]
+  },
+
+  "proxima_revision": "En X días"
 }
 
-Responde SOLO con el JSON, sin texto adicional.
+Responde SOLO con el JSON puro. Sin texto antes ni después. Sin explicaciones.
 PROMPT;
     }
 
