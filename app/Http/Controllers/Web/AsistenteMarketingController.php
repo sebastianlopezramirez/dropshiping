@@ -303,7 +303,8 @@ class AsistenteMarketingController extends Controller
         $precio   = number_format($producto->precio_venta ?? 0, 0, ',', '.');
         $costo    = number_format($producto->precio_costo ?? 0, 0, ',', '.');
         $cpaMax   = number_format($cpaMaximo, 0, ',', '.');
-        $categoria = $producto->categoria->nombre ?? 'Sin categoría';
+        $categoria   = $producto->categoria->nombre ?? 'Sin categoría';
+        $urlProducto = url("/tienda/{$producto->slug}");
 
         return <<<PROMPT
 Eres un experto en marketing digital para e-commerce colombiano, especializado en Meta Ads e Instagram.
@@ -317,6 +318,9 @@ PRODUCTO A LANZAR:
 - Costo del producto: \${$costo} COP
 - Margen de ganancia: {$margen}%
 - CPA máximo permitido (50% del margen): \${$cpaMax} COP
+- URL pública del producto en la tienda: {$urlProducto}
+
+RESTRICCIÓN OBLIGATORIA DE NOMBRE: En todos los textos que generes (captions, hashtags, descripcion_lista), el nombre del producto debe ser EXACTAMENTE "{$producto->nombre}" — no lo reformules, no agregues palabras extra.
 
 REGLAS DE NEGOCIO (no negociables):
 - ROAS mínimo aceptable: 2.5x
@@ -447,6 +451,14 @@ IMPORTANTE: Responde SOLO con el JSON, sin texto adicional antes ni después.
     "senales_escalar": ["ROAS ≥ 4.5x durante 3 días consecutivos", "CTR > 2% sostenido", "señal 3"],
     "senales_pausar": ["ROAS < 2x por 3 días", "CTR < 1% tras rotar creativos", "CPA > CPA máximo por 5 días"]
   },
+
+  "hashtags_instagram": {
+    "masivos": ["#hashtag_masivo_1 (>1M usos)", "#hashtag_masivo_2", "#hashtag_masivo_3", "#hashtag_masivo_4", "#hashtag_masivo_5"],
+    "medianos": ["#hashtag_medio_1 (100K-1M)", "#hashtag_medio_2", "#hashtag_medio_3", "#hashtag_medio_4", "#hashtag_medio_5"],
+    "nicho": ["#hashtag_nicho_1 (<100K)", "#hashtag_nicho_2", "#hashtag_nicho_3", "#hashtag_nicho_4", "#hashtag_nicho_5"]
+  },
+
+  "descripcion_lista": "Texto completo listo para copiar y pegar en Instagram o WhatsApp. Debe incluir: nombre EXACTO del producto ({$producto->nombre}), los 3-5 beneficios principales del producto, el precio \${$precio} COP, el link de compra {$urlProducto}, y un CTA claro. Usa emojis. Máximo 8 líneas.",
 
   "proxima_revision": "En X días"
 }

@@ -282,6 +282,90 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
                 </div>
             )}
 
+            {/* ── DESCRIPCIÓN LISTA PARA PEGAR ───────────────────────────── */}
+            {datos.descripcion_lista && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">📝 Descripción lista para pegar</h4>
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-2">
+                            Instagram · WhatsApp · Redes sociales
+                        </p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap mb-3">{datos.descripcion_lista}</p>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(datos.descripcion_lista)
+                                    .then((e) => {
+                                        e && e.preventDefault && e.preventDefault();
+                                        const btn = document.activeElement;
+                                        if (btn) { btn.textContent = '✅ Copiado'; setTimeout(() => { btn.textContent = '📋 Copiar descripción'; }, 1500); }
+                                    })
+                                    .catch(() => {});
+                            }}
+                            className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+                        >
+                            📋 Copiar descripción
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── HASHTAGS INSTAGRAM ───────────────────────────────────────── */}
+            {datos.hashtags_instagram && (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-800 mb-2">🏷️ Hashtags para Instagram</h4>
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+                        {datos.hashtags_instagram.masivos?.length > 0 && (
+                            <div>
+                                <p className="text-xs font-bold text-purple-600 uppercase mb-1">🔴 Masivos (+1M usos)</p>
+                                <p className="text-sm text-gray-700 flex flex-wrap gap-1">
+                                    {datos.hashtags_instagram.masivos.map((h, i) => (
+                                        <span key={i} className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-mono">{h}</span>
+                                    ))}
+                                </p>
+                            </div>
+                        )}
+                        {datos.hashtags_instagram.medianos?.length > 0 && (
+                            <div>
+                                <p className="text-xs font-bold text-purple-600 uppercase mb-1">🟡 Medianos (100K–1M)</p>
+                                <p className="text-sm text-gray-700 flex flex-wrap gap-1">
+                                    {datos.hashtags_instagram.medianos.map((h, i) => (
+                                        <span key={i} className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-mono">{h}</span>
+                                    ))}
+                                </p>
+                            </div>
+                        )}
+                        {datos.hashtags_instagram.nicho?.length > 0 && (
+                            <div>
+                                <p className="text-xs font-bold text-purple-600 uppercase mb-1">🟢 Nicho (-100K)</p>
+                                <p className="text-sm text-gray-700 flex flex-wrap gap-1">
+                                    {datos.hashtags_instagram.nicho.map((h, i) => (
+                                        <span key={i} className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-mono">{h}</span>
+                                    ))}
+                                </p>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => {
+                                const todos = [
+                                    ...(datos.hashtags_instagram.masivos ?? []),
+                                    ...(datos.hashtags_instagram.medianos ?? []),
+                                    ...(datos.hashtags_instagram.nicho ?? []),
+                                ].join(' ');
+                                navigator.clipboard.writeText(todos)
+                                    .then(() => {
+                                        const btn = document.activeElement;
+                                        if (btn) { btn.textContent = '✅ Copiado'; setTimeout(() => { btn.textContent = '📋 Copiar todos los hashtags'; }, 1500); }
+                                    })
+                                    .catch(() => {});
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+                        >
+                            📋 Copiar todos los hashtags
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* BRIEF CREATIVO */}
             {datos.brief_creativo?.creatividades && datos.brief_creativo.creatividades.length > 0 && (
                 <div>
