@@ -546,6 +546,17 @@ PROMPT;
             if ($respuesta->successful()) {
                 $cuerpo    = $respuesta->json();
                 $contenido = $cuerpo['choices'][0]['message']['content'] ?? '';
+                // Sanitizar JSON: limpiar newlines literales dentro de strings
+                if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
+                    $sanitizado = preg_replace_callback(
+                        '/"((?:[^"\\\\]|\\\\.)*)"/us',
+                        fn($m) => '"' . str_replace(["\n", "\r"], ['\\n', '\\r'], $m[1]) . '"',
+                        $matchJson[0]
+                    );
+                    if ($sanitizado !== null) {
+                        $contenido = $sanitizado;
+                    }
+                }
                 return ['exito' => true, 'contenido' => $contenido];
             }
 
