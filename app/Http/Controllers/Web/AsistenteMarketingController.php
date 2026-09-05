@@ -188,7 +188,7 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis' => $respuesta['contenido'],
-            'modelo'   => 'llama-3.1-8b-instant',
+            'modelo'   => 'groq/compound-mini',
             'modo'     => $modo,
         ]);
     }
@@ -449,7 +449,7 @@ PROMPT;
             ])
             ->timeout(30)
             ->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model'       => 'llama-3.1-8b-instant',
+                'model'       => 'groq/compound-mini',
                 'messages'    => [
                     [
                         'role'    => 'user',
