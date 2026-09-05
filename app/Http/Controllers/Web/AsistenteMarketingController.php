@@ -436,7 +436,7 @@ PROMPT;
      */
     private function llamarGroq(string $prompt): array
     {
-        $apiKey = env('GROQ_API_KEY');
+        $apiKey = config('services.groq.api_key');
 
         if (empty($apiKey)) {
             return ['exito' => false, 'error' => 'GROQ_API_KEY no configurada en .env'];
