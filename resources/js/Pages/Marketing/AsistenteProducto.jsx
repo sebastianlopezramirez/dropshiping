@@ -54,7 +54,9 @@ function PanelAnalisisIA({ analisis, modo }) {
     try {
         // La IA puede devolver el JSON con backticks o sin ellos
         const limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        datos = JSON.parse(limpio);
+        // groq/compound-mini puede devolver texto antes/después del JSON — extraemos solo el bloque {}
+        const match = limpio.match(/\{[\s\S]*\}/);
+        datos = JSON.parse(match ? match[0] : limpio);
     } catch {
         // Si no es JSON válido, mostrar como texto
         return (
