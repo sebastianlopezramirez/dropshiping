@@ -56,9 +56,19 @@ function PanelAnalisisIA({ analisis, modo }) {
         const limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         // groq/compound-mini puede devolver texto antes/después del JSON — extraemos solo el bloque {}
         const match = limpio.match(/\{[\s\S]*\}/);
-        datos = JSON.parse(match ? match[0] : limpio);
-    } catch (e) {
-    console.error('Parse error:', e.message, analisis.substring(0, 300));
+        const bruto = match ? match[0] : limpio;
+        let sanitizado = '', enString = false, escapado = false;
+        for (let idx = 0; idx < bruto.length; idx++) {
+            const c = bruto[idx];
+            if (escapado)               { sanitizado += c; escapado = false; continue; }
+            if (c === '\' && enString) { sanitizado += c; escapado = true;  continue; }
+            if (c === '"')              { enString = !enString; sanitizado += c; continue; }
+            if (enString && (c === '
+' || c === '')) { sanitizado += '\n'; continue; }
+            sanitizado += c;
+        }
+        datos = JSON.parse(sanitizado);
+    } catch {
         // Si no es JSON válido, mostrar como texto
         return (
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
