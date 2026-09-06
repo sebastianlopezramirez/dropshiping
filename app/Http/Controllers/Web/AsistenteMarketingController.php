@@ -199,6 +199,16 @@ class AsistenteMarketingController extends Controller
 
         $modo     = $request->input('modo');
         $metricas = $request->input('metricas', []);
+        $costos   = $request->input('costos', []);
+
+        // Validar costos opcionales (solo lanzamiento)
+        if (!empty($costos)) {
+            $request->validate([
+                'costos.costo_envio'       => 'nullable|numeric|min:0',
+                'costos.costo_empaque'     => 'nullable|numeric|min:0',
+                'costos.comision_pasarela' => 'nullable|numeric|min:0',
+            ]);
+        }
 
         // Calcular datos del producto
         $margen    = 0;
@@ -210,7 +220,7 @@ class AsistenteMarketingController extends Controller
 
         // Construir el prompt según el modo
         $prompt = $modo === 'lanzamiento'
-            ? $this->construirPromptLanzamiento($producto, $margen, $cpaMaximo)
+            ? $this->construirPromptLanzamiento($producto, $margen, $cpaMaximo, $costos)
             : $this->construirPromptOptimizacion($producto, $metricas, $margen, $cpaMaximo);
 
         // Llamar a Groq API
@@ -337,7 +347,7 @@ class AsistenteMarketingController extends Controller
      * DATOS_MERCADO, DATOS_COSTOS, DATOS_META y DATOS_PAGINA se marcan
      * con indicadores honestos para que Groq no invente información.
      */
-    private function construirPromptLanzamiento(Producto $producto, float $margen, float $cpaMaximo): string
+    private function construirPromptLanzamiento(Producto $producto, float $margen, float $cpaMaximo, array $costos = []): string
     {
         $precioVenta  = $producto->precio_venta  ?? 0;
         $precioCosto  = $producto->precio_costo  ?? 0;
@@ -350,6 +360,32 @@ class AsistenteMarketingController extends Controller
         $costoFmt  = number_format($precioCosto, 0, ',', '.');
         $cpaMaxFmt = number_format($cpaMaximo,   0, ',', '.');
         $margenFmt = number_format($margen, 1);
+
+        // ── Construir bloque DATOS_COSTOS ──────────────────────────────────
+        $envio     = isset($costos['costo_envio'])       ? (float) $costos['costo_envio']       : null;
+        $empaque   = isset($costos['costo_empaque'])     ? (float) $costos['costo_empaque']      : null;
+        $pasarela  = isset($costos['comision_pasarela']) ? (float) $costos['comision_pasarela']  : null;
+
+        if ($envio !== null || $empaque !== null || $pasarela !== null) {
+            $totalCostos  = ($envio ?? 0) + ($empaque ?? 0) + ($pasarela ?? 0);
+            $gananciaNeta = $precioVenta - $precioCosto - $totalCostos;
+            $margenNeto   = $precioVenta > 0 ? round(($gananciaNeta / $precioVenta) * 100, 1) : 0;
+            $cpaMaxNeto   = round($gananciaNeta * 0.5, 0);
+
+            $bloqueDataCostos = "[DATOS_COSTOS]  → COMPLETO
+- costo_envio:          " . number_format($envio    ?? 0, 0, ',', '.') . " COP
+- costo_empaque:        " . number_format($empaque  ?? 0, 0, ',', '.') . " COP
+- comision_pasarela:    " . number_format($pasarela ?? 0, 0, ',', '.') . " COP
+- costo_total_operacion:" . number_format($totalCostos, 0, ',', '.') . " COP
+- ganancia_neta_real:   " . number_format($gananciaNeta, 0, ',', '.') . " COP
+- margen_neto_real:     {$margenNeto}%
+- cpa_maximo_real:      " . number_format($cpaMaxNeto, 0, ',', '.') . " COP  (50% ganancia neta)";
+
+            $statusCostos = '"COMPLETO"';
+        } else {
+            $bloqueDataCostos = "[DATOS_COSTOS]   → ECONOMICS_INCOMPLETOS  (falta costo_envio, empaque, comision_pasarela)";
+            $statusCostos     = '"ECONOMICS_INCOMPLETOS"';
+        }
 
         return <<<PROMPT
 Eres un Senior Media Buyer con 10+ años en e-commerce colombiano. Analizas con datos reales; jamás inventas cifras.
@@ -374,7 +410,7 @@ DATOS DISPONIBLES — FASE 1 (solo tienda propia)
 {$catalogoJson}
 
 [DATOS_MERCADO]  → NECESITA_INVESTIGACION_WEB
-[DATOS_COSTOS]   → ECONOMICS_INCOMPLETOS  (falta costo_envio, empaque, comision_pasarela)
+{$bloqueDataCostos}
 [DATOS_META]     → NO_META_DATA           (pixel instalado, sin historial todavía)
 [DATOS_PAGINA]   → NO_DISPONIBLE          (velocidad, conversión y reseñas no medidas aún)
 
@@ -415,7 +451,7 @@ RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
     "producto_tienda": "COMPLETO",
     "catalogo_relacionado": "COMPLETO",
     "datos_mercado": "NECESITA_INVESTIGACION_WEB",
-    "datos_costos": "ECONOMICS_INCOMPLETOS",
+    "datos_costos": {$statusCostos},
     "datos_meta": "NO_META_DATA",
     "datos_pagina": "NO_DISPONIBLE"
   },

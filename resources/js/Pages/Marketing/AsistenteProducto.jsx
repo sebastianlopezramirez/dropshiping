@@ -1437,6 +1437,15 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
     const [mensajeExito, setMensajeExito] = useState('');
     const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
+    // ── Costos del negocio (Phase 2: DATOS_COSTOS → COMPLETO) ──
+    const [modalCostos, setModalCostos] = useState(false);
+    const [costos, setCostos] = useState({
+        costo_envio:       '',   // Costo de envío al cliente (COP)
+        costo_empaque:     '',   // Caja, bolsa, cinta, etc. (COP)
+        comision_pasarela: '',   // Wompi / PSE: monto fijo o % (COP)
+    });
+    const costosTienenDatos = costos.costo_envio || costos.costo_empaque || costos.comision_pasarela;
+
     // Formulario de métricas — cubre todos los campos de Meta Ads Manager
     const [formMetricas, setFormMetricas] = useState({
         fase:     (metricas.length + 1).toString(),
@@ -1476,6 +1485,15 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                 modo,
                 _token: document.querySelector('meta[name="csrf-token"]')?.content,
             };
+
+            // Si hay costos definidos, incluirlos para completar unit_economics
+            if (modo === 'lanzamiento' && costosTienenDatos) {
+                cuerpo.costos = {
+                    costo_envio:       costos.costo_envio       ? parseFloat(costos.costo_envio)       : null,
+                    costo_empaque:     costos.costo_empaque     ? parseFloat(costos.costo_empaque)     : null,
+                    comision_pasarela: costos.comision_pasarela ? parseFloat(costos.comision_pasarela) : null,
+                };
+            }
 
             if (modo === 'optimizacion') {
                 cuerpo.metricas = {
@@ -1735,6 +1753,23 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                     <li>• Métricas objetivo por fase (CTR, ROAS, CPA)</li>
                                 </ul>
                             </div>
+                            {/* ── Botón costos opcionales ── */}
+                            <button
+                                onClick={() => setModalCostos(true)}
+                                className={`w-full text-sm font-semibold py-2.5 rounded-xl border transition-colors flex items-center justify-center gap-2
+                                    ${costosTienenDatos
+                                        ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100'
+                                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300'
+                                    }`}
+                            >
+                                ⚙️ {costosTienenDatos ? 'Costos ingresados ✓ — editar' : 'Agregar costos del negocio (opcional)'}
+                            </button>
+                            {costosTienenDatos && (
+                                <p className="text-xs text-green-600 text-center -mt-1">
+                                    Los unit economics quedarán <strong>COMPLETOS</strong> — el análisis será más preciso
+                                </p>
+                            )}
+
                             <button
                                 onClick={generarAnalisis}
                                 disabled={cargandoIA}
@@ -1752,6 +1787,148 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                     '🚀 Generar estrategia completa'
                                 )}
                             </button>
+                        </div>
+                    )}
+
+                    {/* ══ MODAL DATOS_COSTOS ══════════════════════════════════════════ */}
+                    {modalCostos && (
+                        <div
+                            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                            onClick={e => { if (e.target === e.currentTarget) setModalCostos(false); }}
+                        >
+                            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-900">⚙️ Costos del negocio</h3>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            Completa para que la IA calcule la ganancia neta real
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setModalCostos(false)}
+                                        className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                    >×</button>
+                                </div>
+
+                                {/* Body */}
+                                <div className="p-5 space-y-4">
+                                    {/* Resumen de referencia */}
+                                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-800">
+                                        <p className="font-semibold mb-1">📊 Referencia del producto</p>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <span>Precio venta: <strong>{fmt(producto.precio_venta)}</strong></span>
+                                            <span>Precio costo: <strong>{fmt(producto.precio_costo)}</strong></span>
+                                            <span>Margen bruto: <strong>{producto.margen_porcentaje}%</strong></span>
+                                            <span>CPA máx actual: <strong>{fmt(producto.cpa_maximo)}</strong></span>
+                                        </div>
+                                    </div>
+
+                                    {/* Costo envío */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            🚚 Costo de envío
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-2">
+                                            Lo que pagas a la transportadora por entrega (Servientrega, Interrapidísimo, etc.)
+                                        </p>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                            <input
+                                                type="number" min="0" placeholder="ej. 8000"
+                                                value={costos.costo_envio}
+                                                onChange={e => setCostos(p => ({...p, costo_envio: e.target.value}))}
+                                                className="w-full border border-gray-300 rounded-lg pl-7 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">COP</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Costo empaque */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            📦 Costo de empaque
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-2">
+                                            Caja, bolsa, cinta, papel burbuja, sticker, etc. por pedido
+                                        </p>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                            <input
+                                                type="number" min="0" placeholder="ej. 2500"
+                                                value={costos.costo_empaque}
+                                                onChange={e => setCostos(p => ({...p, costo_empaque: e.target.value}))}
+                                                className="w-full border border-gray-300 rounded-lg pl-7 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">COP</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Comisión pasarela */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            💳 Comisión de pasarela de pago
+                                        </label>
+                                        <p className="text-xs text-gray-500 mb-2">
+                                            Wompi/PSE: comisión por transacción (monto fijo en COP por venta)
+                                        </p>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                            <input
+                                                type="number" min="0" placeholder="ej. 3500"
+                                                value={costos.comision_pasarela}
+                                                onChange={e => setCostos(p => ({...p, comision_pasarela: e.target.value}))}
+                                                className="w-full border border-gray-300 rounded-lg pl-7 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">COP</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Vista previa de ganancia neta */}
+                                    {(costos.costo_envio || costos.costo_empaque || costos.comision_pasarela) && (() => {
+                                        const totalCostos = (parseFloat(costos.costo_envio) || 0)
+                                                          + (parseFloat(costos.costo_empaque) || 0)
+                                                          + (parseFloat(costos.comision_pasarela) || 0);
+                                        const gananciaNeta = (producto.precio_venta || 0) - (producto.precio_costo || 0) - totalCostos;
+                                        const cpaMaxNeto   = Math.round(gananciaNeta * 0.5);
+                                        return (
+                                            <div className={`rounded-xl p-3 border text-xs ${gananciaNeta > 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                                                <p className="font-bold mb-1 text-gray-700">📐 Vista previa</p>
+                                                <div className="grid grid-cols-2 gap-1 text-gray-700">
+                                                    <span>Total costos adicionales:</span>
+                                                    <span className="font-semibold">{fmt(totalCostos)}</span>
+                                                    <span>Ganancia neta real:</span>
+                                                    <span className={`font-bold ${gananciaNeta > 0 ? 'text-green-700' : 'text-red-700'}`}>{fmt(gananciaNeta)}</span>
+                                                    <span>CPA máximo real:</span>
+                                                    <span className="font-bold text-orange-700">{fmt(cpaMaxNeto)}</span>
+                                                </div>
+                                                {gananciaNeta <= 0 && (
+                                                    <p className="mt-1 text-red-600 font-semibold">⚠️ Con estos costos, el margen neto es negativo. Revisa los valores.</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex gap-3 p-5 border-t border-gray-100">
+                                    <button
+                                        onClick={() => {
+                                            setCostos({ costo_envio: '', costo_empaque: '', comision_pasarela: '' });
+                                            setModalCostos(false);
+                                        }}
+                                        className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                                    >
+                                        Limpiar
+                                    </button>
+                                    <button
+                                        onClick={() => setModalCostos(false)}
+                                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-xl text-sm transition-colors"
+                                    >
+                                        ✓ Guardar costos
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
