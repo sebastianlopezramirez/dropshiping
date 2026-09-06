@@ -855,15 +855,17 @@ PROMPT;
             ])
             ->timeout(30)
             ->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model'       => 'groq/compound-mini',
-                'messages'    => [
+                'model'           => 'groq/compound-mini',
+                'messages'        => [
                     [
                         'role'    => 'user',
                         'content' => $prompt,
                     ],
                 ],
-                'temperature' => 0.3,   // Más determinístico para decisiones de negocio
-                'max_tokens'  => 8000,
+                // Forzar salida JSON válida — elimina texto extra, newlines crudos y caracteres inválidos
+                'response_format' => ['type' => 'json_object'],
+                'temperature'     => 0.3,   // Más determinístico para decisiones de negocio
+                'max_tokens'      => 8000,
             ]);
 
             if ($respuesta->successful()) {
