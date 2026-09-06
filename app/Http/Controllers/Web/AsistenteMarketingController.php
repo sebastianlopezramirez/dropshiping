@@ -242,6 +242,40 @@ class AsistenteMarketingController extends Controller
         // y no necesita hacer JSON.parse (que puede fallar con caracteres especiales)
         $analisisParsado = json_decode($respuesta['contenido']);
 
+        // Fallback nivel 1: json_decode falló (newlines crudas u otros caracteres inválidos)
+        if ($analisisParsado === null) {
+            $raw = $respuesta['contenido'];
+
+            // Extraer solo el bloque JSON principal ignorando texto extra del modelo
+            if (preg_match('/\{[\s\S]*\}/su', $raw, $m)) {
+                $jsonBruto = $m[0];
+
+                // Dividir por comillas y escapar caracteres de control DENTRO de los strings
+                // Los segmentos pares (0, 2, 4...) son estructura JSON; los impares son contenido de string
+                $partes = explode('"', $jsonBruto);
+                foreach ($partes as $idx => &$parte) {
+                    if ($idx % 2 === 1) { // Dentro de un string JSON
+                        $parte = str_replace(
+                            ["\n",  "\r",  "\t",  "\x0B", "\x0C"],
+                            ['\\n', '\\r', '\\t', '',     ''],
+                            $parte
+                        );
+                    }
+                }
+                unset($parte);
+
+                $analisisParsado = json_decode(implode('"', $partes));
+            }
+        }
+
+        // Fallback nivel 2: si aún falla, eliminar todos los caracteres de control y reintentar
+        if ($analisisParsado === null) {
+            $limpio = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $respuesta['contenido']);
+            if ($limpio !== null) {
+                $analisisParsado = json_decode($limpio);
+            }
+        }
+
         return response()->json([
             'analisis'       => $analisisParsado ?? $respuesta['contenido'],
             'modelo'         => 'groq/compound-mini',
