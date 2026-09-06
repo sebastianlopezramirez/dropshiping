@@ -228,8 +228,10 @@ class AsistenteMarketingController extends Controller
 
         if (!$respuesta['exito']) {
             return response()->json([
-                'error' => 'No se pudo conectar con el asistente IA. Verifica GROQ_API_KEY.',
-                'detalle' => $respuesta['error'] ?? '',
+                'error'        => 'No se pudo conectar con el asistente IA. Verifica GROQ_API_KEY.',
+                'detalle'      => $respuesta['error'] ?? '',
+                'groq_status'  => $respuesta['groq_status'] ?? null,
+                'groq_detalle' => $respuesta['groq_body'] ?? '',
             ], 503);
         }
 
@@ -991,7 +993,7 @@ PROMPT;
             }
 
             Log::error('Groq API error', ['status' => $respuesta->status(), 'body' => $respuesta->body()]);
-            return ['exito' => false, 'error' => "Error HTTP {$respuesta->status()}"];
+            return ['exito' => false, 'error' => "Error HTTP {$respuesta->status()}", 'groq_body' => $respuesta->body(), 'groq_status' => $respuesta->status()];
 
         } catch (\Exception $e) {
             Log::error('Groq excepción', ['mensaje' => $e->getMessage()]);
