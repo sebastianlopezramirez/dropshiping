@@ -967,6 +967,10 @@ PROMPT;
                 'model'           => 'groq/compound-mini',
                 'messages'        => [
                     [
+                        'role'    => 'system',
+                        'content' => 'You are a JSON-only API. Respond exclusively with a valid JSON object. Never include explanatory text, markdown, code blocks, or any content outside the JSON object.',
+                    ],
+                    [
                         'role'    => 'user',
                         'content' => $prompt,
                     ],
