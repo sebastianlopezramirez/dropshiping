@@ -57,9 +57,22 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
             datos = analisis;
         } else {
             // Fallback: texto crudo — limpiar backticks y extraer bloque {}
-            const limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            let limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             const match = limpio.match(/\{[\s\S]*\}/);
-            datos = JSON.parse(match ? match[0] : limpio);
+            limpio = match ? match[0] : limpio;
+
+            // Intento 1: parseo directo
+            let parseOk = false;
+            try { datos = JSON.parse(limpio); parseOk = true; } catch {}
+
+            if (!parseOk) {
+                // Intento 2: escapar newlines literales DENTRO de strings JSON
+                // La regex con flag 's' captura cada string incluyendo los que tienen \n crudas
+                const reparado = limpio.replace(/"((?:[^"\\]|\\.)*)"/gs, m =>
+                    m.replace(/\n/g, '\\n').replace(/\r/g, '\\r')
+                );
+                datos = JSON.parse(reparado); // Si falla, el catch externo muestra el error
+            }
         }
     } catch {
         // Si no es JSON válido, mostrar como texto legible

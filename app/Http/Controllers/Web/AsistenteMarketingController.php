@@ -242,35 +242,54 @@ class AsistenteMarketingController extends Controller
         // y no necesita hacer JSON.parse (que puede fallar con caracteres especiales)
         $analisisParsado = json_decode($respuesta['contenido']);
 
-        // Fallback nivel 1: json_decode falló (newlines crudas u otros caracteres inválidos)
+        // Fallback nivel 1: estado-máquina caracter a caracter
+        // — maneja comillas escapadas \" correctamente, a diferencia del explode
         if ($analisisParsado === null) {
             $raw = $respuesta['contenido'];
 
-            // Extraer solo el bloque JSON principal ignorando texto extra del modelo
+            // Extraer solo el bloque JSON principal (ignora texto extra del modelo)
             if (preg_match('/\{[\s\S]*\}/su', $raw, $m)) {
                 $jsonBruto = $m[0];
+                $resultado = '';
+                $enString  = false;
+                $escapeSig = false;
+                $longitud  = strlen($jsonBruto);
 
-                // Dividir por comillas y escapar caracteres de control DENTRO de los strings
-                // Los segmentos pares (0, 2, 4...) son estructura JSON; los impares son contenido de string
-                $partes = explode('"', $jsonBruto);
-                foreach ($partes as $idx => &$parte) {
-                    if ($idx % 2 === 1) { // Dentro de un string JSON
-                        $parte = str_replace(
-                            ["\n",  "\r",  "\t",  "\x0B", "\x0C"],
-                            ['\\n', '\\r', '\\t', '',     ''],
-                            $parte
-                        );
+                for ($i = 0; $i < $longitud; $i++) {
+                    $c = $jsonBruto[$i];
+
+                    if ($escapeSig) {
+                        // Caracter anterior era \ — pasar sin modificar
+                        $resultado .= $c;
+                        $escapeSig  = false;
+                    } elseif ($c === '\\') {
+                        // Inicio de secuencia de escape
+                        $resultado .= $c;
+                        $escapeSig  = true;
+                    } elseif ($c === '"') {
+                        // Apertura o cierre de string
+                        $resultado .= $c;
+                        $enString   = !$enString;
+                    } elseif ($enString && $c === "\n") {
+                        // Newline cruda dentro de string → escapar
+                        $resultado .= '\\n';
+                    } elseif ($enString && $c === "\r") {
+                        $resultado .= '\\r';
+                    } elseif ($enString && $c === "\t") {
+                        $resultado .= '\\t';
+                    } else {
+                        $resultado .= $c;
                     }
                 }
-                unset($parte);
 
-                $analisisParsado = json_decode(implode('"', $partes));
+                $analisisParsado = json_decode($resultado);
             }
         }
 
-        // Fallback nivel 2: si aún falla, eliminar todos los caracteres de control y reintentar
+        // Fallback nivel 2: eliminar TODOS los caracteres de control (incluyendo \n y \r)
+        // — menos agresivo que el nivel 1 pero útil si la estructura JSON es simple
         if ($analisisParsado === null) {
-            $limpio = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $respuesta['contenido']);
+            $limpio = preg_replace('/[\x00-\x1F\x7F]/u', ' ', $respuesta['contenido']);
             if ($limpio !== null) {
                 $analisisParsado = json_decode($limpio);
             }
