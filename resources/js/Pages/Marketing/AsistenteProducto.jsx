@@ -701,6 +701,96 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
                 </div>
             )}
 
+            {/* ══════════════════════════════════════════════════════
+                🎓 APRENDE DE TUS MÉTRICAS — Sección educativa
+            ══════════════════════════════════════════════════════ */}
+            {datos.aprende && (
+                <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border-2 border-violet-200 rounded-xl p-4">
+                    <h4 className="text-sm font-bold text-violet-800 mb-4 flex items-center gap-2">
+                        🎓 Aprende de tus métricas
+                        <span className="text-xs font-normal text-violet-500 bg-violet-100 px-2 py-0.5 rounded-full">
+                            modo mentor
+                        </span>
+                    </h4>
+
+                    <div className="space-y-3">
+
+                        {/* Lección principal — destacada arriba */}
+                        {datos.aprende.leccion_principal && (
+                            <div className="bg-white border border-violet-200 rounded-xl p-4">
+                                <p className="text-xs font-bold text-violet-600 uppercase mb-2">💡 Lección principal de esta fase</p>
+                                <p className="text-sm text-gray-800 leading-relaxed">{datos.aprende.leccion_principal}</p>
+                            </div>
+                        )}
+
+                        {/* Grid de 2 columnas con las 4 métricas */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                            {/* ROAS */}
+                            {datos.aprende.roas && (
+                                <div className="bg-white border border-violet-100 rounded-xl p-3">
+                                    <p className="text-xs font-bold text-violet-700 mb-1 flex items-center gap-1">
+                                        📈 ROAS
+                                    </p>
+                                    <p className="text-xs text-violet-500 italic mb-2 border-b border-violet-50 pb-2">
+                                        {datos.aprende.roas.concepto}
+                                    </p>
+                                    <p className="text-xs text-gray-700 leading-relaxed">
+                                        {datos.aprende.roas.tu_caso}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* CPA vs Margen */}
+                            {datos.aprende.cpa_vs_margen && (
+                                <div className="bg-white border border-violet-100 rounded-xl p-3">
+                                    <p className="text-xs font-bold text-violet-700 mb-1 flex items-center gap-1">
+                                        🎯 CPA vs Margen
+                                    </p>
+                                    <p className="text-xs text-violet-500 italic mb-2 border-b border-violet-50 pb-2">
+                                        {datos.aprende.cpa_vs_margen.concepto}
+                                    </p>
+                                    <p className="text-xs text-gray-700 leading-relaxed">
+                                        {datos.aprende.cpa_vs_margen.tu_caso}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Frecuencia */}
+                            {datos.aprende.frecuencia && (
+                                <div className="bg-white border border-violet-100 rounded-xl p-3">
+                                    <p className="text-xs font-bold text-violet-700 mb-1 flex items-center gap-1">
+                                        🔁 Frecuencia
+                                    </p>
+                                    <p className="text-xs text-violet-500 italic mb-2 border-b border-violet-50 pb-2">
+                                        {datos.aprende.frecuencia.concepto}
+                                    </p>
+                                    <p className="text-xs text-gray-700 leading-relaxed">
+                                        {datos.aprende.frecuencia.tu_caso}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Embudo */}
+                            {datos.aprende.embudo && (
+                                <div className="bg-white border border-violet-100 rounded-xl p-3">
+                                    <p className="text-xs font-bold text-violet-700 mb-1 flex items-center gap-1">
+                                        🛒 Embudo de conversión
+                                    </p>
+                                    <p className="text-xs text-violet-500 italic mb-2 border-b border-violet-50 pb-2">
+                                        {datos.aprende.embudo.concepto}
+                                    </p>
+                                    <p className="text-xs text-gray-700 leading-relaxed">
+                                        {datos.aprende.embudo.tu_caso}
+                                    </p>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* PRÓXIMA REVISIÓN */}
             {datos.proxima_revision && (
                 <div className="text-center py-3 bg-gray-50 rounded-xl border border-gray-200">

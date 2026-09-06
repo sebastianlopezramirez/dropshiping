@@ -677,7 +677,27 @@ GENERA UN ANÁLISIS DE OPTIMIZACIÓN EN FORMATO JSON con esta estructura exacta:
     "roas_objetivo": 3.5,
     "cpa_objetivo": 40000
   },
-  "proxima_revision": "En X días"
+  "proxima_revision": "En X días",
+
+  "aprende": {
+    "roas": {
+      "concepto": "Explica en 1 oración qué es ROAS y por qué es la métrica más importante del e-commerce",
+      "tu_caso": "Explica en lenguaje simple qué significa su ROAS específico: si es bueno, malo, qué implica para su negocio y en cuánto dinero se traduce por cada peso invertido"
+    },
+    "cpa_vs_margen": {
+      "concepto": "Explica en 1 oración por qué el CPA debe ser siempre menor al margen de ganancia por venta",
+      "tu_caso": "Compara su CPA real vs su CPA máximo permitido: si está perdiendo o ganando dinero por cada venta, y cuánto exactamente en pesos colombianos"
+    },
+    "frecuencia": {
+      "concepto": "Explica en 1 oración qué es la frecuencia de Meta Ads y qué pasa cuando supera 2.5",
+      "tu_caso": "Interpreta su frecuencia actual: si la audiencia está saturada, cuánto tiempo tiene antes de que baje el rendimiento, y qué debe hacer"
+    },
+    "embudo": {
+      "concepto": "Explica en 1 oración cómo leer el embudo carrito → inicio de pago → compra y qué significa cada tasa",
+      "tu_caso": "Analiza sus tasas reales: dónde se pierden los usuarios, si hay un problema técnico (checkout) o de precio, y qué porcentaje está convirtiendo en cada paso"
+    },
+    "leccion_principal": "La lección más importante que debe aprender de ESTOS datos específicos. Escríbela como si le hablaras a alguien que está aprendiendo marketing digital. Máximo 3 oraciones. Directa, sin tecnicismos innecesarios."
+  }
 }
 
 Responde SOLO con el JSON, sin texto adicional.
