@@ -332,224 +332,278 @@ class AsistenteMarketingController extends Controller
     // ══════════════════════════════════════════════════════════════════
 
     /**
-     * PENSAR — Prompt para el modo LANZAMIENTO
-     * Genera la estrategia inicial del producto desde cero.
+     * PENSAR — Prompt para el modo LANZAMIENTO (Prompt Maestro v2 — Phase 1)
+     * Usa PRODUCTO_TIENDA + CATALOGO_RELACIONADO disponibles en BD.
+     * DATOS_MERCADO, DATOS_COSTOS, DATOS_META y DATOS_PAGINA se marcan
+     * con indicadores honestos para que Groq no invente información.
      */
     private function construirPromptLanzamiento(Producto $producto, float $margen, float $cpaMaximo): string
     {
-        $precio   = number_format($producto->precio_venta ?? 0, 0, ',', '.');
-        $costo    = number_format($producto->precio_costo ?? 0, 0, ',', '.');
-        $cpaMax   = number_format($cpaMaximo, 0, ',', '.');
-        $categoria   = $producto->categoria->nombre ?? 'Sin categoría';
-        $urlProducto = url("/tienda/{$producto->slug}");
+        $precioVenta  = $producto->precio_venta  ?? 0;
+        $precioCosto  = $producto->precio_costo  ?? 0;
+        $urlProducto  = url("/tienda/{$producto->slug}");
+        $categoria    = $producto->categoria->nombre ?? 'Sin categoría';
+        $catalogo     = $this->obtenerCatalogoRelacionado($producto);
+        $catalogoJson = json_encode($catalogo, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        $precioFmt = number_format($precioVenta, 0, ',', '.');
+        $costoFmt  = number_format($precioCosto, 0, ',', '.');
+        $cpaMaxFmt = number_format($cpaMaximo,   0, ',', '.');
+        $margenFmt = number_format($margen, 1);
 
         return <<<PROMPT
-Eres un experto en marketing digital para e-commerce colombiano, especializado en Meta Ads e Instagram.
-Hablas directo, das pasos concretos, usas pesos colombianos (COP).
+Eres un Senior Media Buyer con 10+ años en e-commerce colombiano. Analizas con datos reales; jamás inventas cifras.
 
-PRODUCTO A LANZAR:
-- Nombre: {$producto->nombre}
-- SKU: {$producto->sku}
-- Categoría: {$categoria}
-- Precio de venta: \${$precio} COP
-- Costo del producto: \${$costo} COP
-- Margen de ganancia: {$margen}%
-- CPA máximo permitido (50% del margen): \${$cpaMax} COP
-- URL pública del producto en la tienda: {$urlProducto}
+════════════════════════════════════════════════════════
+DATOS DISPONIBLES — FASE 1 (solo tienda propia)
+════════════════════════════════════════════════════════
 
-RESTRICCIÓN OBLIGATORIA DE NOMBRE: En todos los textos que generes (captions, hashtags, descripcion_lista), el nombre del producto debe ser EXACTAMENTE "{$producto->nombre}" — no lo reformules, no agregues palabras extra.
+[PRODUCTO_TIENDA]
+- nombre: {$producto->nombre}
+- sku: {$producto->sku}
+- categoria: {$categoria}
+- precio_venta: {$precioFmt} COP
+- precio_costo: {$costoFmt} COP
+- margen_pct: {$margenFmt}%
+- cpa_maximo: {$cpaMaxFmt} COP  (50% del margen bruto)
+- stock_actual: {$producto->stock}
+- url: {$urlProducto}
+- descripcion: {$producto->descripcion_corta}
 
-REGLAS DE NEGOCIO (no negociables):
-- ROAS mínimo aceptable: 2.5x
-- ROAS objetivo: 3.5x o superior
-- ROAS de escala: ≥4.5x → doblar presupuesto
-- CPA máximo: \${$cpaMax} COP
-- CTR mínimo saludable: 1.5%
-- Frecuencia máxima antes de rotar creativos: 2.5
+[CATALOGO_RELACIONADO] — productos de la misma categoría en la tienda
+{$catalogoJson}
 
-GENERA UNA ESTRATEGIA DE LANZAMIENTO COMPLETA EN FORMATO JSON con esta estructura exacta.
-IMPORTANTE: Responde SOLO con el JSON, sin texto adicional antes ni después.
+[DATOS_MERCADO]  → NECESITA_INVESTIGACION_WEB
+[DATOS_COSTOS]   → ECONOMICS_INCOMPLETOS  (falta costo_envio, empaque, comision_pasarela)
+[DATOS_META]     → NO_META_DATA           (pixel instalado, sin historial todavía)
+[DATOS_PAGINA]   → NO_DISPONIBLE          (velocidad, conversión y reseñas no medidas aún)
+
+════════════════════════════════════════════════════════
+REGLAS DE NEGOCIO (no negociables)
+════════════════════════════════════════════════════════
+- ROAS mínimo aceptable : 2.5x
+- ROAS objetivo         : 3.5x
+- ROAS de escala        : ≥4.5x → subir presupuesto máx 50%
+- CPA máximo            : {$cpaMaxFmt} COP
+- CTR mínimo saludable  : 1.5%
+- Frecuencia máxima     : 2.5 (rotar creativos al superarla)
+- Moneda                : COP — Colombia
+
+════════════════════════════════════════════════════════
+INSTRUCCIONES DE RAZONAMIENTO
+════════════════════════════════════════════════════════
+1. Trabaja SOLO con los datos que te proporcioné. No inventes precios de competencia ni métricas de mercado.
+2. Donde falten datos, señálalo en "missing_data" y en "data_quality".
+3. El catálogo relacionado te sirve para detectar canibalización y análisis de oferta.
+4. Basa la estrategia en el margen real y el CPA máximo calculado.
+
+RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
 
 {
-  "decision": "LANZAR",
-  "resumen": "Una oración directa de qué hacer y por qué",
-  "presupuesto_diario_cop": 30000,
-  "duracion_dias": 7,
-  "objetivo_campana": "CONVERSIONES",
+  "decision": "LANZAR | PAUSAR | INVESTIGAR",
+  "confidence": "ALTA | MEDIA | BAJA",
+  "executive_summary": "2-3 oraciones: qué hacer hoy y por qué",
 
-  "fases": [
-    {
-      "fase": 1,
-      "nombre": "Prueba inicial y aprendizaje",
-      "duracion": "7 días",
-      "presupuesto_diario": 30000,
-      "objetivo": "Qué lograr en esta fase",
-      "acciones": ["Configurar pixel", "Crear 3 creativos", "Segmentar audiencia fría"],
-      "metricas_objetivo": { "ctr": 1.5, "roas": 2.5, "cpa": 50000 }
-    },
-    {
-      "fase": 2,
-      "nombre": "Optimización",
-      "duracion": "14 días",
-      "presupuesto_diario": 50000,
-      "objetivo": "Qué lograr",
-      "acciones": ["acción 1", "acción 2"],
-      "metricas_objetivo": { "ctr": 2.0, "roas": 3.5, "cpa": 40000 }
-    },
-    {
-      "fase": 3,
-      "nombre": "Escala",
-      "duracion": "30 días",
-      "presupuesto_diario": 100000,
-      "objetivo": "Qué lograr",
-      "acciones": ["acción 1", "acción 2"],
-      "metricas_objetivo": { "ctr": 2.5, "roas": 4.5, "cpa": 35000 }
+  "product_identity": {
+    "categoria_real": "categoría según lo que ves",
+    "problema_resuelve": "dolor o deseo concreto que soluciona",
+    "cliente_ideal": "perfil del comprador en Colombia",
+    "posicionamiento": "cómo diferenciarlo en el mercado colombiano"
+  },
+
+  "data_quality": {
+    "producto_tienda": "COMPLETO",
+    "catalogo_relacionado": "COMPLETO",
+    "datos_mercado": "NECESITA_INVESTIGACION_WEB",
+    "datos_costos": "ECONOMICS_INCOMPLETOS",
+    "datos_meta": "NO_META_DATA",
+    "datos_pagina": "NO_DISPONIBLE"
+  },
+
+  "internal_catalog_analysis": {
+    "productos_relacionados_count": 0,
+    "riesgo_canibalizacion": "ALTO | MEDIO | BAJO | NINGUNO",
+    "diferenciacion_vs_catalogo": "cómo se diferencia de los otros productos",
+    "oportunidad_upsell": "qué producto del catálogo complementa este"
+  },
+
+  "unit_economics": {
+    "precio_venta_cop": {$precioVenta},
+    "precio_costo_declarado_cop": {$precioCosto},
+    "costos_adicionales": "DESCONOCIDO — falta envío, empaque y comisión pasarela",
+    "margen_bruto_pct": {$margen},
+    "cpa_maximo_cop": {$cpaMaximo},
+    "alerta": "ECONOMICS_INCOMPLETOS — los costos reales pueden reducir el margen"
+  },
+
+  "market_research": {
+    "status": "NECESITA_INVESTIGACION_WEB",
+    "precio_mercado_estimado": null,
+    "competidores_detectados": [],
+    "nota": "Se necesita investigación web para completar este módulo"
+  },
+
+  "product_analysis": {
+    "fortalezas": ["fortaleza 1 basada en datos reales", "fortaleza 2"],
+    "debilidades": ["debilidad 1", "debilidad 2"],
+    "oportunidades": ["oportunidad 1 para Colombia"],
+    "amenazas": ["amenaza 1"]
+  },
+
+  "offer_analysis": {
+    "precio_competitivo": "DESCONOCIDO — sin datos de mercado",
+    "propuesta_valor": "propuesta basada en características del producto",
+    "garantia_recomendada": "garantía que aumentaría conversión",
+    "urgencia_escasez": "mecanismo de urgencia recomendado"
+  },
+
+  "customer_analysis": {
+    "perfil_primario": "descripción detallada del comprador ideal colombiano",
+    "pain_points": ["dolor 1", "dolor 2", "dolor 3"],
+    "motivadores_compra": ["motivador 1", "motivador 2"],
+    "objeciones_frecuentes": ["objeción 1", "objeción 2"],
+    "donde_pasa_tiempo": ["Instagram", "TikTok", "YouTube"]
+  },
+
+  "stock_warning": {
+    "stock_actual": {$producto->stock},
+    "alerta": "NORMAL | STOCK_BAJO | SIN_STOCK",
+    "dias_estimados": "calcular según ventas proyectadas"
+  },
+
+  "meta_ads_strategy": {
+    "objetivo_campana": "CONVERSIONES",
+    "presupuesto_diario_inicial_cop": 30000,
+    "duracion_prueba_dias": 7,
+    "fases": [
+      { "fase": 1, "nombre": "Aprendizaje", "duracion": "7 días", "presupuesto_diario": 30000,
+        "objetivo": "Salir del período de aprendizaje con datos",
+        "metricas_objetivo": { "ctr": 1.5, "roas": 2.5, "cpa": {$cpaMaximo} } },
+      { "fase": 2, "nombre": "Optimización", "duracion": "14 días", "presupuesto_diario": 50000,
+        "objetivo": "Reducir CPA y mejorar ROAS",
+        "metricas_objetivo": { "ctr": 2.0, "roas": 3.5 } },
+      { "fase": 3, "nombre": "Escala", "duracion": "30 días", "presupuesto_diario": 100000,
+        "objetivo": "Escalar manteniendo ROAS objetivo",
+        "metricas_objetivo": { "ctr": 2.5, "roas": 4.5 } }
+    ],
+    "segmentacion": {
+      "ciudades": ["Bogotá", "Medellín", "Cali", "Barranquilla"],
+      "intereses": ["interés 1 relevante", "interés 2", "interés 3", "interés 4"],
+      "lookalike": "LAL 1-2% Compradores — activar con 100+ compradores",
+      "retargeting": ["ViewContent 30d", "AddToCart 14d", "InitiateCheckout 7d"]
     }
-  ],
+  },
 
-  "copy_organico": {
+  "creative_strategy": {
+    "formato_prioritario": "Reel 9:16 (15-30s)",
+    "gancho_apertura": "texto exacto para los primeros 3 segundos",
+    "angulos_creativos": [
+      { "angulo": "Demostración", "descripcion": "qué mostrar y cómo", "duracion": "15s" },
+      { "angulo": "Problema-Solución", "descripcion": "qué mostrar y cómo", "duracion": "20s" },
+      { "angulo": "Testimonial UGC", "descripcion": "formato y guión", "duracion": "30s" }
+    ],
+    "tips_produccion": ["tip 1 específico", "tip 2", "tip 3"],
+    "señales_rotar": ["CTR < 1% por 3 días", "Frecuencia > 2.5", "ROAS < 2x sostenido"]
+  },
+
+  "copy": {
+    "primary_texts": [
+      { "variante": "A", "framework": "PAS", "target": "Audiencia fría",
+        "texto": "Copy PAS completo para {$producto->nombre} con 3+ párrafos, emojis y CTA." },
+      { "variante": "B", "framework": "AIDA", "target": "Retargeting",
+        "texto": "Copy AIDA con prueba social y garantía para {$producto->nombre}." },
+      { "variante": "C", "framework": "Urgencia", "target": "Carrito abandonado",
+        "texto": "Copy corto urgente máx 5 líneas para recuperar carritos de {$producto->nombre}." }
+    ],
+    "headlines": [
+      { "texto": "Titular 1 específico — máx 40 chars", "uso": "Meta + Google" },
+      { "texto": "Titular 2 con beneficio — máx 40 chars", "uso": "Meta" },
+      { "texto": "Titular 3 con precio/oferta — máx 40 chars", "uso": "Meta" },
+      { "texto": "Titular 4 retargeting — máx 40 chars", "uso": "Retargeting" }
+    ],
     "hooks": [
-      { "tipo": "Hook Pregunta-Dolor", "texto": "Texto del hook específico para este producto", "nota": "Para quién funciona mejor" },
-      { "tipo": "Hook Precio-Shock", "texto": "Texto del hook de precio específico para este producto", "nota": "Dónde usar este hook" },
-      { "tipo": "Hook Identidad-Aspiracional", "texto": "Texto del hook aspiracional específico", "nota": "Audiencia objetivo" },
-      { "tipo": "Hook Estadística", "texto": "Texto con dato estadístico específico del producto", "nota": "Por qué genera engagement" }
+      { "tipo": "Pregunta-Dolor", "texto": "hook específico para {$producto->nombre}" },
+      { "tipo": "Precio-Shock", "texto": "hook de precio para {$producto->nombre}" },
+      { "tipo": "Aspiracional", "texto": "hook aspiracional para {$producto->nombre}" },
+      { "tipo": "Estadística", "texto": "hook con dato para {$producto->nombre}" }
     ],
-    "captions": [
-      { "variante": "A", "framework": "PAS", "texto": "Caption completo usando Pain-Agitate-Solution para este producto. Mínimo 3 párrafos con emojis, beneficios y CTA." },
-      { "variante": "B", "framework": "AIDA", "texto": "Caption completo usando Attention-Interest-Desire-Action para este producto. Mínimo 3 párrafos con emojis, beneficios y CTA." },
-      { "variante": "C", "framework": "Corto-Stories", "texto": "Caption corto (máximo 5 líneas) para Reels e Historias con emojis y CTA." }
-    ]
-  },
-
-  "copy_meta_ads": {
-    "textos": [
-      { "variante": "A", "tipo": "PAS", "mejor_para": "Audiencia fría (intereses)", "texto": "Texto del anuncio en PAS para este producto. 3-5 líneas con beneficios concretos y CTA." },
-      { "variante": "B", "tipo": "AIDA", "mejor_para": "Retargeting (visitaron la página)", "texto": "Texto del anuncio en AIDA para retargeting. Incluir prueba social y garantía." },
-      { "variante": "C", "tipo": "Urgencia", "mejor_para": "Carritos abandonados", "texto": "Texto corto con urgencia y escasez para recuperar carritos abandonados." }
+    "reel_scripts": [
+      { "duracion": "15s", "gancho": "texto exacto primeros 3s",
+        "desarrollo": "qué mostrar segundos 4-12", "cta": "texto exacto CTA final" }
     ],
-    "titulares": [
-      { "texto": "Titular 1 específico del producto (máx 40 caracteres)", "usa_en": "Meta + Google" },
-      { "texto": "Titular 2 con beneficio clave (máx 40 caracteres)", "usa_en": "Meta" },
-      { "texto": "Titular 3 con precio o oferta (máx 40 caracteres)", "usa_en": "Meta" },
-      { "texto": "Titular 4 para retargeting (máx 40 caracteres)", "usa_en": "Retargeting" }
-    ],
-    "cta": "Comprar ahora"
-  },
-
-  "brief_creativo": {
-    "creatividades": [
-      {
-        "prioridad": 1,
-        "tipo": "Reel demostrativo (15-30s)",
-        "acciones": ["Descripción de qué mostrar en el video", "Qué texto poner en pantalla", "Qué formato y audio usar"]
-      },
-      {
-        "prioridad": 2,
-        "tipo": "Imagen comparativa",
-        "acciones": ["Qué comparar visualmente", "Qué texto incluir", "Qué formato usar"]
-      },
-      {
-        "prioridad": 3,
-        "tipo": "Carrusel de beneficios",
-        "acciones": ["Qué poner en cada tarjeta", "Cuántas tarjetas", "Última tarjeta con CTA"]
-      }
-    ]
-  },
-
-  "segmentacion": {
-    "pais": "Colombia",
-    "edad_min": 22,
-    "edad_max": 45,
-    "ciudades": ["Bogotá", "Medellín", "Cali", "Barranquilla"],
-    "intereses_fria": ["interés 1 específico del producto", "interés 2", "interés 3", "interés 4", "interés 5"],
-    "tamano_audiencia": "X.XM - Y.YM personas",
-    "retargeting_pixeles": ["ViewContent 30 días", "AddToCart 14 días", "InitiateCheckout 7 días"],
-    "lookalike": ["LAL 1% Compradores", "LAL 2% Compradores"],
-    "broad_advantage": "Sin intereses — Meta Advantage+ Shopping — activar cuando tengas +50 conversiones/semana"
-  },
-
-  "creativos": {
-    "formato_recomendado": "Reels o Imagen",
-    "gancho_apertura": "Texto exacto del gancho para los primeros 3 segundos del video",
-    "tips_creativos": ["tip 1 específico", "tip 2 específico", "tip 3 específico"],
-    "alertas_rotar": ["CTR < 1% por 3 días consecutivos", "Frecuencia > 2.5", "señal 3 específica"]
-  },
-
-  "horarios": {
-    "mejores_dias": ["Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
-    "mejor_horario": "18:00 - 22:00 hora Colombia",
-    "justificacion": "Por qué estos días y horarios para este producto y audiencia específica"
+    "cta_principal": "Comprar ahora",
+    "hashtags": {
+      "masivos": ["#hashtag_masivo_1", "#hashtag_masivo_2", "#hashtag_masivo_3"],
+      "medianos": ["#hashtag_medio_1", "#hashtag_medio_2", "#hashtag_medio_3"],
+      "nicho": ["#hashtag_nicho_1", "#hashtag_nicho_2", "#hashtag_nicho_3"]
+    }
   },
 
   "kpis": {
-    "ctr_objetivo": 1.5,
-    "roas_objetivo": 2.5,
-    "cpa_maximo": 50000,
-    "senales_escalar": ["ROAS ≥ 4.5x durante 3 días consecutivos", "CTR > 2% sostenido", "señal 3"],
-    "senales_pausar": ["ROAS < 2x por 3 días", "CTR < 1% tras rotar creativos", "CPA > CPA máximo por 5 días"]
+    "ctr_minimo": 1.5, "ctr_objetivo": 2.5,
+    "roas_minimo": 2.5, "roas_objetivo": 3.5, "roas_escala": 4.5,
+    "cpa_maximo_cop": {$cpaMaximo}, "frecuencia_maxima": 2.5
   },
 
-  "hashtags_instagram": {
-    "masivos": ["#hashtag_masivo_1 (>1M usos)", "#hashtag_masivo_2", "#hashtag_masivo_3", "#hashtag_masivo_4", "#hashtag_masivo_5"],
-    "medianos": ["#hashtag_medio_1 (100K-1M)", "#hashtag_medio_2", "#hashtag_medio_3", "#hashtag_medio_4", "#hashtag_medio_5"],
-    "nicho": ["#hashtag_nicho_1 (<100K)", "#hashtag_nicho_2", "#hashtag_nicho_3", "#hashtag_nicho_4", "#hashtag_nicho_5"]
-  },
-
-  "descripcion_lista": "Texto completo listo para copiar y pegar en Instagram o WhatsApp. Debe incluir: nombre EXACTO del producto ({$producto->nombre}), los 3-5 beneficios principales del producto, el precio \${$precio} COP, el link de compra {$urlProducto}, y un CTA claro. Usa emojis. Máximo 8 líneas.",
-
-  "google_shopping": {
-    "titulo_optimizado": "Título exacto máximo 70 caracteres con keyword principal al inicio, beneficio clave y marca si aplica — optimizado para Google Shopping",
-    "descripcion_optimizada": "Descripción de 150 caracteres con keyword principal, beneficio diferenciador, precio y CTA implícito",
-    "categoria_google": "Categoría exacta de Google Product Taxonomy en español (ej: Hogar y jardín > Decoración > Marcos de fotos)",
-    "tips_feed": [
-      "Imagen fondo blanco puro #FFFFFF mínimo 800x800px — fundamental para ser aprobado en Google Shopping",
-      "GTIN o código de barras mejora el ranking y la visibilidad en Shopping — agrega si tienes",
-      "Disponibilidad: en_stock actualizada en tiempo real — un producto sin stock pierde impresiones",
-      "Precio competitivo visible — Google compara precios entre vendedores del mismo producto",
-      "Título con keyword al inicio — los primeros 25 caracteres son los más relevantes para el algoritmo"
-    ],
-    "como_hacerlo": "PASO 1: Ve a merchants.google.com → Productos → Añadir producto manualmente o via feed. PASO 2: Pega el título optimizado EXACTAMENTE como se indica arriba. PASO 3: Sube imagen con fondo blanco puro (#FFFFFF) mínimo 800x800px — rechaza imágenes con fondos de color o texto sobre la imagen. PASO 4: Completa precio, disponibilidad y categoría exacta de Google Product Taxonomy. PASO 5: Enlaza Merchant Center con Google Ads (Herramientas → Cuentas enlazadas). PASO 6: Crea campaña de Shopping ESTÁNDAR (NO Performance Max todavía — necesitas datos primero). PASO 7: Presupuesto inicial $40.000 COP/día, CPC manual hasta tener 30+ conversiones/mes. PASO 8: Cuando tengas 30+ conversiones/mes activa Performance Max con señales de audiencia."
-  },
-
-  "google_search": {
-    "palabras_clave": [
-      { "keyword": "comprar [PRODUCTO] colombia", "concordancia": "EXACTA", "intencion": "Compra directa — máxima prioridad", "cpc_max_cop": 800 },
-      { "keyword": "precio [PRODUCTO] colombia", "concordancia": "FRASE", "intencion": "Comparación de precio", "cpc_max_cop": 600 },
-      { "keyword": "[PRODUCTO] barato colombia", "concordancia": "FRASE", "intencion": "Búsqueda de precio bajo", "cpc_max_cop": 400 },
-      { "keyword": "[PRODUCTO] envio rapido colombia", "concordancia": "FRASE", "intencion": "Beneficio logístico", "cpc_max_cop": 500 },
-      { "keyword": "[PRODUCTO] original colombia", "concordancia": "FRASE", "intencion": "Calidad y confianza", "cpc_max_cop": 550 }
-    ],
-    "titulares_responsivos": [
-      "Titular 1 con keyword principal y beneficio (máx 30 chars)",
-      "Titular 2 con precio o descuento (máx 30 chars)",
-      "Titular 3 con envío o garantía (máx 30 chars)",
-      "Titular 4 con urgencia o escasez (máx 30 chars)",
-      "Titular 5 con prueba social (máx 30 chars)"
-    ],
-    "descripciones": [
-      "Descripción 1: beneficios principales del producto con CTA claro (máx 90 chars)",
-      "Descripción 2: diferenciador + garantía o envío gratis + urgencia (máx 90 chars)"
-    ],
-    "presupuesto_inicial_cop": 40000,
-    "como_hacerlo": "PASO 1: Google Ads → Nueva campaña → Búsqueda → Objetivo: Ventas → URL del producto. PASO 2: Usa CPC manual (NO Smart Bidding ni tROAS hasta tener 30+ conversiones/mes). PASO 3: Crea 2 grupos de anuncios — Grupo A: intención de compra directa (concordancia EXACTA), Grupo B: comparación y precio (concordancia FRASE). PASO 4: Agrega las palabras clave con los CPC máximos indicados arriba — no pagues más. PASO 5: Crea anuncio responsivo de búsqueda con los 5 titulares y 2 descripciones. PASO 6: Activa extensiones: Sitelinks (beneficios), Precio (muestra el precio), Promoción (descuento si tienes). PASO 7: Excluye keywords negativas: gratis, tutorial, cómo hacer, segunda mano, usado. PASO 8: Revisa Search Terms Report cada 3 días y agrega términos irrelevantes como negativas. PASO 9: Cuando tengas 30+ conversiones/mes activa tROAS con objetivo 300% (3x)."
-  },
-
-  "alertas_accion": [
-    { "semaforo": "ROJO", "senal": "ROAS baja de 2.0x por 3 días seguidos", "accion": "PAUSA HOY. Cambia creativos antes de reactivar. Revisa si el precio es competitivo vs competencia." },
-    { "semaforo": "ROJO", "senal": "CTR cae por debajo del 1% en Meta Ads", "accion": "Rota creativos esta semana. Prueba 3 titulares nuevos durante 5 días seguidos." },
-    { "semaforo": "ROJO", "senal": "CPA supera el máximo permitido por 5 días consecutivos", "accion": "Reduce presupuesto 40% o pausa. Revisa segmentación — posiblemente audiencia saturada." },
-    { "semaforo": "AMARILLO", "senal": "Frecuencia en Meta supera 2.5", "accion": "Amplía segmentación o lanza creativos nuevos esta semana. Activa Advantage+ si no lo tienes." },
-    { "semaforo": "AMARILLO", "senal": "CPA supera el máximo por 3 días", "accion": "Reduce presupuesto 30%, revisa segmentación y landing page. Verifica velocidad del sitio." },
-    { "semaforo": "AMARILLO", "senal": "CTR entre 1% y 1.5% por más de 7 días", "accion": "Mejora el gancho visual y el titular. Prueba formato video vs imagen estática." },
-    { "semaforo": "VERDE", "senal": "ROAS supera 4.5x durante 3 días consecutivos", "accion": "Sube presupuesto exactamente 50%. No más de 50% o Meta sale del período de aprendizaje (reinicia)." },
-    { "semaforo": "VERDE", "senal": "CTR supera 2.5% sostenido por 5 días", "accion": "Creativos funcionan muy bien — escala horizontal: copia este creativo a otras audiencias." }
+  "pause_rules": [
+    { "semaforo": "ROJO", "senal": "ROAS < 2.0x por 3 días seguidos", "accion": "PAUSA HOY" },
+    { "semaforo": "ROJO", "senal": "CTR < 1% tras rotar creativos", "accion": "Reformula oferta" },
+    { "semaforo": "ROJO", "senal": "CPA > máximo por 5 días", "accion": "Reduce presupuesto 40%" },
+    { "semaforo": "AMARILLO", "senal": "Frecuencia > 2.5", "accion": "Rota creativos" },
+    { "semaforo": "VERDE", "senal": "ROAS ≥ 4.5x por 3 días", "accion": "Sube presupuesto 50%" }
   ],
 
-  "proxima_revision": "En X días"
+  "action_plan": {
+    "today": ["acción concreta 1 para hoy", "acción 2", "acción 3"],
+    "tomorrow": ["acción para mañana 1", "acción 2"],
+    "days_3_to_7": ["revisión CTR", "optimizar según primeros datos"],
+    "week_2": ["optimizar conjunto ganador", "pausar perdedores"],
+    "scaling": "cuándo y cómo escalar según ROAS sostenido"
+  },
+
+  "risks": [
+    { "riesgo": "riesgo 1 específico del producto", "probabilidad": "ALTA", "mitigacion": "cómo mitigarlo" },
+    { "riesgo": "riesgo 2", "probabilidad": "MEDIA", "mitigacion": "acción concreta" }
+  ],
+
+  "missing_data": [
+    "Costo de envío — necesario para economics completos",
+    "Costo de empaque — afecta margen real",
+    "Comisión pasarela Wompi — afecta margen neto",
+    "Precios de competencia en Colombia",
+    "Historial Meta Ads — sin datos de pixel",
+    "Métricas de página (velocidad, tasa de conversión)"
+  ],
+
+  "next_action": "acción más importante que debe hacer el usuario HOY mismo"
 }
 
 Responde SOLO con el JSON puro. Sin texto antes ni después. Sin explicaciones.
 PROMPT;
+    }
+
+    /**
+     * PENSAR — Obtiene productos de la misma categoría para análisis
+     * de canibalización y oportunidades de upsell/cross-sell.
+     */
+    private function obtenerCatalogoRelacionado(Producto $producto): array
+    {
+        return Producto::where('categoria_id', $producto->categoria_id)
+            ->where('id', '!=', $producto->id)
+            ->whereIn('estado', ['activo', 'borrador'])
+            ->select('nombre', 'sku', 'precio_venta', 'precio_costo', 'stock', 'slug')
+            ->orderBy('nombre')
+            ->limit(6)
+            ->get()
+            ->map(fn ($p) => [
+                'nombre'       => $p->nombre,
+                'sku'          => $p->sku,
+                'precio'       => $p->precio_venta,
+                'precio_costo' => $p->precio_costo,
+                'stock'        => $p->stock,
+                'url'          => url("/tienda/{$p->slug}"),
+            ])
+            ->toArray();
     }
 
     /**
