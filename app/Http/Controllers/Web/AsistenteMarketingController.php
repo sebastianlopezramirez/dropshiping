@@ -349,8 +349,14 @@ class AsistenteMarketingController extends Controller
      */
     private function construirPromptLanzamiento(Producto $producto, float $margen, float $cpaMaximo, array $costos = []): string
     {
-        $precioVenta  = $producto->precio_venta  ?? 0;
-        $precioCosto  = $producto->precio_costo  ?? 0;
+        // Si el usuario corrigió precio/costo desde el modal, usar esos valores
+        $precioVenta  = (isset($costos['precio_venta'])  && (float) $costos['precio_venta']  > 0)
+            ? (float) $costos['precio_venta']
+            : (float) ($producto->precio_venta  ?? 0);
+
+        $precioCosto  = (isset($costos['precio_costo'])  && (float) $costos['precio_costo']  > 0)
+            ? (float) $costos['precio_costo']
+            : (float) ($producto->precio_costo  ?? 0);
         $urlProducto  = url("/tienda/{$producto->slug}");
         $categoria    = $producto->categoria->nombre ?? 'Sin categoría';
         $catalogo     = $this->obtenerCatalogoRelacionado($producto);

@@ -1440,6 +1440,8 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
     // ── Costos del negocio (Phase 2: DATOS_COSTOS → COMPLETO) ──
     const [modalCostos, setModalCostos] = useState(false);
     const [costos, setCostos] = useState({
+        precio_venta:      producto.precio_venta  || 0,  // editable en modal — override local
+        precio_costo:      producto.precio_costo  || 0,  // editable en modal — override local
         costo_envio:       '',   // Costo de envío al cliente (COP)
         costo_empaque:     '',   // Caja, bolsa, cinta, etc. (COP)
         comision_pasarela: '',   // Wompi / PSE: monto fijo o % (COP)
@@ -1486,9 +1488,12 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                 _token: document.querySelector('meta[name="csrf-token"]')?.content,
             };
 
-            // Si hay costos definidos, incluirlos para completar unit_economics
-            if (modo === 'lanzamiento' && costosTienenDatos) {
+            // En modo lanzamiento: siempre enviar precio/costo (pueden estar corregidos en el modal)
+            // + costos operativos opcionales (envío, empaque, pasarela)
+            if (modo === 'lanzamiento') {
                 cuerpo.costos = {
+                    precio_venta:      costos.precio_venta  ? parseFloat(costos.precio_venta)  : null,
+                    precio_costo:      costos.precio_costo  ? parseFloat(costos.precio_costo)  : null,
                     costo_envio:       costos.costo_envio       ? parseFloat(costos.costo_envio)       : null,
                     costo_empaque:     costos.costo_empaque     ? parseFloat(costos.costo_empaque)     : null,
                     comision_pasarela: costos.comision_pasarela ? parseFloat(costos.comision_pasarela) : null,
@@ -1813,15 +1818,39 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
 
                                 {/* Body */}
                                 <div className="p-5 space-y-4">
-                                    {/* Resumen de referencia */}
-                                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-800">
-                                        <p className="font-semibold mb-1">📊 Referencia del producto</p>
-                                        <div className="grid grid-cols-2 gap-1">
-                                            <span>Precio venta: <strong>{fmt(producto.precio_venta)}</strong></span>
-                                            <span>Precio costo: <strong>{fmt(producto.precio_costo)}</strong></span>
-                                            <span>Margen bruto: <strong>{producto.margen_porcentaje}%</strong></span>
-                                            <span>CPA máx actual: <strong>{fmt(producto.cpa_maximo)}</strong></span>
+                                    {/* Referencia del producto — editable */}
+                                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-2">
+                                        <p className="text-xs font-semibold text-orange-800">📊 Precio y costo del producto</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="text-xs text-orange-700 font-medium block mb-1">Precio de venta (COP)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                                                    <input
+                                                        type="number" min="0"
+                                                        value={costos.precio_venta}
+                                                        onChange={e => setCostos(p => ({...p, precio_venta: parseFloat(e.target.value) || 0}))}
+                                                        className="w-full border border-orange-300 rounded-lg pl-5 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-orange-700 font-medium block mb-1">Costo del producto (COP)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                                                    <input
+                                                        type="number" min="0"
+                                                        value={costos.precio_costo}
+                                                        onChange={e => setCostos(p => ({...p, precio_costo: parseFloat(e.target.value) || 0}))}
+                                                        className="w-full border border-orange-300 rounded-lg pl-5 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
+                                        {/* Nota aclaratoria */}
+                                        <p className="text-xs text-orange-700 bg-orange-100 rounded-lg px-2 py-1.5 leading-relaxed">
+                                            ✏️ <strong>¿Precio o costo incorrecto?</strong> Corrígelo aquí — solo afecta este análisis, no modifica el producto en el catálogo.
+                                        </p>
                                     </div>
 
                                     {/* Costo envío */}
@@ -1889,7 +1918,7 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                         const totalCostos = (parseFloat(costos.costo_envio) || 0)
                                                           + (parseFloat(costos.costo_empaque) || 0)
                                                           + (parseFloat(costos.comision_pasarela) || 0);
-                                        const gananciaNeta = (producto.precio_venta || 0) - (producto.precio_costo || 0) - totalCostos;
+                                        const gananciaNeta = (costos.precio_venta || 0) - (costos.precio_costo || 0) - totalCostos;
                                         const cpaMaxNeto   = Math.round(gananciaNeta * 0.5);
                                         return (
                                             <div className={`rounded-xl p-3 border text-xs ${gananciaNeta > 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
@@ -1914,7 +1943,13 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                 <div className="flex gap-3 p-5 border-t border-gray-100">
                                     <button
                                         onClick={() => {
-                                            setCostos({ costo_envio: '', costo_empaque: '', comision_pasarela: '' });
+                                            setCostos({
+                                                precio_venta:      producto.precio_venta  || 0,
+                                                precio_costo:      producto.precio_costo  || 0,
+                                                costo_envio:       '',
+                                                costo_empaque:     '',
+                                                comision_pasarela: '',
+                                            });
                                             setModalCostos(false);
                                         }}
                                         className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors"
