@@ -972,7 +972,7 @@ PROMPT;
                     ],
                 ],
                 'temperature'     => 0.3,   // Más determinístico para decisiones de negocio
-                'max_tokens'      => 16000,
+                'max_tokens'      => 8192,
             ]);
 
             if ($respuesta->successful()) {
