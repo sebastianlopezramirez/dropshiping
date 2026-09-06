@@ -295,11 +295,24 @@ class AsistenteMarketingController extends Controller
             }
         }
 
+        // ── DEBUG TEMPORAL — remover después de diagnosticar ──
+        $contenidoRaw = $respuesta['contenido'] ?? '';
+        $primerosChars = mb_substr($contenidoRaw, 0, 120);
+        $ultimosChars  = mb_substr($contenidoRaw, -60);
+
         return response()->json([
-            'analisis'       => $analisisParsado ?? $respuesta['contenido'],
+            'analisis'       => $analisisParsado ?? $contenidoRaw,
             'modelo'         => 'groq/compound-mini',
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,
+            '_debug' => [
+                'tipo'             => gettype($analisisParsado),
+                'parse_ok'         => $analisisParsado !== null,
+                'json_error'       => json_last_error_msg(),
+                'longitud'         => strlen($contenidoRaw),
+                'inicio'           => $primerosChars,
+                'fin'              => $ultimosChars,
+            ],
         ]);
     }
 
