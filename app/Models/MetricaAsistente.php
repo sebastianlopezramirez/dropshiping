@@ -48,6 +48,7 @@ class MetricaAsistente extends Model
     protected $fillable = [
         'producto_id',
         'fase',
+        // ── Métricas originales ──────────────────
         'ctr',
         'roas',
         'cpa',
@@ -55,21 +56,46 @@ class MetricaAsistente extends Model
         'gasto',
         'ingresos',
         'notas',
+        // ── Alcance y visibilidad (Meta Ads) ────
+        'alcance',
+        'impresiones',
+        'frecuencia',
+        'cpm',
+        // ── Clics y tráfico (Meta Ads) ──────────
+        'clics_enlace',
+        'cpc_enlace',
+        // ── Conversiones (Meta Ads) ─────────────
+        'agregar_carrito',
+        'inicios_pago',
+        // ── Auditoría ───────────────────────────
         'creado_por',
     ];
 
     protected function casts(): array
     {
         return [
-            'fase'          => 'integer',
-            'ctr'           => 'decimal:2',
-            'roas'          => 'decimal:2',
-            'cpa'           => 'decimal:2',
-            'ventas'        => 'integer',
-            'gasto'         => 'decimal:2',
-            'ingresos'      => 'decimal:2',
-            'creado_en'     => 'datetime',
-            'actualizado_en' => 'datetime',
+            // Originales
+            'fase'            => 'integer',
+            'ctr'             => 'decimal:2',
+            'roas'            => 'decimal:2',
+            'cpa'             => 'decimal:2',
+            'ventas'          => 'integer',
+            'gasto'           => 'decimal:2',
+            'ingresos'        => 'decimal:2',
+            // Alcance y visibilidad
+            'alcance'         => 'integer',
+            'impresiones'     => 'integer',
+            'frecuencia'      => 'decimal:2',
+            'cpm'             => 'decimal:2',
+            // Clics y tráfico
+            'clics_enlace'    => 'integer',
+            'cpc_enlace'      => 'decimal:2',
+            // Conversiones
+            'agregar_carrito' => 'integer',
+            'inicios_pago'    => 'integer',
+            // Fechas
+            'creado_en'       => 'datetime',
+            'actualizado_en'  => 'datetime',
         ];
     }
 

@@ -733,16 +733,28 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
     const [mensajeExito, setMensajeExito] = useState('');
     const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
-    // Formulario de métricas
+    // Formulario de métricas — cubre todos los campos de Meta Ads Manager
     const [formMetricas, setFormMetricas] = useState({
         fase:     (metricas.length + 1).toString(),
-        ctr:      '',
-        roas:     '',
-        cpa:      '',
-        ventas:   '',
-        gasto:    '',
-        ingresos: '',
-        notas:    '',
+        // ── Originales ─────────────────────────
+        ctr:             '',
+        roas:            '',
+        cpa:             '',
+        ventas:          '',
+        gasto:           '',
+        ingresos:        '',
+        notas:           '',
+        // ── Alcance y visibilidad ───────────────
+        alcance:         '',
+        impresiones:     '',
+        frecuencia:      '',
+        cpm:             '',
+        // ── Clics y tráfico ────────────────────
+        clics_enlace:    '',
+        cpc_enlace:      '',
+        // ── Conversiones ───────────────────────
+        agregar_carrito: '',
+        inicios_pago:    '',
     });
 
     const fmt = (v) => new Intl.NumberFormat('es-CO', {
@@ -763,12 +775,24 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
 
             if (modo === 'optimizacion') {
                 cuerpo.metricas = {
-                    ctr:      formMetricas.ctr      ? parseFloat(formMetricas.ctr)      : null,
-                    roas:     formMetricas.roas     ? parseFloat(formMetricas.roas)     : null,
-                    cpa:      formMetricas.cpa      ? parseFloat(formMetricas.cpa)      : null,
-                    ventas:   formMetricas.ventas   ? parseInt(formMetricas.ventas)     : null,
-                    gasto:    formMetricas.gasto    ? parseFloat(formMetricas.gasto)    : null,
-                    ingresos: formMetricas.ingresos ? parseFloat(formMetricas.ingresos) : null,
+                    // ── Originales ────────────────────────────────
+                    ctr:             formMetricas.ctr             ? parseFloat(formMetricas.ctr)             : null,
+                    roas:            formMetricas.roas            ? parseFloat(formMetricas.roas)            : null,
+                    cpa:             formMetricas.cpa             ? parseFloat(formMetricas.cpa)             : null,
+                    ventas:          formMetricas.ventas          ? parseInt(formMetricas.ventas)            : null,
+                    gasto:           formMetricas.gasto           ? parseFloat(formMetricas.gasto)           : null,
+                    ingresos:        formMetricas.ingresos        ? parseFloat(formMetricas.ingresos)        : null,
+                    // ── Alcance y visibilidad ─────────────────────
+                    alcance:         formMetricas.alcance         ? parseInt(formMetricas.alcance)           : null,
+                    impresiones:     formMetricas.impresiones     ? parseInt(formMetricas.impresiones)       : null,
+                    frecuencia:      formMetricas.frecuencia      ? parseFloat(formMetricas.frecuencia)      : null,
+                    cpm:             formMetricas.cpm             ? parseFloat(formMetricas.cpm)             : null,
+                    // ── Clics y tráfico ──────────────────────────
+                    clics_enlace:    formMetricas.clics_enlace    ? parseInt(formMetricas.clics_enlace)      : null,
+                    cpc_enlace:      formMetricas.cpc_enlace      ? parseFloat(formMetricas.cpc_enlace)      : null,
+                    // ── Conversiones ──────────────────────────────
+                    agregar_carrito: formMetricas.agregar_carrito ? parseInt(formMetricas.agregar_carrito)   : null,
+                    inicios_pago:    formMetricas.inicios_pago    ? parseInt(formMetricas.inicios_pago)      : null,
                 };
             }
 
@@ -810,14 +834,26 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({
-                    fase:     parseInt(formMetricas.fase),
-                    ctr:      formMetricas.ctr      ? parseFloat(formMetricas.ctr)      : null,
-                    roas:     formMetricas.roas     ? parseFloat(formMetricas.roas)     : null,
-                    cpa:      formMetricas.cpa      ? parseFloat(formMetricas.cpa)      : null,
-                    ventas:   formMetricas.ventas   ? parseInt(formMetricas.ventas)     : null,
-                    gasto:    formMetricas.gasto    ? parseFloat(formMetricas.gasto)    : null,
-                    ingresos: formMetricas.ingresos ? parseFloat(formMetricas.ingresos) : null,
-                    notas:    formMetricas.notas    || null,
+                    fase:            parseInt(formMetricas.fase),
+                    // ── Originales ───────────────────────────────
+                    ctr:             formMetricas.ctr             ? parseFloat(formMetricas.ctr)           : null,
+                    roas:            formMetricas.roas            ? parseFloat(formMetricas.roas)          : null,
+                    cpa:             formMetricas.cpa             ? parseFloat(formMetricas.cpa)           : null,
+                    ventas:          formMetricas.ventas          ? parseInt(formMetricas.ventas)          : null,
+                    gasto:           formMetricas.gasto           ? parseFloat(formMetricas.gasto)         : null,
+                    ingresos:        formMetricas.ingresos        ? parseFloat(formMetricas.ingresos)      : null,
+                    notas:           formMetricas.notas           || null,
+                    // ── Alcance y visibilidad ─────────────────────
+                    alcance:         formMetricas.alcance         ? parseInt(formMetricas.alcance)         : null,
+                    impresiones:     formMetricas.impresiones     ? parseInt(formMetricas.impresiones)     : null,
+                    frecuencia:      formMetricas.frecuencia      ? parseFloat(formMetricas.frecuencia)    : null,
+                    cpm:             formMetricas.cpm             ? parseFloat(formMetricas.cpm)           : null,
+                    // ── Clics y tráfico ──────────────────────────
+                    clics_enlace:    formMetricas.clics_enlace    ? parseInt(formMetricas.clics_enlace)    : null,
+                    cpc_enlace:      formMetricas.cpc_enlace      ? parseFloat(formMetricas.cpc_enlace)    : null,
+                    // ── Conversiones ──────────────────────────────
+                    agregar_carrito: formMetricas.agregar_carrito ? parseInt(formMetricas.agregar_carrito) : null,
+                    inicios_pago:    formMetricas.inicios_pago    ? parseInt(formMetricas.inicios_pago)    : null,
                 }),
             });
 
@@ -1018,12 +1054,15 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                     {/* ── MODO OPTIMIZACIÓN ── */}
                     {modo === 'optimizacion' && (
                         <div className="space-y-4">
-                            <p className="text-sm text-gray-600">
-                                Ingresa las métricas reales de <strong>Meta Ads / Instagram Insights</strong> del período actual:
-                            </p>
+                            {/* Encabezado e instrucción */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
+                                <p className="font-semibold mb-1">📊 ¿Dónde encuentro estos datos?</p>
+                                <p className="text-xs">Abre <strong>Meta Ads Manager → tu campaña → Ver detalles</strong>. Cada campo indica el nombre exacto como aparece en Meta.</p>
+                            </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                <div>
+                            {/* Fase */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-32">
                                     <label className="block text-xs font-medium text-gray-600 mb-1">
                                         Fase actual <span className="text-red-500">*</span>
                                     </label>
@@ -1035,76 +1074,189 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                                         placeholder="1"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">CTR (%)</label>
-                                    <input
-                                        type="number" step="0.01" min="0" max="100"
-                                        value={formMetricas.ctr}
-                                        onChange={e => setFormMetricas(p => ({...p, ctr: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="1.5"
-                                    />
+                                <p className="text-xs text-gray-500 mt-4">Número de semana o ciclo de análisis. Empieza en 1.</p>
+                            </div>
+
+                            {/* ── SECCIÓN 1: Alcance y visibilidad ── */}
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">👁 Alcance y visibilidad</p>
+                                    <p className="text-xs text-gray-500">Meta Ads Manager → columna "Rendimiento"</p>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">ROAS</label>
-                                    <input
-                                        type="number" step="0.01" min="0"
-                                        value={formMetricas.roas}
-                                        onChange={e => setFormMetricas(p => ({...p, roas: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="2.8"
-                                    />
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Alcance
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Alcance"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.alcance}
+                                            onChange={e => setFormMetricas(p => ({...p, alcance: e.target.value}))}
+                                            className={inputCls} placeholder="12400" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Impresiones
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Impresiones"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.impresiones}
+                                            onChange={e => setFormMetricas(p => ({...p, impresiones: e.target.value}))}
+                                            className={inputCls} placeholder="28500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Frecuencia
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Frecuencia"</span>
+                                        </label>
+                                        <input type="number" step="0.01" min="0"
+                                            value={formMetricas.frecuencia}
+                                            onChange={e => setFormMetricas(p => ({...p, frecuencia: e.target.value}))}
+                                            className={inputCls} placeholder="2.3" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            CPM (COP)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "CPM"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.cpm}
+                                            onChange={e => setFormMetricas(p => ({...p, cpm: e.target.value}))}
+                                            className={inputCls} placeholder="3200" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">CPA (COP)</label>
-                                    <input
-                                        type="number" min="0"
-                                        value={formMetricas.cpa}
-                                        onChange={e => setFormMetricas(p => ({...p, cpa: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="45000"
-                                    />
+                            </div>
+
+                            {/* ── SECCIÓN 2: Clics y tráfico ── */}
+                            <div className="border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">🖱 Clics y tráfico</p>
+                                    <p className="text-xs text-gray-500">Meta Ads Manager → columna "Rendimiento y clics"</p>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Ventas (unidades)</label>
-                                    <input
-                                        type="number" min="0"
-                                        value={formMetricas.ventas}
-                                        onChange={e => setFormMetricas(p => ({...p, ventas: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="12"
-                                    />
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            CTR enlace (%)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "CTR (todos)"</span>
+                                        </label>
+                                        <input type="number" step="0.01" min="0" max="100"
+                                            value={formMetricas.ctr}
+                                            onChange={e => setFormMetricas(p => ({...p, ctr: e.target.value}))}
+                                            className={inputCls} placeholder="1.8" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Clics en enlace
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Clics en el enlace"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.clics_enlace}
+                                            onChange={e => setFormMetricas(p => ({...p, clics_enlace: e.target.value}))}
+                                            className={inputCls} placeholder="512" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            CPC enlace (COP)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "CPC del enlace"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.cpc_enlace}
+                                            onChange={e => setFormMetricas(p => ({...p, cpc_enlace: e.target.value}))}
+                                            className={inputCls} placeholder="680" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Gasto pub. (COP)</label>
-                                    <input
-                                        type="number" min="0"
-                                        value={formMetricas.gasto}
-                                        onChange={e => setFormMetricas(p => ({...p, gasto: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="210000"
-                                    />
+                            </div>
+
+                            {/* ── SECCIÓN 3: Conversiones ── */}
+                            <div className="border border-blue-200 rounded-xl overflow-hidden">
+                                <div className="bg-blue-50 px-4 py-2 border-b border-blue-200">
+                                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">🛒 Conversiones — Lo más importante</p>
+                                    <p className="text-xs text-blue-500">Meta Ads Manager → columna "Conversiones" → activar "Compras"</p>
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Ingresos generados (COP)</label>
-                                    <input
-                                        type="number" min="0"
-                                        value={formMetricas.ingresos}
-                                        onChange={e => setFormMetricas(p => ({...p, ingresos: e.target.value}))}
-                                        className={inputCls}
-                                        placeholder="588000"
-                                    />
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Añadir al carrito
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Artículos añadidos"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.agregar_carrito}
+                                            onChange={e => setFormMetricas(p => ({...p, agregar_carrito: e.target.value}))}
+                                            className={inputCls} placeholder="47" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Inicios de pago
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Pagos iniciados"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.inicios_pago}
+                                            onChange={e => setFormMetricas(p => ({...p, inicios_pago: e.target.value}))}
+                                            className={inputCls} placeholder="18" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Compras (ventas)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Compras"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.ventas}
+                                            onChange={e => setFormMetricas(p => ({...p, ventas: e.target.value}))}
+                                            className={inputCls} placeholder="12" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Valor compras (COP)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Valor de conversión"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.ingresos}
+                                            onChange={e => setFormMetricas(p => ({...p, ingresos: e.target.value}))}
+                                            className={inputCls} placeholder="960000" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            Gasto total (COP)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Importe gastado"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.gasto}
+                                            onChange={e => setFormMetricas(p => ({...p, gasto: e.target.value}))}
+                                            className={inputCls} placeholder="85000" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            ROAS
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "ROAS de compras"</span>
+                                        </label>
+                                        <input type="number" step="0.01" min="0"
+                                            value={formMetricas.roas}
+                                            onChange={e => setFormMetricas(p => ({...p, roas: e.target.value}))}
+                                            className={inputCls} placeholder="11.3" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                                            CPA (COP)
+                                            <span className="block text-gray-400 font-normal normal-case">Meta: "Coste por resultado"</span>
+                                        </label>
+                                        <input type="number" min="0"
+                                            value={formMetricas.cpa}
+                                            onChange={e => setFormMetricas(p => ({...p, cpa: e.target.value}))}
+                                            className={inputCls} placeholder="7083" />
+                                    </div>
                                 </div>
-                                <div className="col-span-3">
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Notas / observaciones</label>
-                                    <textarea
-                                        value={formMetricas.notas}
-                                        onChange={e => setFormMetricas(p => ({...p, notas: e.target.value}))}
-                                        className={inputCls}
-                                        rows={2}
-                                        placeholder="Ej: creativos de video funcionan mejor que imagen estática…"
-                                    />
-                                </div>
+                            </div>
+
+                            {/* ── Notas / observaciones ── */}
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">📝 Notas / observaciones</label>
+                                <textarea
+                                    value={formMetricas.notas}
+                                    onChange={e => setFormMetricas(p => ({...p, notas: e.target.value}))}
+                                    className={inputCls}
+                                    rows={2}
+                                    placeholder="Ej: creativos de video funcionan mejor que imagen estática…"
+                                />
                             </div>
 
                             {/* ── PANEL DE ACCIONES con explicación visual ── */}

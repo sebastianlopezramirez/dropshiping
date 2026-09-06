@@ -180,12 +180,21 @@ class AsistenteMarketingController extends Controller
         $request->validate([
             'modo'     => 'required|in:lanzamiento,optimizacion',
             'metricas' => 'required_if:modo,optimizacion|array',
-            'metricas.ctr'     => 'nullable|numeric|min:0|max:100',
-            'metricas.roas'    => 'nullable|numeric|min:0',
-            'metricas.cpa'     => 'nullable|numeric|min:0',
-            'metricas.ventas'  => 'nullable|integer|min:0',
-            'metricas.gasto'   => 'nullable|numeric|min:0',
-            'metricas.ingresos'=> 'nullable|numeric|min:0',
+            'metricas.ctr'             => 'nullable|numeric|min:0|max:100',
+            'metricas.roas'            => 'nullable|numeric|min:0',
+            'metricas.cpa'             => 'nullable|numeric|min:0',
+            'metricas.ventas'          => 'nullable|integer|min:0',
+            'metricas.gasto'           => 'nullable|numeric|min:0',
+            'metricas.ingresos'        => 'nullable|numeric|min:0',
+            // Campos Meta Ads extendidos
+            'metricas.alcance'         => 'nullable|integer|min:0',
+            'metricas.impresiones'     => 'nullable|integer|min:0',
+            'metricas.frecuencia'      => 'nullable|numeric|min:0',
+            'metricas.cpm'             => 'nullable|numeric|min:0',
+            'metricas.clics_enlace'    => 'nullable|integer|min:0',
+            'metricas.cpc_enlace'      => 'nullable|numeric|min:0',
+            'metricas.agregar_carrito' => 'nullable|integer|min:0',
+            'metricas.inicios_pago'    => 'nullable|integer|min:0',
         ]);
 
         $modo     = $request->input('modo');
@@ -563,6 +572,16 @@ PROMPT;
         $gasto   = isset($metricas['gasto'])   ? number_format($metricas['gasto'], 0, ',', '.') : 'N/A';
         $ingresos = isset($metricas['ingresos']) ? number_format($metricas['ingresos'], 0, ',', '.') : 'N/A';
 
+        // Métricas Meta Ads extendidas
+        $alcance        = isset($metricas['alcance'])         ? number_format($metricas['alcance'], 0, ',', '.')         : 'N/A';
+        $impresiones    = isset($metricas['impresiones'])     ? number_format($metricas['impresiones'], 0, ',', '.')     : 'N/A';
+        $frecuencia     = $metricas['frecuencia']             ?? 'N/A';
+        $cpm            = isset($metricas['cpm'])             ? number_format($metricas['cpm'], 0, ',', '.')             : 'N/A';
+        $clicsEnlace    = isset($metricas['clics_enlace'])    ? number_format($metricas['clics_enlace'], 0, ',', '.')    : 'N/A';
+        $cpcEnlace      = isset($metricas['cpc_enlace'])      ? number_format($metricas['cpc_enlace'], 0, ',', '.')      : 'N/A';
+        $agregarCarrito = $metricas['agregar_carrito']        ?? 'N/A';
+        $iniciosPago    = $metricas['inicios_pago']           ?? 'N/A';
+
         return <<<PROMPT
 Eres un experto en marketing digital para e-commerce colombiano, especializado en Meta Ads e Instagram.
 Das decisiones directas y acciones concretas basadas en datos. Usas pesos colombianos (COP).
@@ -574,24 +593,53 @@ PRODUCTO:
 - Margen: {$margen}%
 - CPA máximo permitido: \${$cpaMax} COP
 
-MÉTRICAS REALES DEL PERÍODO (ingresadas por el administrador):
-- CTR: {$ctr}%
-- ROAS: {$roas}x
-- CPA: \${$cpa} COP
-- Ventas: {$ventas} unidades
-- Gasto publicitario: \${$gasto} COP
-- Ingresos generados: \${$ingresos} COP
+MÉTRICAS REALES META ADS (ingresadas desde Meta Ads Manager):
+
+👁 ALCANCE Y VISIBILIDAD:
+- Alcance: {$alcance} personas únicas
+- Impresiones: {$impresiones} veces mostrado
+- Frecuencia: {$frecuencia}x (veces que cada persona vio el anuncio — máximo saludable: 2.5)
+- CPM: \${$cpm} COP (costo por cada 1.000 impresiones)
+
+🖱 CLICS Y TRÁFICO:
+- CTR (tasa de clics): {$ctr}%
+- Clics en el enlace: {$clicsEnlace} clics
+- CPC (costo por clic): \${$cpcEnlace} COP
+
+🛒 CONVERSIONES (embudo completo):
+- Agregar al carrito: {$agregarCarrito} eventos
+- Inicios de pago: {$iniciosPago} eventos
+- Compras completadas: {$ventas} ventas
+- Valor total de compras: \${$ingresos} COP
+- Gasto publicitario total: \${$gasto} COP
+- ROAS de compras: {$roas}x
+- CPA (costo por compra): \${$cpa} COP
 
 REGLAS DE DECISIÓN (aplícalas estrictamente):
+ROAS:
 - ROAS ≥ 4.5x → ESCALAR (doblar presupuesto, expandir audiencias)
 - ROAS 3.5x-4.4x → ESCALAR MODERADO (+30-50% presupuesto)
 - ROAS 2.5x-3.4x → OPTIMIZAR (ajustar creativos, audiencias, copys)
 - ROAS < 2.5x → PAUSAR o reducir presupuesto urgente
+
+CTR:
 - CTR < 1%   → Rotar creativos inmediatamente
 - CTR 1%-1.5% → Mejorar creativos y titular
 - CTR > 2%   → Creativos funcionan, probar más audiencias
+
+CPA:
 - CPA > CPA_MAX → Reducir presupuesto o cambiar segmentación
 - CPA < 70% del CPA_MAX → Aumentar presupuesto
+
+FRECUENCIA (señal de saturación de audiencia):
+- Frecuencia > 2.5 → Audiencia saturada: ampliar segmentación o rotar creativos
+- Frecuencia > 3.5 → Fatiga crítica: cambiar audiencia completamente
+
+EMBUDO DE CONVERSIÓN (detecta dónde se pierden usuarios):
+- Si agregar_carrito es alto pero inicios_pago son bajos → problema en página de producto o precio
+- Si inicios_pago son altos pero ventas son bajas → problema en checkout o método de pago
+- Tasa carrito-a-compra saludable: > 25% (ventas/agregar_carrito)
+- Tasa inicio_pago-a-compra saludable: > 50% (ventas/inicios_pago)
 
 GENERA UN ANÁLISIS DE OPTIMIZACIÓN EN FORMATO JSON con esta estructura exacta:
 {
@@ -599,9 +647,11 @@ GENERA UN ANÁLISIS DE OPTIMIZACIÓN EN FORMATO JSON con esta estructura exacta:
   "nivel_urgencia": "ALTA | MEDIA | BAJA",
   "resumen": "Una oración directa de la situación",
   "diagnostico": {
-    "roas": { "valor": 2.8, "estado": "ADVERTENCIA", "interpretacion": "Por qué es bueno/malo" },
-    "ctr": { "valor": 1.2, "estado": "OK", "interpretacion": "Significado" },
-    "cpa": { "valor": 45000, "estado": "CRITICO", "interpretacion": "Situación vs máximo permitido" }
+    "roas":      { "valor": 2.8,   "estado": "ADVERTENCIA", "interpretacion": "Por qué es bueno/malo" },
+    "ctr":       { "valor": 1.2,   "estado": "OK",          "interpretacion": "Qué significa este CTR" },
+    "cpa":       { "valor": 45000, "estado": "CRITICO",     "interpretacion": "Situación vs CPA máximo permitido" },
+    "frecuencia":{ "valor": 1.8,   "estado": "OK",          "interpretacion": "Si la audiencia está saturada o no" },
+    "embudo":    { "tasa_carrito_a_compra": "25.5%", "tasa_pago_a_compra": "66.7%", "cuello_botella": "Dónde se pierde la mayoría de usuarios y por qué" }
   },
   "acciones_inmediatas": [
     { "prioridad": 1, "accion": "Qué hacer ahora mismo", "plazo": "Hoy" },
