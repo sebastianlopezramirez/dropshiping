@@ -969,8 +969,6 @@ PROMPT;
                         'content' => $prompt,
                     ],
                 ],
-                // Forzar salida JSON válida — elimina texto extra, newlines crudos y caracteres inválidos
-                'response_format' => ['type' => 'json_object'],
                 'temperature'     => 0.3,   // Más determinístico para decisiones de negocio
                 'max_tokens'      => 16000,
             ]);
