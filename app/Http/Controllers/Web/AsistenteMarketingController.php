@@ -295,6 +295,47 @@ class AsistenteMarketingController extends Controller
             }
         }
 
+        // Fallback nivel 3: reparar JSON truncado por límite de tokens
+        // Si el modelo fue cortado antes de cerrar llaves/corchetes, los cerramos
+        if ($analisisParsado === null) {
+            $raw = $respuesta['contenido'] ?? '';
+            // Extraer el bloque JSON
+            if (preg_match('/\{[\s\S]*/su', $raw, $m)) {
+                $fragmento = $m[0];
+                // Contar aperturas y cierres para detectar truncación
+                $pilaEstructuras = [];
+                $enStr   = false;
+                $escSig  = false;
+                $lon     = strlen($fragmento);
+                for ($i = 0; $i < $lon; $i++) {
+                    $c = $fragmento[$i];
+                    if ($escSig)               { $escSig = false; continue; }
+                    if ($c === '\\')          { $escSig = true;  continue; }
+                    if ($c === '"')            { $enStr = !$enStr; continue; }
+                    if ($enStr)                { continue; }
+                    if ($c === '{' || $c === '[') { $pilaEstructuras[] = $c; }
+                    if ($c === '}' || $c === ']') { array_pop($pilaEstructuras); }
+                }
+                // Cerrar lo que falta en orden inverso
+                $cierre = '';
+                foreach (array_reverse($pilaEstructuras) as $ab) {
+                    $cierre .= ($ab === '{') ? '"_truncado":true}' : ']';
+                    // Solo agregar el marcador una vez
+                    if ($ab === '{') break;
+                }
+                // Reconstruir: quitar texto incompleto del último campo
+                $reparado = rtrim($fragmento);
+                // Si termina en coma o texto incompleto sin valor, limpiar
+                $reparado = preg_replace('/,\s*$/', '', $reparado);
+                $reparado = preg_replace('/"[^"]*$/', '', $reparado); // string sin cerrar
+                // Cerrar estructuras faltantes
+                foreach (array_reverse($pilaEstructuras) as $ab) {
+                    $reparado .= ($ab === '{') ? '}' : ']';
+                }
+                $analisisParsado = json_decode($reparado);
+            }
+        }
+
         // ── DEBUG TEMPORAL — remover después de diagnosticar ──
         $contenidoRaw = $respuesta['contenido'] ?? '';
         $primerosChars = mb_substr($contenidoRaw, 0, 120);
@@ -931,7 +972,7 @@ PROMPT;
                 // Forzar salida JSON válida — elimina texto extra, newlines crudos y caracteres inválidos
                 'response_format' => ['type' => 'json_object'],
                 'temperature'     => 0.3,   // Más determinístico para decisiones de negocio
-                'max_tokens'      => 8000,
+                'max_tokens'      => 16000,
             ]);
 
             if ($respuesta->successful()) {
