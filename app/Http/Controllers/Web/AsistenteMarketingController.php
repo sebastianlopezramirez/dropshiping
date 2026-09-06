@@ -238,8 +238,12 @@ class AsistenteMarketingController extends Controller
             $producto->update(['ia_iniciado_en' => now()]);
         }
 
+        // Intentar parsear el JSON antes de enviarlo — así el frontend recibe un objeto nativo
+        // y no necesita hacer JSON.parse (que puede fallar con caracteres especiales)
+        $analisisParsado = json_decode($respuesta['contenido']);
+
         return response()->json([
-            'analisis'       => $respuesta['contenido'],
+            'analisis'       => $analisisParsado ?? $respuesta['contenido'],
             'modelo'         => 'groq/compound-mini',
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,

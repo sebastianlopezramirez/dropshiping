@@ -52,16 +52,23 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
     // Intentar parsear el JSON de la IA
     let datos = null;
     try {
-        // La IA puede devolver el JSON con backticks o sin ellos
-        const limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        // groq/compound-mini puede devolver texto antes/después del JSON — extraemos solo el bloque {}
-        const match = limpio.match(/\{[\s\S]*\}/);
-        datos = JSON.parse(match ? match[0] : limpio);
+        if (typeof analisis === 'object' && analisis !== null) {
+            // Backend ya lo parseó con json_decode — llega como objeto JS nativo
+            datos = analisis;
+        } else {
+            // Fallback: texto crudo — limpiar backticks y extraer bloque {}
+            const limpio = analisis.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const match = limpio.match(/\{[\s\S]*\}/);
+            datos = JSON.parse(match ? match[0] : limpio);
+        }
     } catch {
-        // Si no es JSON válido, mostrar como texto
+        // Si no es JSON válido, mostrar como texto legible
         return (
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <pre className="text-xs text-gray-700 whitespace-pre-wrap">{analisis}</pre>
+                <p className="text-xs text-red-500 font-semibold mb-2">⚠️ El asistente respondió en formato inesperado. Intenta de nuevo.</p>
+                <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+                    {typeof analisis === 'string' ? analisis : JSON.stringify(analisis, null, 2)}
+                </pre>
             </div>
         );
     }
@@ -2243,7 +2250,7 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                         <div className="flex items-center gap-2 mb-4">
                             <h3 className="text-sm font-semibold text-gray-700">🤖 Análisis del Asistente IA</h3>
                             <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                                Llama 3.3 70B · Groq
+                                    compound-mini · Groq
                             </span>
                         </div>
                         <PanelAnalisisIA analisis={analisisIA} modo={modo} urlProducto={urlProducto} />
