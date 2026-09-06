@@ -393,6 +393,32 @@ class AsistenteMarketingController extends Controller
             $statusCostos     = '"ECONOMICS_INCOMPLETOS"';
         }
 
+        // ── PUNTO 20: Calcular presupuesto diario basado en CPA real ─────────
+        // Meta necesita ~50 conversiones para salir del aprendizaje.
+        // Base mínima: CPA_max × 3 conversiones/día para tener señal útil en 7 días.
+        $cpaParaCalculo = ($statusCostos === '"COMPLETO"' && isset($cpaMaxNeto) && $cpaMaxNeto > 0)
+            ? (float) $cpaMaxNeto
+            : (float) $cpaMaximo;
+
+        if ($cpaParaCalculo <= 0) {
+            $presupuesto1        = 0;
+            $presupuesto2        = 0;
+            $presupuesto3        = 0;
+            $alertaPresupuesto   = '"PRESUPUESTO_LIMITADO"';
+            $justificacionBudget = 'Margen neto insuficiente: CPA maximo es 0. Primero ajusta precio o reduce costos.';
+        } else {
+            // Redondear al múltiplo de 5.000 más cercano
+            $base              = (int) (round($cpaParaCalculo * 3 / 5000) * 5000);
+            $base              = max(15000, $base);
+            $presupuesto1      = $base;
+            $presupuesto2      = (int) (round($base * 1.7 / 5000) * 5000);
+            $presupuesto3      = (int) (round($base * 3.5 / 5000) * 5000);
+            $alertaPresupuesto = '"VIABLE"';
+            $justificacionBudget = 'CPA max ' . number_format($cpaParaCalculo, 0, '.', ',')
+                . ' COP x3 conv/dia = base ' . number_format($presupuesto1, 0, '.', ',')
+                . ' COP/dia. Fase 2 x1.7, Fase 3 x3.5.';
+        }
+
         return <<<PROMPT
 Eres un Senior Media Buyer con 10+ años en e-commerce colombiano. Analizas con datos reales; jamás inventas cifras.
 
@@ -438,6 +464,8 @@ INSTRUCCIONES DE RAZONAMIENTO
 2. Donde falten datos, señálalo en "missing_data" y en "data_quality".
 3. El catálogo relacionado te sirve para detectar canibalización y análisis de oferta.
 4. Basa la estrategia en el margen real y el CPA máximo calculado.
+5. PRESUPUESTO (PUNTO 20 — obligatorio): Los campos presupuesto_diario ya están calculados matemáticamente en el JSON. Úsalos EXACTAMENTE. Si alerta_presupuesto es PRESUPUESTO_LIMITADO, explica en executive_summary que el margen no soporta inversión publicitaria rentable y qué debe corregirse primero.
+6. AUDIENCIA (PUNTO 19 — obligatorio): Hay NO_META_DATA (cuenta sin historial de pixel). REGLA: NO uses intereses como primera audiencia sin pixel entrenado. Evalúa y elige UNA estructura: (A) Broad Targeting puro, (B) Advantage+ Shopping Campaign, (C) Intereses solo si puedes justificar con datos del producto que son precisos. Para una cuenta nueva en Colombia sin datos, Broad o Advantage+ casi siempre gana. Documenta tu elección y razón en "tipo_recomendado".
 
 RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
 
@@ -515,22 +543,26 @@ RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
 
   "meta_ads_strategy": {
     "objetivo_campana": "CONVERSIONES",
-    "presupuesto_diario_inicial_cop": 30000,
+    "alerta_presupuesto": {$alertaPresupuesto},
+    "justificacion_presupuesto": "{$justificacionBudget}",
+    "presupuesto_diario_inicial_cop": {$presupuesto1},
     "duracion_prueba_dias": 7,
     "fases": [
-      { "fase": 1, "nombre": "Aprendizaje", "duracion": "7 días", "presupuesto_diario": 30000,
+      { "fase": 1, "nombre": "Aprendizaje", "duracion": "7 días", "presupuesto_diario": {$presupuesto1},
         "objetivo": "Salir del período de aprendizaje con datos",
         "metricas_objetivo": { "ctr": 1.5, "roas": 2.5, "cpa": {$cpaMaximo} } },
-      { "fase": 2, "nombre": "Optimización", "duracion": "14 días", "presupuesto_diario": 50000,
+      { "fase": 2, "nombre": "Optimización", "duracion": "14 días", "presupuesto_diario": {$presupuesto2},
         "objetivo": "Reducir CPA y mejorar ROAS",
         "metricas_objetivo": { "ctr": 2.0, "roas": 3.5 } },
-      { "fase": 3, "nombre": "Escala", "duracion": "30 días", "presupuesto_diario": 100000,
+      { "fase": 3, "nombre": "Escala", "duracion": "30 días", "presupuesto_diario": {$presupuesto3},
         "objetivo": "Escalar manteniendo ROAS objetivo",
         "metricas_objetivo": { "ctr": 2.5, "roas": 4.5 } }
     ],
-    "segmentacion": {
+    "estrategia_audiencia": {
+      "tipo_recomendado": "Broad | Advantage+ | Intereses — elige según instrucción 6 y justifica aquí por qué",
       "ciudades": ["Bogotá", "Medellín", "Cali", "Barranquilla"],
-      "intereses": ["interés 1 relevante", "interés 2", "interés 3", "interés 4"],
+      "fase_1_audiencia": "describe la audiencia exacta para fase 1 según tu elección",
+      "fase_2_audiencia": "describe la audiencia exacta para fase 2 según tu elección",
       "lookalike": "LAL 1-2% Compradores — activar con 100+ compradores",
       "retargeting": ["ViewContent 30d", "AddToCart 14d", "InitiateCheckout 7d"]
     }
