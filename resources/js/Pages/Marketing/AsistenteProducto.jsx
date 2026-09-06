@@ -84,6 +84,620 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
         'BAJA':  'text-green-600',
     };
 
+    const badgeDQ = {
+        'COMPLETO':                    'bg-green-100 text-green-700',
+        'NECESITA_INVESTIGACION_WEB':  'bg-yellow-100 text-yellow-700',
+        'ECONOMICS_INCOMPLETOS':       'bg-orange-100 text-orange-700',
+        'NO_META_DATA':                'bg-red-100 text-red-700',
+        'NO_DISPONIBLE':               'bg-gray-100 text-gray-600',
+    };
+    const colorSemaforo = {
+        'ROJO':     'bg-red-50 border-red-300 text-red-700',
+        'AMARILLO': 'bg-yellow-50 border-yellow-300 text-yellow-700',
+        'VERDE':    'bg-green-50 border-green-300 text-green-700',
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // RENDERER LANZAMIENTO — Prompt Maestro v2 (Phase 1)
+    // ══════════════════════════════════════════════════════════════
+    if (modo === 'lanzamiento') {
+        const d = datos;
+        const fmtCOP = (n) => n != null ? `$${Number(n).toLocaleString('es-CO')} COP` : '—';
+
+        return (
+            <div className="space-y-5">
+
+                {/* ── DECISIÓN + CONFIANZA ── */}
+                <div className="flex flex-wrap items-center gap-3">
+                    <span className={`text-2xl font-black px-5 py-2 rounded-xl ${colorDecision[d.decision] ?? 'bg-gray-100 text-gray-800'}`}>
+                        {d.decision}
+                    </span>
+                    {d.confidence && (
+                        <span className={`text-sm font-bold px-3 py-1 rounded-lg border ${
+                            d.confidence === 'ALTA'  ? 'bg-green-50 border-green-300 text-green-700' :
+                            d.confidence === 'MEDIA' ? 'bg-yellow-50 border-yellow-300 text-yellow-700' :
+                                                       'bg-red-50 border-red-300 text-red-700'}`}>
+                            Confianza {d.confidence}
+                        </span>
+                    )}
+                </div>
+
+                {/* ── RESUMEN EJECUTIVO ── */}
+                {d.executive_summary && (
+                    <p className="text-gray-800 font-medium text-base border-l-4 border-orange-400 pl-3 leading-relaxed">
+                        {d.executive_summary}
+                    </p>
+                )}
+
+                {/* ── NEXT ACTION ── */}
+                {d.next_action && (
+                    <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 flex items-start gap-3">
+                        <span className="text-2xl">⚡</span>
+                        <div>
+                            <p className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-1">Acción más importante HOY</p>
+                            <p className="text-sm font-semibold text-gray-800">{d.next_action}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── CALIDAD DE DATOS ── */}
+                {d.data_quality && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📡 Calidad de datos disponibles</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                            {Object.entries(d.data_quality).map(([clave, estado]) => (
+                                <div key={clave} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${badgeDQ[estado] ?? 'bg-gray-100 text-gray-600'}`}>
+                                    <span>{estado === 'COMPLETO' ? '✅' : estado === 'NECESITA_INVESTIGACION_WEB' ? '🔍' : estado === 'ECONOMICS_INCOMPLETOS' ? '⚠️' : '❌'}</span>
+                                    <span className="font-semibold uppercase tracking-wide">{clave.replace(/_/g, ' ')}</span>
+                                    <span className="ml-auto opacity-75 truncate">{estado}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── UNIT ECONOMICS ── */}
+                {d.unit_economics && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">💰 Unit Economics</h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase mb-0.5">Precio venta</p>
+                                <p className="font-bold text-gray-800">{fmtCOP(d.unit_economics.precio_venta_cop)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase mb-0.5">Costo declarado</p>
+                                <p className="font-bold text-gray-800">{fmtCOP(d.unit_economics.precio_costo_declarado_cop)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase mb-0.5">Margen bruto</p>
+                                <p className="font-bold text-green-700">{d.unit_economics.margen_bruto_pct}%</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase mb-0.5">CPA máximo</p>
+                                <p className="font-bold text-orange-600">{fmtCOP(d.unit_economics.cpa_maximo_cop)}</p>
+                            </div>
+                        </div>
+                        {d.unit_economics.alerta && (
+                            <p className="mt-3 text-xs text-orange-700 bg-orange-50 rounded-lg px-3 py-2">
+                                ⚠️ {d.unit_economics.alerta}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* ── IDENTIDAD DEL PRODUCTO ── */}
+                {d.product_identity && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-3">🎯 Identidad del producto</h4>
+                        <div className="space-y-2 text-sm">
+                            {d.product_identity.problema_resuelve && (
+                                <p><span className="font-semibold text-blue-700">Problema que resuelve: </span>{d.product_identity.problema_resuelve}</p>
+                            )}
+                            {d.product_identity.cliente_ideal && (
+                                <p><span className="font-semibold text-blue-700">Cliente ideal: </span>{d.product_identity.cliente_ideal}</p>
+                            )}
+                            {d.product_identity.posicionamiento && (
+                                <p><span className="font-semibold text-blue-700">Posicionamiento: </span>{d.product_identity.posicionamiento}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── ANÁLISIS CATÁLOGO INTERNO ── */}
+                {d.internal_catalog_analysis && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📦 Catálogo relacionado</h4>
+                        <div className="flex flex-wrap gap-3 text-sm">
+                            <div className="bg-gray-50 rounded-lg px-3 py-2">
+                                <p className="text-xs text-gray-500">Productos relacionados</p>
+                                <p className="font-bold text-gray-800">{d.internal_catalog_analysis.productos_relacionados_count}</p>
+                            </div>
+                            {d.internal_catalog_analysis.riesgo_canibalizacion && (
+                                <div className={`rounded-lg px-3 py-2 ${
+                                    d.internal_catalog_analysis.riesgo_canibalizacion === 'ALTO' ? 'bg-red-50' :
+                                    d.internal_catalog_analysis.riesgo_canibalizacion === 'MEDIO' ? 'bg-yellow-50' : 'bg-green-50'}`}>
+                                    <p className="text-xs text-gray-500">Riesgo canibalización</p>
+                                    <p className="font-bold text-gray-800">{d.internal_catalog_analysis.riesgo_canibalizacion}</p>
+                                </div>
+                            )}
+                        </div>
+                        {d.internal_catalog_analysis.diferenciacion_vs_catalogo && (
+                            <p className="mt-2 text-xs text-gray-600">
+                                <span className="font-semibold">Diferenciación:</span> {d.internal_catalog_analysis.diferenciacion_vs_catalogo}
+                            </p>
+                        )}
+                        {d.internal_catalog_analysis.oportunidad_upsell && (
+                            <p className="mt-1 text-xs text-green-700">
+                                🔼 <span className="font-semibold">Upsell:</span> {d.internal_catalog_analysis.oportunidad_upsell}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* ── MERCADO ── */}
+                {d.market_research && d.market_research.status !== 'NECESITA_INVESTIGACION_WEB' && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">🔍 Investigación de mercado</h4>
+                        <p className="text-sm text-gray-700">{d.market_research.nota}</p>
+                    </div>
+                )}
+                {d.market_research?.status === 'NECESITA_INVESTIGACION_WEB' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800">
+                        🔍 <strong>Datos de mercado pendientes</strong> — {d.market_research.nota}
+                    </div>
+                )}
+
+                {/* ── ANÁLISIS FODA ── */}
+                {d.product_analysis && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📊 Análisis FODA</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { key: 'fortalezas',    label: 'Fortalezas',    color: 'border-green-300 bg-green-50',  dot: 'text-green-600' },
+                                { key: 'debilidades',   label: 'Debilidades',   color: 'border-red-300 bg-red-50',     dot: 'text-red-500' },
+                                { key: 'oportunidades', label: 'Oportunidades', color: 'border-blue-300 bg-blue-50',   dot: 'text-blue-600' },
+                                { key: 'amenazas',      label: 'Amenazas',      color: 'border-orange-300 bg-orange-50', dot: 'text-orange-500' },
+                            ].map(({ key, label, color, dot }) => d.product_analysis[key]?.length > 0 && (
+                                <div key={key} className={`rounded-xl border p-3 ${color}`}>
+                                    <p className="text-xs font-bold uppercase mb-2 text-gray-600">{label}</p>
+                                    <ul className="space-y-1">
+                                        {d.product_analysis[key].map((item, i) => (
+                                            <li key={i} className={`text-xs text-gray-700 flex items-start gap-1`}>
+                                                <span className={`${dot} flex-shrink-0 font-bold`}>•</span> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── ANÁLISIS DE CLIENTE ── */}
+                {d.customer_analysis && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3">👤 Análisis de cliente</h4>
+                        {d.customer_analysis.perfil_primario && (
+                            <p className="text-sm text-gray-800 mb-3 font-medium">{d.customer_analysis.perfil_primario}</p>
+                        )}
+                        <div className="grid grid-cols-2 gap-3">
+                            {d.customer_analysis.pain_points?.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-red-600 uppercase mb-1">Pain points</p>
+                                    <ul className="space-y-0.5">
+                                        {d.customer_analysis.pain_points.map((p, i) => (
+                                            <li key={i} className="text-xs text-gray-700">• {p}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {d.customer_analysis.motivadores_compra?.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-green-600 uppercase mb-1">Motivadores</p>
+                                    <ul className="space-y-0.5">
+                                        {d.customer_analysis.motivadores_compra.map((p, i) => (
+                                            <li key={i} className="text-xs text-gray-700">• {p}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {d.customer_analysis.objeciones_frecuentes?.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-orange-600 uppercase mb-1">Objeciones</p>
+                                    <ul className="space-y-0.5">
+                                        {d.customer_analysis.objeciones_frecuentes.map((p, i) => (
+                                            <li key={i} className="text-xs text-gray-700">• {p}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {d.customer_analysis.donde_pasa_tiempo?.length > 0 && (
+                                <div>
+                                    <p className="text-xs font-bold text-blue-600 uppercase mb-1">Dónde está</p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {d.customer_analysis.donde_pasa_tiempo.map((p, i) => (
+                                            <span key={i} className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{p}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── OFERTA ── */}
+                {d.offer_analysis && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">🏷️ Análisis de oferta</h4>
+                        <div className="space-y-2 text-sm text-gray-700">
+                            {d.offer_analysis.propuesta_valor && (
+                                <p><span className="font-semibold">Propuesta de valor:</span> {d.offer_analysis.propuesta_valor}</p>
+                            )}
+                            {d.offer_analysis.garantia_recomendada && (
+                                <p><span className="font-semibold">Garantía recomendada:</span> {d.offer_analysis.garantia_recomendada}</p>
+                            )}
+                            {d.offer_analysis.urgencia_escasez && (
+                                <p><span className="font-semibold">Urgencia/escasez:</span> {d.offer_analysis.urgencia_escasez}</p>
+                            )}
+                            {d.offer_analysis.precio_competitivo && (
+                                <p className="text-xs text-gray-500">Precio competitivo: {d.offer_analysis.precio_competitivo}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STOCK WARNING ── */}
+                {d.stock_warning && (
+                    <div className={`rounded-xl p-3 text-sm flex items-center gap-3 border ${
+                        d.stock_warning.alerta === 'SIN_STOCK' ? 'bg-red-50 border-red-300 text-red-700' :
+                        d.stock_warning.alerta === 'STOCK_BAJO' ? 'bg-orange-50 border-orange-300 text-orange-700' :
+                        'bg-green-50 border-green-300 text-green-700'}`}>
+                        <span className="text-xl">{d.stock_warning.alerta === 'SIN_STOCK' ? '🚫' : d.stock_warning.alerta === 'STOCK_BAJO' ? '⚠️' : '✅'}</span>
+                        <div>
+                            <span className="font-bold">Stock: {d.stock_warning.stock_actual} unidades</span>
+                            {d.stock_warning.dias_estimados && (
+                                <span className="ml-2 text-xs opacity-80">({d.stock_warning.dias_estimados})</span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── META ADS STRATEGY — FASES ── */}
+                {d.meta_ads_strategy?.fases?.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-1">📅 Estrategia Meta Ads — Fases</h4>
+                        {d.meta_ads_strategy.presupuesto_diario_inicial_cop && (
+                            <p className="text-xs text-gray-500 mb-2">
+                                Presupuesto inicial: <strong>{fmtCOP(d.meta_ads_strategy.presupuesto_diario_inicial_cop)}/día</strong> · Prueba: {d.meta_ads_strategy.duracion_prueba_dias} días
+                            </p>
+                        )}
+                        <div className="space-y-3">
+                            {d.meta_ads_strategy.fases.map((fase, i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="w-7 h-7 rounded-full bg-orange-500 text-white text-sm flex items-center justify-center font-bold">{fase.fase}</span>
+                                        <h5 className="font-semibold text-gray-800">{fase.nombre}</h5>
+                                        <span className="ml-auto text-xs text-gray-500">⏱ {fase.duracion}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 mb-2">{fase.objetivo}</p>
+                                    {fase.metricas_objetivo && (
+                                        <div className="flex flex-wrap gap-2 text-xs">
+                                            {fase.metricas_objetivo.ctr && (
+                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">CTR ≥ {fase.metricas_objetivo.ctr}%</span>
+                                            )}
+                                            {fase.metricas_objetivo.roas && (
+                                                <span className="bg-green-50 text-green-700 px-2 py-1 rounded">ROAS ≥ {fase.metricas_objetivo.roas}x</span>
+                                            )}
+                                            {fase.metricas_objetivo.cpa && (
+                                                <span className="bg-orange-50 text-orange-700 px-2 py-1 rounded">CPA ≤ {fmtCOP(fase.metricas_objetivo.cpa)}</span>
+                                            )}
+                                            {fase.presupuesto_diario && (
+                                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded">{fmtCOP(fase.presupuesto_diario)}/día</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {/* Segmentación */}
+                        {d.meta_ads_strategy.segmentacion && (
+                            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                <p className="text-xs font-bold text-blue-700 uppercase mb-2">🎯 Segmentación inicial</p>
+                                {d.meta_ads_strategy.segmentacion.ciudades?.length > 0 && (
+                                    <div className="mb-2">
+                                        <p className="text-xs text-blue-600 font-semibold mb-1">Ciudades</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {d.meta_ads_strategy.segmentacion.ciudades.map((c, i) => (
+                                                <span key={i} className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">{c}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {d.meta_ads_strategy.segmentacion.intereses?.length > 0 && (
+                                    <div className="mb-2">
+                                        <p className="text-xs text-blue-600 font-semibold mb-1">Intereses</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {d.meta_ads_strategy.segmentacion.intereses.map((c, i) => (
+                                                <span key={i} className="bg-white text-blue-700 border border-blue-200 text-xs px-2 py-0.5 rounded">{c}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── ESTRATEGIA CREATIVA ── */}
+                {d.creative_strategy && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-purple-800 mb-2">🎨 Estrategia creativa</h4>
+                        {d.creative_strategy.formato_prioritario && (
+                            <p className="text-sm font-bold text-purple-700 mb-1">📱 {d.creative_strategy.formato_prioritario}</p>
+                        )}
+                        {d.creative_strategy.gancho_apertura && (
+                            <p className="text-sm text-gray-700 italic mb-3">"{d.creative_strategy.gancho_apertura}"</p>
+                        )}
+                        {d.creative_strategy.angulos_creativos?.length > 0 && (
+                            <div className="space-y-2 mb-3">
+                                <p className="text-xs font-bold text-purple-600 uppercase">Ángulos creativos</p>
+                                {d.creative_strategy.angulos_creativos.map((a, i) => (
+                                    <div key={i} className="bg-white rounded-lg p-3 border border-purple-100">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold text-purple-700">{a.angulo}</span>
+                                            {a.duracion && <span className="text-xs text-gray-400 ml-auto">{a.duracion}</span>}
+                                        </div>
+                                        <p className="text-xs text-gray-600">{a.descripcion}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {d.creative_strategy.tips_produccion?.length > 0 && (
+                            <div>
+                                <p className="text-xs font-bold text-purple-600 uppercase mb-1">Tips de producción</p>
+                                <ul className="space-y-0.5">
+                                    {d.creative_strategy.tips_produccion.map((t, i) => (
+                                        <li key={i} className="text-xs text-purple-700">• {t}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── COPY — TEXTOS PRINCIPALES ── */}
+                {d.copy?.primary_texts?.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">✍️ Copy — Textos principales</h4>
+                        {/* Link de compra */}
+                        {urlProducto && (
+                            <div className="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-indigo-600 uppercase mb-1">🔗 Link de compra</p>
+                                    <p className="text-sm text-indigo-900 font-mono break-all">{urlProducto}</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(urlProducto)
+                                            .then(() => { const b = document.activeElement; if (b) { b.textContent = '✅'; setTimeout(() => { b.textContent = '📋'; }, 1500); } })
+                                            .catch(() => {});
+                                    }}
+                                    className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors"
+                                >
+                                    📋
+                                </button>
+                            </div>
+                        )}
+                        <div className="space-y-3">
+                            {d.copy.primary_texts.map((t, i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-0.5 rounded">Variante {t.variante}</span>
+                                        {t.framework && <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded">{t.framework}</span>}
+                                        {t.target && <span className="text-xs text-gray-400">{t.target}</span>}
+                                    </div>
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{t.texto}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── COPY — HOOKS ── */}
+                {d.copy?.hooks?.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">🎣 Hooks (primeros 3 segundos)</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                            {d.copy.hooks.map((h, i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
+                                    <p className="text-xs font-bold text-orange-600 uppercase mb-1">{h.tipo}</p>
+                                    <p className="text-sm text-gray-800 italic">"{h.texto}"</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── COPY — TITULARES ── */}
+                {d.copy?.headlines?.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h5 className="text-xs font-bold text-blue-800 uppercase mb-2">📌 Titulares del anuncio</h5>
+                        <div className="space-y-1">
+                            {d.copy.headlines.map((h, i) => (
+                                <div key={i} className="flex items-center gap-2 text-sm">
+                                    <span className="text-blue-700 font-medium flex-1">"{h.texto}"</span>
+                                    {h.uso && <span className="text-xs text-blue-400 flex-shrink-0">{h.uso}</span>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── HASHTAGS ── */}
+                {d.copy?.hashtags && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">🏷️ Hashtags</h4>
+                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+                            {['masivos', 'medianos', 'nicho'].map((nivel) => d.copy.hashtags[nivel]?.length > 0 && (
+                                <div key={nivel}>
+                                    <p className="text-xs font-bold text-purple-600 uppercase mb-1">
+                                        {nivel === 'masivos' ? '🔴 Masivos' : nivel === 'medianos' ? '🟡 Medianos' : '🟢 Nicho'}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                        {d.copy.hashtags[nivel].map((h, i) => (
+                                            <span key={i} className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-mono">{h}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                onClick={() => {
+                                    const todos = [
+                                        ...(d.copy.hashtags?.masivos ?? []),
+                                        ...(d.copy.hashtags?.medianos ?? []),
+                                        ...(d.copy.hashtags?.nicho ?? []),
+                                    ].join(' ');
+                                    navigator.clipboard.writeText(todos)
+                                        .then(() => { const b = document.activeElement; if (b) { b.textContent = '✅ Copiado'; setTimeout(() => { b.textContent = '📋 Copiar hashtags'; }, 1500); } })
+                                        .catch(() => {});
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+                            >
+                                📋 Copiar hashtags
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── KPIs ── */}
+                {d.kpis && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📈 KPIs objetivo</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                            {[
+                                { label: 'CTR mínimo',   val: `${d.kpis.ctr_minimo}%`,   color: 'bg-gray-50 border-gray-200' },
+                                { label: 'CTR objetivo', val: `${d.kpis.ctr_objetivo}%`,  color: 'bg-blue-50 border-blue-200' },
+                                { label: 'ROAS mínimo',  val: `${d.kpis.roas_minimo}x`,   color: 'bg-gray-50 border-gray-200' },
+                                { label: 'ROAS objetivo',val: `${d.kpis.roas_objetivo}x`,  color: 'bg-green-50 border-green-200' },
+                                { label: 'ROAS escala',  val: `${d.kpis.roas_escala}x`,    color: 'bg-emerald-50 border-emerald-200' },
+                                { label: 'Frecuencia máx', val: `${d.kpis.frecuencia_maxima}`, color: 'bg-orange-50 border-orange-200' },
+                            ].map(({ label, val, color }, i) => val !== 'undefinedx' && val !== 'undefined%' && (
+                                <div key={i} className={`rounded-lg border p-3 text-center ${color}`}>
+                                    <p className="text-xs text-gray-500 uppercase mb-1">{label}</p>
+                                    <p className="text-lg font-black text-gray-800">{val}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {d.kpis.cpa_maximo_cop && (
+                            <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                                <p className="text-xs text-orange-600 uppercase mb-1">CPA máximo</p>
+                                <p className="text-lg font-black text-orange-700">{fmtCOP(d.kpis.cpa_maximo_cop)}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── REGLAS DE PAUSA ── */}
+                {d.pause_rules?.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">🚦 Reglas de pausa</h4>
+                        <div className="space-y-2">
+                            {d.pause_rules.map((r, i) => (
+                                <div key={i} className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-xs ${colorSemaforo[r.semaforo] ?? 'bg-gray-50 border-gray-200 text-gray-700'}`}>
+                                    <span className="font-bold flex-shrink-0">
+                                        {r.semaforo === 'ROJO' ? '🔴' : r.semaforo === 'AMARILLO' ? '🟡' : '🟢'}
+                                    </span>
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{r.senal}</p>
+                                    </div>
+                                    <span className="font-bold flex-shrink-0 text-right">{r.accion}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── PLAN DE ACCIÓN ── */}
+                {d.action_plan && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📋 Plan de acción</h4>
+                        <div className="space-y-3">
+                            {[
+                                { key: 'today',       label: 'HOY',           color: 'bg-red-50 border-red-200' },
+                                { key: 'tomorrow',    label: 'MAÑANA',        color: 'bg-orange-50 border-orange-200' },
+                                { key: 'days_3_to_7', label: 'DÍAS 3–7',      color: 'bg-yellow-50 border-yellow-200' },
+                                { key: 'week_2',      label: 'SEMANA 2',      color: 'bg-blue-50 border-blue-200' },
+                            ].map(({ key, label, color }) => d.action_plan[key]?.length > 0 && (
+                                <div key={key} className={`rounded-xl border p-3 ${color}`}>
+                                    <p className="text-xs font-bold uppercase tracking-wide text-gray-600 mb-2">{label}</p>
+                                    <ul className="space-y-1">
+                                        {d.action_plan[key].map((a, i) => (
+                                            <li key={i} className="text-xs text-gray-700 flex items-start gap-1">
+                                                <span className="text-orange-400 flex-shrink-0 font-bold">→</span> {a}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                            {d.action_plan.scaling && (
+                                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                                    <p className="text-xs font-bold uppercase text-green-700 mb-1">🚀 ESCALADO</p>
+                                    <p className="text-xs text-gray-700">{d.action_plan.scaling}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── RIESGOS ── */}
+                {d.risks?.length > 0 && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">⚠️ Riesgos identificados</h4>
+                        <div className="space-y-2">
+                            {d.risks.map((r, i) => (
+                                <div key={i} className="bg-white border border-gray-200 rounded-xl p-3">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-semibold text-gray-800">{r.riesgo}</span>
+                                        {r.probabilidad && (
+                                            <span className={`text-xs px-2 py-0.5 rounded font-bold ml-auto ${
+                                                r.probabilidad === 'ALTA' ? 'bg-red-100 text-red-700' :
+                                                r.probabilidad === 'MEDIA' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-gray-100 text-gray-600'}`}>
+                                                {r.probabilidad}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {r.mitigacion && (
+                                        <p className="text-xs text-green-700">✅ {r.mitigacion}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── DATOS FALTANTES ── */}
+                {d.missing_data?.length > 0 && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <h4 className="text-sm font-semibold text-gray-600 mb-2">📌 Datos que mejorarían el análisis</h4>
+                        <ul className="space-y-1">
+                            {d.missing_data.map((m, i) => (
+                                <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                                    <span className="text-gray-400 flex-shrink-0">•</span> {m}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+            </div>
+        );
+    }
+    // ══════════════════════════════════════════════════════════════
+    // FIN RENDERER LANZAMIENTO
+    // ══════════════════════════════════════════════════════════════
+
     return (
         <div className="space-y-4">
             {/* Decisión principal */}
