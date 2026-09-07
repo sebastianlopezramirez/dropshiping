@@ -374,7 +374,7 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis'       => $analisisParsado ?? $contenidoRaw,
-            'modelo'         => $iaUsada === 'gemini' ? 'gemini-2.0-flash' : 'groq/compound-mini',
+            'modelo'         => $iaUsada === 'gemini' ? 'gemini-3.6-flash' : 'groq/compound-mini',
             'ia_usada'       => $iaUsada,
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,
@@ -1057,7 +1057,7 @@ PROMPT;
         try {
             // ENTENDER: Keys de Google AI Studio usan formato AQ. — siempre van con ?key= en la URL.
             // Modelo: gemini-2.0-flash (más estable y disponible en proyectos nuevos).
-            $modelo = 'gemini-2.0-flash';
+            $modelo = 'gemini-3.6-flash';
             $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
             $http   = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
 
