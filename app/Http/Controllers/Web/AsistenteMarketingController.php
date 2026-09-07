@@ -1053,9 +1053,24 @@ PROMPT;
         }
 
         try {
-            $respuesta = Http::withHeaders(['Content-Type' => 'application/json'])
-                ->timeout(30)
-                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+            // ENTENDER: Las credenciales de Google pueden ser API key (empieza con "AIza")
+            // u OAuth token (empieza con "AQ.", "ya29.", etc.). Cada tipo usa auth diferente.
+            $esApiKey = str_starts_with($apiKey, 'AIza');
+
+            if ($esApiKey) {
+                // API key estándar → pasar en el query string ?key=
+                $http = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
+                $url  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
+            } else {
+                // OAuth token / access token → pasar en el header Authorization: Bearer
+                $http = Http::withHeaders([
+                    'Content-Type'  => 'application/json',
+                    'Authorization' => "Bearer {$apiKey}",
+                ])->timeout(30);
+                $url  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+            }
+
+            $respuesta = $http->post($url, [
                     'systemInstruction' => [
                         'parts' => [['text' => 'You are a JSON-only API. Respond exclusively with a valid JSON object. Never include explanatory text, markdown, code blocks, or any content outside the JSON object.']],
                     ],
@@ -1098,12 +1113,14 @@ PROMPT;
                 $reintentarEn = $delay ? str_replace('s', ' segundos', $delay) : 'unas horas';
             }
 
-            Log::error('Gemini API error', ['status' => $respuesta->status(), 'body' => $respuesta->body()]);
+            Log::error('Gemini API error', ['status' => $respuesta->status(), 'body' => $respuesta->body(), 'es_api_key' => $esApiKey]);
             return [
                 'exito'         => false,
                 'error'         => "Gemini error HTTP {$respuesta->status()}",
                 'es_rate_limit' => $esRateLimit,
                 'reintentar_en' => $reintentarEn,
+                '_body_gemini'  => $respuesta->json(),      // debug temporal
+                '_auth_usada'   => $esApiKey ? 'api_key' : 'bearer_token',
             ];
 
         } catch (\Exception $e) {
