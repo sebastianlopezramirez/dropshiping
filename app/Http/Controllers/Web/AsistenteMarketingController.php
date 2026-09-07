@@ -482,7 +482,7 @@ class AsistenteMarketingController extends Controller
             ? (float) $costos['precio_costo']
             : (float) ($producto->precio_costo  ?? 0);
         $urlProducto  = url("/tienda/{$producto->slug}");
-        $categoria    = $producto->categoria->nombre ?? 'Sin categoría';
+        $categoria    = $producto->categoria?->nombre ?? 'Sin categoría';
         $catalogo     = $this->obtenerCatalogoRelacionado($producto);
         $catalogoJson = json_encode($catalogo, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
