@@ -228,38 +228,35 @@ class AsistenteMarketingController extends Controller
         $respuesta = $this->llamarGroq($prompt);
 
         if (!$respuesta['exito']) {
-            // Groq sin cuota diaria → intentar Gemini automáticamente
-            if ($respuesta['es_rate_limit'] ?? false) {
-                $respuestaGemini = $this->llamarGemini($prompt);
+            // Groq falló (rate limit, error HTTP, timeout, etc.) → intentar Gemini automáticamente
+            $respuestaGemini = $this->llamarGemini($prompt);
 
-                if ($respuestaGemini['exito']) {
-                    $iaUsada   = 'gemini';
-                    $respuesta = $respuestaGemini;
-                } else {
-                    $errorTipo = ($respuestaGemini['es_rate_limit'] ?? false)
-                        ? 'ambas_agotadas'
-                        : 'fallo_conexion';
-
-                    return response()->json([
-                        'error'         => $errorTipo === 'ambas_agotadas'
-                            ? 'Ambas IAs han alcanzado su límite diario de tokens. Reintenta más tarde.'
-                            : 'No se pudo conectar con ningún asistente IA.',
-                        'error_tipo'    => $errorTipo,
-                        'reintentar_en' => $respuestaGemini['reintentar_en'] ?? 'unas horas',
-                        '_debug_gemini' => [
-                            'error'         => $respuestaGemini['error'] ?? null,
-                            'es_rate_limit' => $respuestaGemini['es_rate_limit'] ?? null,
-                            'key_prefix'    => substr(config('services.gemini.api_key') ?? '', 0, 10) . '...',
-                            'body_completo' => $respuestaGemini['_body_gemini'] ?? null,
-                            'modelo_usado'  => $respuestaGemini['_modelo_usado'] ?? null,
-                        ],
-                    ], 503);
-                }
+            if ($respuestaGemini['exito']) {
+                $iaUsada   = 'gemini';
+                $respuesta = $respuestaGemini;
             } else {
+                $errorTipo = ($respuestaGemini['es_rate_limit'] ?? false)
+                    ? 'ambas_agotadas'
+                    : 'fallo_conexion';
+
                 return response()->json([
-                    'error'      => 'No se pudo conectar con el asistente IA.',
-                    'error_tipo' => 'fallo_conexion',
-                    'detalle'    => $respuesta['error'] ?? '',
+                    'error'         => $errorTipo === 'ambas_agotadas'
+                        ? 'Ambas IAs han alcanzado su límite diario de tokens. Reintenta más tarde.'
+                        : 'No se pudo conectar con ningún asistente IA.',
+                    'error_tipo'    => $errorTipo,
+                    'reintentar_en' => $respuestaGemini['reintentar_en'] ?? 'unas horas',
+                    '_debug_groq'   => [
+                        'error'      => $respuesta['error'] ?? null,
+                        'status'     => $respuesta['groq_status'] ?? null,
+                        'body'       => $respuesta['groq_body'] ?? null,
+                    ],
+                    '_debug_gemini' => [
+                        'error'         => $respuestaGemini['error'] ?? null,
+                        'es_rate_limit' => $respuestaGemini['es_rate_limit'] ?? null,
+                        'key_prefix'    => substr(config('services.gemini.api_key') ?? '', 0, 10) . '...',
+                        'body_completo' => $respuestaGemini['_body_gemini'] ?? null,
+                        'modelo_usado'  => $respuestaGemini['_modelo_usado'] ?? null,
+                    ],
                 ], 503);
             }
         }
