@@ -250,6 +250,8 @@ class AsistenteMarketingController extends Controller
                             'error'         => $respuestaGemini['error'] ?? null,
                             'es_rate_limit' => $respuestaGemini['es_rate_limit'] ?? null,
                             'key_prefix'    => substr(config('services.gemini.api_key') ?? '', 0, 10) . '...',
+                            'body_completo' => $respuestaGemini['_body_gemini'] ?? null,
+                            'modelo_usado'  => $respuestaGemini['_modelo_usado'] ?? null,
                         ],
                     ], 503);
                 }
