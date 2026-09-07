@@ -696,11 +696,11 @@ RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
   "copy": {
     "primary_texts": [
       { "variante": "A", "framework": "PAS", "target": "Audiencia fría",
-        "texto": "Copy PAS completo para {$producto->nombre} con 3+ párrafos, emojis y CTA." },
+        "texto": "Copy PAS máx 3 líneas + CTA para {$producto->nombre}." },
       { "variante": "B", "framework": "AIDA", "target": "Retargeting",
-        "texto": "Copy AIDA con prueba social y garantía para {$producto->nombre}." },
+        "texto": "Copy AIDA máx 3 líneas + CTA para {$producto->nombre}." },
       { "variante": "C", "framework": "Urgencia", "target": "Carrito abandonado",
-        "texto": "Copy corto urgente máx 5 líneas para recuperar carritos de {$producto->nombre}." }
+        "texto": "Copy urgente máx 2 líneas para {$producto->nombre}." }
     ],
     "headlines": [
       { "texto": "Titular 1 específico — máx 40 chars", "uso": "Meta + Google" },
