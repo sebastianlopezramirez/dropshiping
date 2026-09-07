@@ -181,4 +181,60 @@ class HealthController extends Controller
             ];
         }
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // LISTAR MODELOS DISPONIBLES — GET /health/modelos
+    // ─────────────────────────────────────────────────────────────────
+    // ENTENDER: Llama a la API de Google para ver qué modelos están
+    //   activos con la API key configurada en Railway.
+    // USAR: Cuando /health/gemini devuelve 404 "modelo no encontrado"
+    // ─────────────────────────────────────────────────────────────────
+    public function modelos()
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        if (empty($apiKey)) {
+            return response()->json([
+                'ok'       => false,
+                'problema' => 'GEMINI_API_KEY no configurada en Railway Variables',
+            ]);
+        }
+
+        try {
+            $resp = Http::timeout(15)->get(
+                "https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}"
+            );
+
+            if (!$resp->successful()) {
+                return response()->json([
+                    'ok'          => false,
+                    'codigo_http' => $resp->status(),
+                    'body'        => $resp->json(),
+                ]);
+            }
+
+            $modelos = collect($resp->json('models', []))
+                ->filter(fn($m) => str_contains($m['name'] ?? '', 'gemini'))
+                ->map(fn($m) => [
+                    'nombre'       => str_replace('models/', '', $m['name'] ?? ''),
+                    'display_name' => $m['displayName'] ?? '',
+                    'descripcion'  => $m['description'] ?? '',
+                ])
+                ->values();
+
+            return response()->json([
+                'ok'      => true,
+                'total'   => $modelos->count(),
+                'modelos' => $modelos,
+                'consejo' => 'Usa el campo "nombre" en llamarGemini() — copia el que tenga "flash" en su nombre',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'ok'       => false,
+                'problema' => $e->getMessage(),
+            ]);
+        }
+    }
+
 }

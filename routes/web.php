@@ -606,6 +606,7 @@ Route::prefix('health')
          Route::get('/',       'index');
          Route::get('/gemini', 'gemini');
          Route::get('/db',     'db');
+         Route::get('/modelos', 'modelos');
      });
 
 require __DIR__.'/auth.php';
