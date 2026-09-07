@@ -223,42 +223,22 @@ class AsistenteMarketingController extends Controller
             ? $this->construirPromptLanzamiento($producto, $margen, $cpaMaximo, $costos)
             : $this->construirPromptOptimizacion($producto, $metricas, $margen, $cpaMaximo);
 
-        // Llamar a Groq (primario) — si da 429, intentar Gemini (fallback)
-        $iaUsada   = 'groq';
-        $respuesta = $this->llamarGroq($prompt);
+        // Llamar a Gemini (único modelo activo)
+        $iaUsada   = 'gemini';
+        $respuesta = $this->llamarGemini($prompt);
 
         if (!$respuesta['exito']) {
-            // Groq falló (rate limit, error HTTP, timeout, etc.) → intentar Gemini automáticamente
-            $respuestaGemini = $this->llamarGemini($prompt);
+            $errorTipo = ($respuesta['es_rate_limit'] ?? false)
+                ? 'limite_alcanzado'
+                : 'fallo_conexion';
 
-            if ($respuestaGemini['exito']) {
-                $iaUsada   = 'gemini';
-                $respuesta = $respuestaGemini;
-            } else {
-                $errorTipo = ($respuestaGemini['es_rate_limit'] ?? false)
-                    ? 'ambas_agotadas'
-                    : 'fallo_conexion';
-
-                return response()->json([
-                    'error'         => $errorTipo === 'ambas_agotadas'
-                        ? 'Ambas IAs han alcanzado su límite diario de tokens. Reintenta más tarde.'
-                        : 'No se pudo conectar con ningún asistente IA.',
-                    'error_tipo'    => $errorTipo,
-                    'reintentar_en' => $respuestaGemini['reintentar_en'] ?? 'unas horas',
-                    '_debug_groq'   => [
-                        'error'      => $respuesta['error'] ?? null,
-                        'status'     => $respuesta['groq_status'] ?? null,
-                        'body'       => $respuesta['groq_body'] ?? null,
-                    ],
-                    '_debug_gemini' => [
-                        'error'         => $respuestaGemini['error'] ?? null,
-                        'es_rate_limit' => $respuestaGemini['es_rate_limit'] ?? null,
-                        'key_prefix'    => substr(config('services.gemini.api_key') ?? '', 0, 10) . '...',
-                        'body_completo' => $respuestaGemini['_body_gemini'] ?? null,
-                        'modelo_usado'  => $respuestaGemini['_modelo_usado'] ?? null,
-                    ],
-                ], 503);
-            }
+            return response()->json([
+                'error'         => $errorTipo === 'limite_alcanzado'
+                    ? 'El asistente IA ha alcanzado su límite diario de tokens. Reintenta más tarde.'
+                    : 'No se pudo conectar con el asistente IA.',
+                'error_tipo'    => $errorTipo,
+                'reintentar_en' => $respuesta['reintentar_en'] ?? 'unas horas',
+            ], 503);
         }
 
         // Guardar fecha del primer análisis si aún no existe
@@ -371,7 +351,7 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis'       => $analisisParsado ?? $contenidoRaw,
-            'modelo'         => $iaUsada === 'gemini' ? 'gemini-3.6-flash' : 'groq/compound-mini',
+            'modelo'         => 'gemini-flash',
             'ia_usada'       => $iaUsada,
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,
