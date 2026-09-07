@@ -590,6 +590,31 @@ function PanelAnalisisIA({ analisis, modo, urlProducto }) {
                     </div>
                 )}
 
+                {/* ── DESCRIPCIÓN INSTAGRAM ── */}
+                {d.copy?.descripcion_instagram && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">📸 Descripción para Instagram</h4>
+                        <div className="bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 rounded-xl p-4 space-y-3">
+                            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
+                                {d.copy.descripcion_instagram}
+                            </pre>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(d.copy.descripcion_instagram)
+                                        .then(() => {
+                                            const b = document.activeElement;
+                                            if (b) { b.textContent = '✅ Copiado'; setTimeout(() => { b.textContent = '📋 Copiar caption'; }, 1500); }
+                                        })
+                                        .catch(() => {});
+                                }}
+                                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                            >
+                                📋 Copiar caption
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── KPIs ── */}
                 {d.kpis && (
                     <div>
