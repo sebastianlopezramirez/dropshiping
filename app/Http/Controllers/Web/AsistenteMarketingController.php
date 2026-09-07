@@ -255,9 +255,11 @@ class AsistenteMarketingController extends Controller
         if ($analisisParsado === null) {
             $raw = $respuesta['contenido'];
 
-            // Extraer solo el bloque JSON principal (ignora texto extra del modelo)
-            if (preg_match('/\{[\s\S]*\}/su', $raw, $m)) {
-                $jsonBruto = $m[0];
+            // Extraer solo el bloque JSON principal (sin regex /u — seguro con UTF-8)
+            $_ini1 = strpos($raw, '{');
+            $_fin1 = strrpos($raw, '}');
+            if ($_ini1 !== false && $_fin1 !== false && $_fin1 > $_ini1) {
+                $jsonBruto = substr($raw, $_ini1, $_fin1 - $_ini1 + 1);
                 $resultado = '';
                 $enString  = false;
                 $escapeSig = false;
@@ -297,7 +299,8 @@ class AsistenteMarketingController extends Controller
         // Fallback nivel 2: eliminar TODOS los caracteres de control (incluyendo \n y \r)
         // — menos agresivo que el nivel 1 pero útil si la estructura JSON es simple
         if ($analisisParsado === null) {
-            $limpio = preg_replace('/[\x00-\x1F\x7F]/u', ' ', $respuesta['contenido']);
+            // Eliminar control chars sin regex /u — seguro con cualquier UTF-8
+            $limpio = preg_replace('/[\x00-\x1F\x7F]/', ' ', $respuesta['contenido']);
             if ($limpio !== null) {
                 $analisisParsado = json_decode($limpio);
             }
@@ -308,8 +311,9 @@ class AsistenteMarketingController extends Controller
         if ($analisisParsado === null) {
             $raw = $respuesta['contenido'] ?? '';
             // Extraer el bloque JSON
-            if (preg_match('/\{[\s\S]*/su', $raw, $m)) {
-                $fragmento = $m[0];
+            $_ini3 = strpos($raw, '{');
+            if ($_ini3 !== false) {
+                $fragmento = substr($raw, $_ini3);
                 // Contar aperturas y cierres para detectar truncación
                 $pilaEstructuras = [];
                 $enStr   = false;
