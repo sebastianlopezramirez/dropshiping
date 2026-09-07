@@ -753,7 +753,8 @@ RESPONDE ÚNICAMENTE con el siguiente JSON. Sin texto antes ni después.
       "masivos": ["#hashtag_masivo_1", "#hashtag_masivo_2", "#hashtag_masivo_3"],
       "medianos": ["#hashtag_medio_1", "#hashtag_medio_2", "#hashtag_medio_3"],
       "nicho": ["#hashtag_nicho_1", "#hashtag_nicho_2", "#hashtag_nicho_3"]
-    }
+    },
+    "descripcion_instagram": "Caption listo para pegar en Instagram. Estructura obligatoria: línea 1 = gancho con emoji impactante, línea 2-4 = beneficio principal + detalle del producto + propuesta de valor, línea 5 = CTA claro con emoji de flecha o carrito, línea 6 en blanco, línea 7+ = hashtags agrupados (masivos + medianos + nicho). Máx 2200 chars totales. Usar emojis con moderación (máx 6). Redactar en español colombiano natural, tono cálido y cercano. Específico para {$producto->nombre}."
   },
 
   "kpis": {
