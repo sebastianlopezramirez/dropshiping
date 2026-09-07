@@ -372,7 +372,7 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis'       => $analisisParsado ?? $contenidoRaw,
-            'modelo'         => $iaUsada === 'gemini' ? 'gemini-1.5-flash' : 'groq/compound-mini',
+            'modelo'         => $iaUsada === 'gemini' ? 'gemini-2.0-flash' : 'groq/compound-mini',
             'ia_usada'       => $iaUsada,
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,
@@ -1053,22 +1053,11 @@ PROMPT;
         }
 
         try {
-            // ENTENDER: Las credenciales de Google pueden ser API key (empieza con "AIza")
-            // u OAuth token (empieza con "AQ.", "ya29.", etc.). Cada tipo usa auth diferente.
-            $esApiKey = str_starts_with($apiKey, 'AIza');
-
-            if ($esApiKey) {
-                // API key estándar → pasar en el query string ?key=
-                $http = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
-                $url  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
-            } else {
-                // OAuth token / access token → pasar en el header Authorization: Bearer
-                $http = Http::withHeaders([
-                    'Content-Type'  => 'application/json',
-                    'Authorization' => "Bearer {$apiKey}",
-                ])->timeout(30);
-                $url  = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-            }
+            // ENTENDER: Keys de Google AI Studio usan formato AQ. — siempre van con ?key= en la URL.
+            // Modelo: gemini-2.0-flash (más estable y disponible en proyectos nuevos).
+            $modelo = 'gemini-2.0-flash';
+            $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
+            $http   = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
 
             $respuesta = $http->post($url, [
                     'systemInstruction' => [
@@ -1113,14 +1102,15 @@ PROMPT;
                 $reintentarEn = $delay ? str_replace('s', ' segundos', $delay) : 'unas horas';
             }
 
-            Log::error('Gemini API error', ['status' => $respuesta->status(), 'body' => $respuesta->body(), 'es_api_key' => $esApiKey]);
+            Log::error('Gemini API error', ['status' => $respuesta->status(), 'body' => $respuesta->body(), 'modelo' => $modelo]);
             return [
                 'exito'         => false,
                 'error'         => "Gemini error HTTP {$respuesta->status()}",
                 'es_rate_limit' => $esRateLimit,
                 'reintentar_en' => $reintentarEn,
-                '_body_gemini'  => $respuesta->json(),      // debug temporal
-                '_auth_usada'   => $esApiKey ? 'api_key' : 'bearer_token',
+                '_body_gemini'  => $respuesta->json(),   // debug temporal
+                '_modelo_usado' => $modelo,
+                '_url_gemini'   => "...generateContent?key=" . substr($apiKey, 0, 10) . "...",
             ];
 
         } catch (\Exception $e) {
