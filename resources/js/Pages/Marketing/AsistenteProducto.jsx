@@ -1451,6 +1451,7 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
     const [modo, setModo] = useState(metricas.length === 0 ? 'lanzamiento' : 'optimizacion');
     const [cargandoIA, setCargandoIA] = useState(false);
     const [analisisIA, setAnalisisIA] = useState(null);
+    const [iaUsada, setIaUsada]   = useState(null); // 'groq' | 'gemini' | null
     const [errorIA, setErrorIA] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const [eliminando, setEliminando] = useState(false);
@@ -1500,6 +1501,7 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
     const generarAnalisis = async () => {
         setCargandoIA(true);
         setAnalisisIA(null);
+        setIaUsada(null);
         setErrorIA(null);
 
         try {
@@ -1556,8 +1558,15 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
             const data = await resp.json();
 
             if (!resp.ok) {
-                setErrorIA(data.error ?? 'Error desconocido al contactar la IA.');
+                const tipo = data.error_tipo ?? null;
+                if (tipo === 'ambas_agotadas') {
+                    const tiempo = data.reintentar_en ?? 'unas horas';
+                    setErrorIA(`⏳ Ambas IAs han alcanzado su límite diario de tokens. Reintenta en ${tiempo}.`);
+                } else {
+                    setErrorIA(data.error ?? 'Error desconocido al contactar la IA.');
+                }
             } else {
+                setIaUsada(data.ia_usada ?? 'groq');
                 setAnalisisIA(data.analisis);
             }
         } catch (e) {
@@ -1692,6 +1701,14 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                     <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
                         ❌ {errorIA}
                         <button onClick={() => setErrorIA(null)} className="ml-auto text-red-500 hover:text-red-700">×</button>
+                    </div>
+                )}
+
+                {/* Aviso cuando Groq se agotó y se usó Gemini como respaldo */}
+                {iaUsada === 'gemini' && analisisIA && (
+                    <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
+                        🔄 <span><strong>Groq sin cuota diaria</strong> — este análisis fue generado con <strong>Gemini (Google AI)</strong>. Funcionalidad idéntica.</span>
+                        <button onClick={() => setIaUsada('groq')} className="ml-auto text-blue-400 hover:text-blue-600">×</button>
                     </div>
                 )}
 
@@ -2262,8 +2279,12 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                         <div className="flex items-center gap-2 mb-4">
                             <h3 className="text-sm font-semibold text-gray-700">🤖 Análisis del Asistente IA</h3>
-                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                                    compound-mini · Groq
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                iaUsada === 'gemini'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-gray-100 text-gray-400'
+                            }`}>
+                                {iaUsada === 'gemini' ? 'gemini-1.5-flash · Google' : 'compound-mini · Groq'}
                             </span>
                         </div>
                         <PanelAnalisisIA analisis={analisisIA} modo={modo} urlProducto={urlProducto} />

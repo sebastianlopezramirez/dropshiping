@@ -223,16 +223,38 @@ class AsistenteMarketingController extends Controller
             ? $this->construirPromptLanzamiento($producto, $margen, $cpaMaximo, $costos)
             : $this->construirPromptOptimizacion($producto, $metricas, $margen, $cpaMaximo);
 
-        // Llamar a Groq API
+        // Llamar a Groq (primario) — si da 429, intentar Gemini (fallback)
+        $iaUsada   = 'groq';
         $respuesta = $this->llamarGroq($prompt);
 
         if (!$respuesta['exito']) {
-            return response()->json([
-                'error'        => 'No se pudo conectar con el asistente IA. Verifica GROQ_API_KEY.',
-                'detalle'      => $respuesta['error'] ?? '',
-                'groq_status'  => $respuesta['groq_status'] ?? null,
-                'groq_detalle' => $respuesta['groq_body'] ?? '',
-            ], 503);
+            // Groq sin cuota diaria → intentar Gemini automáticamente
+            if ($respuesta['es_rate_limit'] ?? false) {
+                $respuestaGemini = $this->llamarGemini($prompt);
+
+                if ($respuestaGemini['exito']) {
+                    $iaUsada   = 'gemini';
+                    $respuesta = $respuestaGemini;
+                } else {
+                    $errorTipo = ($respuestaGemini['es_rate_limit'] ?? false)
+                        ? 'ambas_agotadas'
+                        : 'fallo_conexion';
+
+                    return response()->json([
+                        'error'         => $errorTipo === 'ambas_agotadas'
+                            ? 'Ambas IAs han alcanzado su límite diario de tokens. Reintenta más tarde.'
+                            : 'No se pudo conectar con ningún asistente IA.',
+                        'error_tipo'    => $errorTipo,
+                        'reintentar_en' => $respuestaGemini['reintentar_en'] ?? 'unas horas',
+                    ], 503);
+                }
+            } else {
+                return response()->json([
+                    'error'      => 'No se pudo conectar con el asistente IA.',
+                    'error_tipo' => 'fallo_conexion',
+                    'detalle'    => $respuesta['error'] ?? '',
+                ], 503);
+            }
         }
 
         // Guardar fecha del primer análisis si aún no existe
@@ -345,7 +367,8 @@ class AsistenteMarketingController extends Controller
 
         return response()->json([
             'analisis'       => $analisisParsado ?? $contenidoRaw,
-            'modelo'         => 'groq/compound-mini',
+            'modelo'         => $iaUsada === 'gemini' ? 'gemini-1.5-flash' : 'groq/compound-mini',
+            'ia_usada'       => $iaUsada,
             'modo'           => $modo,
             'ia_iniciado_en' => $producto->ia_iniciado_en,
             '_debug' => [
@@ -997,11 +1020,89 @@ PROMPT;
             }
 
             Log::error('Groq API error', ['status' => $respuesta->status(), 'body' => $respuesta->body()]);
-            return ['exito' => false, 'error' => "Error HTTP {$respuesta->status()}", 'groq_body' => $respuesta->body(), 'groq_status' => $respuesta->status()];
+            return [
+                'exito'         => false,
+                'error'         => "Error HTTP {$respuesta->status()}",
+                'groq_body'     => $respuesta->body(),
+                'groq_status'   => $respuesta->status(),
+                'es_rate_limit' => $respuesta->status() === 429,
+            ];
 
         } catch (\Exception $e) {
             Log::error('Groq excepción', ['mensaje' => $e->getMessage()]);
             return ['exito' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * LLAMAR GEMINI — Fallback cuando Groq supera su límite diario (429).
+     * Modelo: gemini-1.5-flash | Free tier: 1,000,000 tokens/día.
+     * Retorna ['exito' => bool, 'contenido' => string, 'error' => string, 'es_rate_limit' => bool]
+     */
+    private function llamarGemini(string $prompt): array
+    {
+        $apiKey = config('services.gemini.api_key');
+
+        if (empty($apiKey)) {
+            return ['exito' => false, 'error' => 'GEMINI_API_KEY no configurada en .env', 'es_rate_limit' => false];
+        }
+
+        try {
+            $respuesta = Http::withHeaders(['Content-Type' => 'application/json'])
+                ->timeout(30)
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+                    'systemInstruction' => [
+                        'parts' => [['text' => 'You are a JSON-only API. Respond exclusively with a valid JSON object. Never include explanatory text, markdown, code blocks, or any content outside the JSON object.']],
+                    ],
+                    'contents' => [
+                        ['parts' => [['text' => $prompt]]],
+                    ],
+                    'generationConfig' => [
+                        'temperature'     => 0.3,
+                        'maxOutputTokens' => 8192,
+                    ],
+                ]);
+
+            if ($respuesta->successful()) {
+                $cuerpo    = $respuesta->json();
+                $contenido = $cuerpo['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                // Mismo saneamiento que Groq: extraer bloque JSON y limpiar newlines internos
+                if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
+                    $sanitizado = preg_replace_callback(
+                        '/"((?:[^"\\]|\\.)*)"/us',
+                        fn($m) => '"' . str_replace(["
+", ""], ['\n', '\r'], $m[1]) . '"',
+                        $matchJson[0]
+                    );
+                    if ($sanitizado !== null) {
+                        $contenido = $sanitizado;
+                    }
+                }
+
+                return ['exito' => true, 'contenido' => $contenido, 'es_rate_limit' => false];
+            }
+
+            $esRateLimit   = $respuesta->status() === 429;
+            $reintentarEn  = null;
+            if ($esRateLimit) {
+                // Gemini devuelve retryDelay en el body: {"error":{"details":[{"retryDelay":"86400s"}]}}
+                $body = $respuesta->json();
+                $delay = $body['error']['details'][0]['retryDelay'] ?? null;
+                $reintentarEn = $delay ? str_replace('s', ' segundos', $delay) : 'unas horas';
+            }
+
+            Log::error('Gemini API error', ['status' => $respuesta->status(), 'body' => $respuesta->body()]);
+            return [
+                'exito'         => false,
+                'error'         => "Gemini error HTTP {$respuesta->status()}",
+                'es_rate_limit' => $esRateLimit,
+                'reintentar_en' => $reintentarEn,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Gemini excepción', ['mensaje' => $e->getMessage()]);
+            return ['exito' => false, 'error' => $e->getMessage(), 'es_rate_limit' => false];
         }
     }
 
