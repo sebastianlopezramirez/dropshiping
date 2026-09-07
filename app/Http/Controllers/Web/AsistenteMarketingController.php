@@ -1081,10 +1081,8 @@ PROMPT;
                 // Mismo saneamiento que Groq: extraer bloque JSON y limpiar newlines internos
                 if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
                     $sanitizado = preg_replace_callback(
-                        '/"((?:[^"\\]|\\.)*)"/us',
-                        fn($m) => '"' . str_replace(["
-", "
-"], ['\n', '\r'], $m[1]) . '"',
+                        '/"((?:[^"\\\\]|\\\\.)*)"/us',
+                        fn($m) => '"' . str_replace(["\n", "\r"], ['\\n', '\\r'], $m[1]) . '"',
                         $matchJson[0]
                     );
                     if ($sanitizado !== null) {
