@@ -1012,19 +1012,7 @@ PROMPT;
                 $contenido = $cuerpo['choices'][0]['message']['content'] ?? '';
                 // Sanitizar JSON: limpiar newlines literales dentro de strings
                 if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
-                    $sanitizado = preg_replace_callback(
-                        '/"((?:[^"\\\\]|\\\\.)*)"/us',
-                        function($m) {
-                        $inner = $m[1];
-                        $inner = str_replace(["\n", "\r", "\t"], ['\\n', '\\r', '\\t'], $inner);
-                        $inner = preg_replace_callback('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', fn($c) => sprintf('\\u%04x', ord($c[0])), $inner);
-                        return '"' . $inner . '"';
-                    },
-                        $matchJson[0]
-                    );
-                    if ($sanitizado !== null) {
-                        $contenido = $sanitizado;
-                    }
+                    $contenido = $this->sanitizarJson($matchJson[0]);
                 }
                 return ['exito' => true, 'contenido' => $contenido];
             }
@@ -1083,19 +1071,7 @@ PROMPT;
 
                 // Mismo saneamiento que Groq: extraer bloque JSON y limpiar newlines internos
                 if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
-                    $sanitizado = preg_replace_callback(
-                        '/"((?:[^"\\\\]|\\\\.)*)"/us',
-                        function($m) {
-                        $inner = $m[1];
-                        $inner = str_replace(["\n", "\r", "\t"], ['\\n', '\\r', '\\t'], $inner);
-                        $inner = preg_replace_callback('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', fn($c) => sprintf('\\u%04x', ord($c[0])), $inner);
-                        return '"' . $inner . '"';
-                    },
-                        $matchJson[0]
-                    );
-                    if ($sanitizado !== null) {
-                        $contenido = $sanitizado;
-                    }
+                    $contenido = $this->sanitizarJson($matchJson[0]);
                 }
 
                 return ['exito' => true, 'contenido' => $contenido, 'es_rate_limit' => false];
@@ -1125,6 +1101,56 @@ PROMPT;
             Log::error('Gemini excepción', ['mensaje' => $e->getMessage()]);
             return ['exito' => false, 'error' => $e->getMessage(), 'es_rate_limit' => false];
         }
+    }
+
+    /**
+     * SANITIZAR — Parser char a char para limpiar control chars dentro de strings JSON.
+     * Más robusto que preg_replace_callback /u que falla con UTF-8 especial (tildes, ñ).
+     */
+    private function sanitizarJson(string $json): string
+    {
+        $resultado = '';
+        $len       = strlen($json);
+        $enString  = false;
+        $escape    = false;
+
+        for ($i = 0; $i < $len; $i++) {
+            $char = $json[$i];
+            $ord  = ord($char);
+
+            if ($escape) {
+                $resultado .= $char;
+                $escape     = false;
+                continue;
+            }
+
+            if ($char === '\\' && $enString) {
+                $resultado .= $char;
+                $escape     = true;
+                continue;
+            }
+
+            if ($char === '"') {
+                $resultado .= $char;
+                $enString   = !$enString;
+                continue;
+            }
+
+            // Control char DENTRO de string JSON → escapar
+            if ($enString && $ord <= 0x1F) {
+                switch ($char) {
+                    case "\n": $resultado .= '\\n'; break;
+                    case "\r": $resultado .= '\\r'; break;
+                    case "\t": $resultado .= '\\t'; break;
+                    default:    $resultado .= sprintf('\\u%04x', $ord);
+                }
+                continue;
+            }
+
+            $resultado .= $char;
+        }
+
+        return $resultado;
     }
 
     /**
