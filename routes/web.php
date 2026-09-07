@@ -586,6 +586,28 @@ Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
 | este proyecto usa ->withRouting(web: ...) sin callback then:.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| HEALTH CHECK — Monitor de servicios críticos (público, sin auth)
+|--------------------------------------------------------------------------
+| GET /health          → estado general (Gemini + BD)
+| GET /health/gemini   → solo Gemini (para bots de monitoreo externos)
+| GET /health/db       → solo base de datos
+|
+| Úsalo en:
+|   - UptimeRobot (gratuito): alerta si /health devuelve != 200
+|   - Railway: verifica que el deploy funciona
+|   - Manualmente en el browser cuando algo falla
+*/
+Route::prefix('health')
+     ->controller(\App\Http\Controllers\Web\HealthController::class)
+     ->group(function () {
+         Route::get('/',       'index');
+         Route::get('/gemini', 'gemini');
+         Route::get('/db',     'db');
+     });
+
 require __DIR__.'/auth.php';
 
 /*
