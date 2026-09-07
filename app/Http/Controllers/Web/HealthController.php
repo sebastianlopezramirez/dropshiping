@@ -136,6 +136,7 @@ class HealthController extends Controller
                 'problema'    => $problema,
                 'solucion'    => $solucion,
                 'latencia_ms' => $latencia,
+                'raw_error'   => $resp->body(),
             ];
 
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
