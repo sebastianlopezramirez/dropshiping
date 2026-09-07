@@ -1010,9 +1010,12 @@ PROMPT;
             if ($respuesta->successful()) {
                 $cuerpo    = $respuesta->json();
                 $contenido = $cuerpo['choices'][0]['message']['content'] ?? '';
-                // Sanitizar JSON: limpiar newlines literales dentro de strings
-                if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
-                    $contenido = $this->sanitizarJson($matchJson[0]);
+                // Sanitizar JSON: extraer bloque {…} con strpos/strrpos (sin regex /u)
+                // para evitar fallo silencioso de preg_match con UTF-8 complejo (tildes, ñ)
+                $inicio = strpos($contenido, '{');
+                $fin    = strrpos($contenido, '}');
+                if ($inicio !== false && $fin !== false && $fin > $inicio) {
+                    $contenido = $this->sanitizarJson(substr($contenido, $inicio, $fin - $inicio + 1));
                 }
                 return ['exito' => true, 'contenido' => $contenido];
             }
@@ -1069,9 +1072,11 @@ PROMPT;
                 $cuerpo    = $respuesta->json();
                 $contenido = $cuerpo['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
-                // Mismo saneamiento que Groq: extraer bloque JSON y limpiar newlines internos
-                if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
-                    $contenido = $this->sanitizarJson($matchJson[0]);
+                // Mismo saneamiento que Groq: extraer bloque {…} con strpos/strrpos (sin regex /u)
+                $inicio = strpos($contenido, '{');
+                $fin    = strrpos($contenido, '}');
+                if ($inicio !== false && $fin !== false && $fin > $inicio) {
+                    $contenido = $this->sanitizarJson(substr($contenido, $inicio, $fin - $inicio + 1));
                 }
 
                 return ['exito' => true, 'contenido' => $contenido, 'es_rate_limit' => false];
