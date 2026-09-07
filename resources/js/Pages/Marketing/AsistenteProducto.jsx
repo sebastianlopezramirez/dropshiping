@@ -1580,22 +1580,29 @@ export default function AsistenteProducto({ producto, metricas, puede_eliminar }
                 body: JSON.stringify(cuerpo),
             });
 
-            const data = await resp.json();
+            // Intentar parsear JSON — si el servidor devuelve HTML de error, json() lanza
+            let data = null;
+            try {
+                data = await resp.json();
+            } catch (_) {
+                setErrorIA('El servidor devolvió un error inesperado. Intenta de nuevo en unos segundos.');
+                return;
+            }
 
             if (!resp.ok) {
                 const tipo = data.error_tipo ?? null;
-                if (tipo === 'ambas_agotadas') {
+                if (tipo === 'limite_alcanzado') {
                     const tiempo = data.reintentar_en ?? 'unas horas';
-                    setErrorIA(`⏳ Ambas IAs han alcanzado su límite diario de tokens. Reintenta en ${tiempo}.`);
+                    setErrorIA(`⏳ El asistente IA ha alcanzado su límite diario. Reintenta en ${tiempo}.`);
                 } else {
-                    setErrorIA(data.error ?? 'Error desconocido al contactar la IA.');
+                    setErrorIA(data.error ?? 'Error al contactar el asistente IA.');
                 }
             } else {
-                setIaUsada(data.ia_usada ?? 'groq');
+                setIaUsada(data.ia_usada ?? 'gemini');
                 setAnalisisIA(data.analisis);
             }
         } catch (e) {
-            setErrorIA('Error de conexión. Verifica GROQ_API_KEY en .env');
+            setErrorIA('Error de conexión con el servidor. Verifica tu conexión e intenta de nuevo.');
         } finally {
             setCargandoIA(false);
         }
