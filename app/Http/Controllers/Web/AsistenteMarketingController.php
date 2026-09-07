@@ -1014,7 +1014,12 @@ PROMPT;
                 if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
                     $sanitizado = preg_replace_callback(
                         '/"((?:[^"\\\\]|\\\\.)*)"/us',
-                        fn($m) => '"' . str_replace(["\n", "\r"], ['\\n', '\\r'], $m[1]) . '"',
+                        function($m) {
+                        $inner = $m[1];
+                        $inner = str_replace(["\n", "\r", "\t"], ['\\n', '\\r', '\\t'], $inner);
+                        $inner = preg_replace_callback('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', fn($c) => sprintf('\\u%04x', ord($c[0])), $inner);
+                        return '"' . $inner . '"';
+                    },
                         $matchJson[0]
                     );
                     if ($sanitizado !== null) {
@@ -1080,7 +1085,12 @@ PROMPT;
                 if (preg_match('/\{[\s\S]*\}/u', $contenido, $matchJson)) {
                     $sanitizado = preg_replace_callback(
                         '/"((?:[^"\\\\]|\\\\.)*)"/us',
-                        fn($m) => '"' . str_replace(["\n", "\r"], ['\\n', '\\r'], $m[1]) . '"',
+                        function($m) {
+                        $inner = $m[1];
+                        $inner = str_replace(["\n", "\r", "\t"], ['\\n', '\\r', '\\t'], $inner);
+                        $inner = preg_replace_callback('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', fn($c) => sprintf('\\u%04x', ord($c[0])), $inner);
+                        return '"' . $inner . '"';
+                    },
                         $matchJson[0]
                     );
                     if ($sanitizado !== null) {
