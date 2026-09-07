@@ -85,7 +85,7 @@ class HealthController extends Controller
         $inicio = microtime(true);
 
         try {
-            $modelo = 'gemini-2.0-flash';
+            $modelo = 'gemini-2.5-flash';
             $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
 
             $resp = Http::timeout(10)->post($url, [
@@ -121,7 +121,7 @@ class HealthController extends Controller
 
             $solucion = match(true) {
                 $codigo === 401 => 'Regenera la API key en aistudio.google.com y actualízala en Railway',
-                $codigo === 404 => 'Cambia el modelo a gemini-2.0-flash en llamarGemini()',
+                $codigo === 404 => 'Cambia el modelo a gemini-2.5-flash en llamarGemini()',
                 $codigo === 429 => 'El límite diario se reinicia a medianoche (hora del servidor de Google)',
                 $codigo >= 500  => 'Problema temporal de Google — no requiere acción, reintenta en 5 min',
                 default         => 'Revisa el body de la respuesta para más detalles',

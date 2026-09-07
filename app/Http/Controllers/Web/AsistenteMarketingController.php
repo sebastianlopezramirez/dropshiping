@@ -1021,7 +1021,7 @@ PROMPT;
 
     /**
      * LLAMAR GEMINI — Fallback cuando Groq supera su límite diario (429).
-     * Modelo: gemini-2.0-flash | Free tier: 1,000,000 tokens/día.
+     * Modelo: gemini-2.5-flash | Free tier: 1,000,000 tokens/día.
      * Retorna ['exito' => bool, 'contenido' => string, 'error' => string, 'es_rate_limit' => bool]
      */
     private function llamarGemini(string $prompt): array
@@ -1034,8 +1034,8 @@ PROMPT;
 
         try {
             // ENTENDER: Keys de Google AI Studio usan formato AQ. — siempre van con ?key= en la URL.
-            // Modelo: gemini-2.0-flash (free tier, 1M tokens/día, disponible en todos los proyectos).
-            $modelo = 'gemini-2.0-flash';
+            // Modelo: gemini-2.5-flash (free tier, 1M tokens/día, disponible en todos los proyectos).
+            $modelo = 'gemini-2.5-flash';
             $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
             $http   = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
 
