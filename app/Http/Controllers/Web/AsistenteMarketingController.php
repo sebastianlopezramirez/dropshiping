@@ -246,6 +246,11 @@ class AsistenteMarketingController extends Controller
                             : 'No se pudo conectar con ningún asistente IA.',
                         'error_tipo'    => $errorTipo,
                         'reintentar_en' => $respuestaGemini['reintentar_en'] ?? 'unas horas',
+                        '_debug_gemini' => [
+                            'error'         => $respuestaGemini['error'] ?? null,
+                            'es_rate_limit' => $respuestaGemini['es_rate_limit'] ?? null,
+                            'key_prefix'    => substr(config('services.gemini.api_key') ?? '', 0, 10) . '...',
+                        ],
                     ], 503);
                 }
             } else {
@@ -1072,7 +1077,8 @@ PROMPT;
                     $sanitizado = preg_replace_callback(
                         '/"((?:[^"\\]|\\.)*)"/us',
                         fn($m) => '"' . str_replace(["
-", ""], ['\n', '\r'], $m[1]) . '"',
+", "
+"], ['\n', '\r'], $m[1]) . '"',
                         $matchJson[0]
                     );
                     if ($sanitizado !== null) {
