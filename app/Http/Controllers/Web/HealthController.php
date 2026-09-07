@@ -86,7 +86,7 @@ class HealthController extends Controller
 
         try {
             $modelo = 'gemini-2.5-flash';
-            $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
+            $url    = "https://generativelanguage.googleapis.com/v1/models/{$modelo}:generateContent?key={$apiKey}";
 
             $resp = Http::timeout(10)->post($url, [
                 'contents' => [

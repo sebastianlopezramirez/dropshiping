@@ -1036,7 +1036,7 @@ PROMPT;
             // ENTENDER: Keys de Google AI Studio usan formato AQ. — siempre van con ?key= en la URL.
             // Modelo: gemini-2.5-flash (free tier, 1M tokens/día, disponible en todos los proyectos).
             $modelo = 'gemini-2.5-flash';
-            $url    = "https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}";
+            $url    = "https://generativelanguage.googleapis.com/v1/models/{$modelo}:generateContent?key={$apiKey}";
             $http   = Http::withHeaders(['Content-Type' => 'application/json'])->timeout(30);
 
             $respuesta = $http->post($url, [
