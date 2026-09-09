@@ -223,10 +223,20 @@ class AsistenteMarketingController extends Controller
             ? $this->construirPromptLanzamiento($producto, $margen, $cpaMaximo, $costos)
             : $this->construirPromptOptimizacion($producto, $metricas, $margen, $cpaMaximo);
 
-        // Llamar a Gemini (único modelo activo)
-        $iaUsada   = 'gemini';
-        $respuesta = $this->llamarGemini($prompt);
+        // ── Motor IA: Groq primero (14,400 req/día gratis) → Gemini como respaldo ──
+        $iaUsada   = 'groq';
+        $respuesta = $this->llamarGroq($prompt);
 
+        // Si Groq falla por cualquier motivo → intentar con Gemini
+        if (!$respuesta['exito']) {
+            Log::warning('Groq falló — activando Gemini como respaldo', [
+                'error' => $respuesta['error'] ?? 'desconocido',
+            ]);
+            $iaUsada   = 'gemini';
+            $respuesta = $this->llamarGemini($prompt);
+        }
+
+        // Si ambos motores fallan → devolver error claro al usuario
         if (!$respuesta['exito']) {
             $errorTipo = ($respuesta['es_rate_limit'] ?? false)
                 ? 'limite_alcanzado'
@@ -234,8 +244,8 @@ class AsistenteMarketingController extends Controller
 
             return response()->json([
                 'error'         => $errorTipo === 'limite_alcanzado'
-                    ? 'El asistente IA ha alcanzado su límite diario de tokens. Reintenta más tarde.'
-                    : 'No se pudo conectar con el asistente IA.',
+                    ? 'El asistente IA ha alcanzado su límite diario. Reintenta en unas horas.'
+                    : 'No se pudo conectar con el asistente IA. Intenta nuevamente.',
                 'error_tipo'    => $errorTipo,
                 'reintentar_en' => $respuesta['reintentar_en'] ?? 'unas horas',
             ], 503);
