@@ -997,20 +997,48 @@ PROMPT;
                         'content' => $prompt,
                     ],
                 ],
-                'temperature'     => 0.3,   // Más determinístico para decisiones de negocio
-                'max_tokens'      => 8192,
+                'temperature'        => 0.3,   // Más determinístico para decisiones de negocio
+                'max_tokens'         => 8192,
+                'response_format'    => ['type' => 'json_object'], // Fuerza respuesta 100% JSON
             ]);
 
             if ($respuesta->successful()) {
                 $cuerpo    = $respuesta->json();
                 $contenido = $cuerpo['choices'][0]['message']['content'] ?? '';
-                // Sanitizar JSON: extraer bloque {…} con strpos/strrpos (sin regex /u)
-                // para evitar fallo silencioso de preg_match con UTF-8 complejo (tildes, ñ)
+
+                // ── EXTRAER BLOQUE JSON con conteo de llaves (no strrpos) ──
+                // strrpos('}') falla cuando el modelo agrega texto con } después del JSON.
+                // Esta versión cuenta profundidad y encuentra el cierre CORRECTO del objeto raíz.
                 $inicio = strpos($contenido, '{');
-                $fin    = strrpos($contenido, '}');
-                if ($inicio !== false && $fin !== false && $fin > $inicio) {
-                    $contenido = $this->sanitizarJson(substr($contenido, $inicio, $fin - $inicio + 1));
+                if ($inicio !== false) {
+                    $profundidad   = 0;
+                    $cierrePos     = null;
+                    $longContenido = strlen($contenido);
+                    $enString      = false;
+                    $escapeNext    = false;
+
+                    for ($i = $inicio; $i < $longContenido; $i++) {
+                        $c = $contenido[$i];
+
+                        if ($escapeNext)             { $escapeNext = false; continue; }
+                        if ($c === '\\' && $enString) { $escapeNext = true; continue; }
+                        if ($c === '"')              { $enString = !$enString; continue; }
+                        if ($enString)               { continue; }
+
+                        if ($c === '{')              { $profundidad++; }
+                        if ($c === '}') {
+                            $profundidad--;
+                            if ($profundidad === 0)  { $cierrePos = $i; break; }
+                        }
+                    }
+
+                    if ($cierrePos !== null) {
+                        $contenido = $this->sanitizarJson(
+                            substr($contenido, $inicio, $cierrePos - $inicio + 1)
+                        );
+                    }
                 }
+
                 return ['exito' => true, 'contenido' => $contenido];
             }
 

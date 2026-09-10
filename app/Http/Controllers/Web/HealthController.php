@@ -30,22 +30,32 @@ class HealthController extends Controller
 {
     public function index(): \Illuminate\Http\JsonResponse
     {
+        $groq   = $this->verificarGroq();
         $gemini = $this->verificarGemini();
         $bd     = $this->verificarBD();
 
-        $todo_ok = $gemini['ok'] && $bd['ok'];
+        // El sistema funciona si al menos uno de los motores IA responde
+        $ia_ok   = $groq['ok'] || $gemini['ok'];
+        $todo_ok = $ia_ok && $bd['ok'];
 
         $codigo = $todo_ok ? 200 : 503;
 
         return response()->json([
             'estado'    => $todo_ok ? '✅ Todos los servicios operativos' : '❌ Hay servicios con problemas',
             'servicios' => [
-                'gemini'       => $gemini,
+                'groq'          => $groq,
+                'gemini'        => $gemini,
                 'base_de_datos' => $bd,
             ],
             'timestamp'       => now()->toISOString(),
             'entorno'         => app()->environment(),
         ], $codigo);
+    }
+
+    public function groq(): \Illuminate\Http\JsonResponse
+    {
+        $resultado = $this->verificarGroq();
+        return response()->json($resultado, $resultado['ok'] ? 200 : 503);
     }
 
     public function gemini(): \Illuminate\Http\JsonResponse
@@ -58,6 +68,103 @@ class HealthController extends Controller
     {
         $resultado = $this->verificarBD();
         return response()->json($resultado, $resultado['ok'] ? 200 : 503);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // VERIFICAR GROQ
+    // Envía un prompt mínimo y mide latencia. Detecta:
+    //   - API key faltante o inválida (401)
+    //   - Rate limit (429)
+    //   - Modelo incorrecto (404)
+    //   - Timeout (>10s)
+    // ─────────────────────────────────────────────────────────────────
+    private function verificarGroq(): array
+    {
+        $apiKey = config('services.groq.api_key');
+
+        if (empty($apiKey)) {
+            return [
+                'ok'          => false,
+                'servicio'    => 'groq',
+                'problema'    => 'GROQ_API_KEY no está configurada en las variables de entorno de Railway',
+                'solucion'    => 'Ve a Railway → tu proyecto → Variables → agrega GROQ_API_KEY',
+                'latencia_ms' => null,
+            ];
+        }
+
+        $inicio = microtime(true);
+
+        try {
+            $modelo = 'compound-beta-mini';
+            $url    = 'https://api.groq.com/openai/v1/chat/completions';
+
+            $resp = Http::timeout(10)
+                ->withToken($apiKey)
+                ->post($url, [
+                    'model'      => $modelo,
+                    'max_tokens' => 10,
+                    'messages'   => [
+                        ['role' => 'user', 'content' => 'Responde solo: OK'],
+                    ],
+                ]);
+
+            $latencia = round((microtime(true) - $inicio) * 1000);
+
+            if ($resp->successful()) {
+                return [
+                    'ok'          => true,
+                    'servicio'    => 'groq',
+                    'modelo'      => $modelo,
+                    'latencia_ms' => $latencia,
+                    'estado'      => '✅ Operativo',
+                ];
+            }
+
+            $codigo   = $resp->status();
+            $problema = match(true) {
+                $codigo === 401 => 'API key inválida o expirada',
+                $codigo === 403 => 'API key sin permisos para este modelo',
+                $codigo === 404 => 'Modelo no encontrado — verifica el nombre del modelo',
+                $codigo === 429 => 'Límite de requests diarios alcanzado (14,400/día en free tier)',
+                $codigo >= 500  => 'Error en los servidores de Groq — espera unos minutos',
+                default         => "Error HTTP {$codigo}",
+            };
+
+            $solucion = match(true) {
+                $codigo === 401 => 'Regenera la API key en console.groq.com/keys y actualízala en Railway',
+                $codigo === 429 => 'Límite diario agotado — se reinicia a medianoche UTC (7 PM Colombia)',
+                $codigo >= 500  => 'Problema temporal de Groq — reintenta en 5 minutos',
+                default         => 'Revisa los logs de Railway para más detalles',
+            };
+
+            Log::warning('Health check Groq falló', ['codigo' => $codigo, 'body' => $resp->body()]);
+
+            return [
+                'ok'          => false,
+                'servicio'    => 'groq',
+                'codigo_http' => $codigo,
+                'problema'    => $problema,
+                'solucion'    => $solucion,
+                'latencia_ms' => $latencia,
+            ];
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            return [
+                'ok'          => false,
+                'servicio'    => 'groq',
+                'problema'    => 'Timeout — Groq tardó más de 10 segundos en responder',
+                'solucion'    => 'Puede ser un problema temporal. Reintenta en 2 minutos.',
+                'latencia_ms' => round((microtime(true) - $inicio) * 1000),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'ok'          => false,
+                'servicio'    => 'groq',
+                'problema'    => 'Excepción inesperada: ' . $e->getMessage(),
+                'solucion'    => 'Revisa los logs de Railway para el stack trace completo',
+                'latencia_ms' => round((microtime(true) - $inicio) * 1000),
+            ];
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────

@@ -591,8 +591,9 @@ Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
 |--------------------------------------------------------------------------
 | HEALTH CHECK — Monitor de servicios críticos (público, sin auth)
 |--------------------------------------------------------------------------
-| GET /health          → estado general (Gemini + BD)
-| GET /health/gemini   → solo Gemini (para bots de monitoreo externos)
+| GET /health          → estado general (Groq + Gemini + BD)
+| GET /health/groq     → solo Groq (motor principal)
+| GET /health/gemini   → solo Gemini (motor de respaldo)
 | GET /health/db       → solo base de datos
 |
 | Úsalo en:
@@ -603,9 +604,10 @@ Route::post('wompi/webhook', [TransaccionController::class, 'webhookWompi'])
 Route::prefix('health')
      ->controller(\App\Http\Controllers\Web\HealthController::class)
      ->group(function () {
-         Route::get('/',       'index');
-         Route::get('/gemini', 'gemini');
-         Route::get('/db',     'db');
+         Route::get('/',        'index');
+         Route::get('/groq',    'groq');
+         Route::get('/gemini',  'gemini');
+         Route::get('/db',      'db');
          Route::get('/modelos', 'modelos');
      });
 
